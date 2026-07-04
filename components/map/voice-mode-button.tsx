@@ -5,6 +5,7 @@ import { ConversationProvider, useConversation } from "@elevenlabs/react"
 import { Loader2, Mic, MicOff } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { Progress } from "@/components/ui/progress"
 import {
   buildVoiceFirstMessage,
   toDynamicVariables,
@@ -68,12 +69,86 @@ const bindVoiceContext = async (
 const VoiceModeButtonInner = ({ context, className }: VoiceModeButtonProps) => {
   const [sessionState, setSessionState] = useState<VoiceSessionState>("idle")
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [microphoneLevel, setMicrophoneLevel] = useState(0)
   const contextSessionIdRef = useRef<string | null>(null)
   const contextRef = useRef<LocationContext | null>(null)
   const conversationRef = useRef<ReturnType<typeof useConversation> | null>(
     null
   )
   const buttonRef = useRef<HTMLButtonElement | null>(null)
+  const microphoneStreamRef = useRef<MediaStream | null>(null)
+  const microphoneAudioContextRef = useRef<AudioContext | null>(null)
+  const microphoneAnimationFrameRef = useRef<number | null>(null)
+  const microphoneLevelUpdatedAtRef = useRef(0)
+
+  const stopMicrophoneMonitor = useCallback(() => {
+    if (microphoneAnimationFrameRef.current !== null) {
+      cancelAnimationFrame(microphoneAnimationFrameRef.current)
+      microphoneAnimationFrameRef.current = null
+    }
+
+    microphoneStreamRef.current?.getTracks().forEach((track) => {
+      track.stop()
+    })
+    microphoneStreamRef.current = null
+
+    void microphoneAudioContextRef.current?.close()
+    microphoneAudioContextRef.current = null
+    microphoneLevelUpdatedAtRef.current = 0
+    setMicrophoneLevel(0)
+  }, [])
+
+  const startMicrophoneMonitor = useCallback(
+    (stream: MediaStream) => {
+      stopMicrophoneMonitor()
+
+      const AudioContextConstructor =
+        window.AudioContext ??
+        (
+          window as typeof window & {
+            webkitAudioContext?: typeof AudioContext
+          }
+        ).webkitAudioContext
+
+      if (!AudioContextConstructor) {
+        return
+      }
+
+      const audioContext = new AudioContextConstructor()
+      const analyser = audioContext.createAnalyser()
+      const source = audioContext.createMediaStreamSource(stream)
+
+      analyser.fftSize = 256
+      analyser.smoothingTimeConstant = 0.75
+      const samples = new Uint8Array(analyser.fftSize)
+      source.connect(analyser)
+
+      microphoneStreamRef.current = stream
+      microphoneAudioContextRef.current = audioContext
+
+      const updateLevel = (timestamp: number) => {
+        analyser.getByteTimeDomainData(samples)
+
+        let sum = 0
+
+        for (const sample of samples) {
+          const centeredSample = (sample - 128) / 128
+          sum += centeredSample * centeredSample
+        }
+
+        if (timestamp - microphoneLevelUpdatedAtRef.current > 80) {
+          const rms = Math.sqrt(sum / samples.length)
+          setMicrophoneLevel(Math.min(100, Math.round(rms * 180)))
+          microphoneLevelUpdatedAtRef.current = timestamp
+        }
+
+        microphoneAnimationFrameRef.current = requestAnimationFrame(updateLevel)
+      }
+
+      microphoneAnimationFrameRef.current = requestAnimationFrame(updateLevel)
+    },
+    [stopMicrophoneMonitor]
+  )
 
   const conversation = useConversation({
     onConnect: () => {
@@ -100,10 +175,12 @@ const VoiceModeButtonInner = ({ context, className }: VoiceModeButtonProps) => {
       setSessionState("idle")
       contextSessionIdRef.current = null
       contextRef.current = null
+      stopMicrophoneMonitor()
     },
     onError: (message) => {
       setSessionState("error")
       setErrorMessage(message || "Voice mode failed")
+      stopMicrophoneMonitor()
     },
   })
 
@@ -160,7 +237,10 @@ const VoiceModeButtonInner = ({ context, className }: VoiceModeButtonProps) => {
     setErrorMessage(null)
 
     try {
-      await navigator.mediaDevices.getUserMedia({ audio: true })
+      const microphoneStream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+      })
+      startMicrophoneMonitor(microphoneStream)
 
       const response = await fetch(voiceApiUrl("/api/voice/token"), {
         method: "POST",
@@ -202,20 +282,22 @@ const VoiceModeButtonInner = ({ context, className }: VoiceModeButtonProps) => {
     } catch (error) {
       contextSessionIdRef.current = null
       contextRef.current = null
+      stopMicrophoneMonitor()
       setSessionState("error")
       setErrorMessage(formatVoiceStartError(error))
       buttonRef.current?.focus()
     }
-  }, [context, conversation])
+  }, [context, conversation, startMicrophoneMonitor, stopMicrophoneMonitor])
 
   const handleStopSession = useCallback(() => {
     conversation.endSession()
     contextSessionIdRef.current = null
     contextRef.current = null
+    stopMicrophoneMonitor()
     setSessionState("idle")
     setErrorMessage(null)
     buttonRef.current?.focus()
-  }, [conversation])
+  }, [conversation, stopMicrophoneMonitor])
 
   const handleToggle = useCallback(() => {
     if (isActive) {
@@ -265,6 +347,12 @@ const VoiceModeButtonInner = ({ context, className }: VoiceModeButtonProps) => {
     }
   }, [handleStopSession, isActive])
 
+  useEffect(() => {
+    return () => {
+      stopMicrophoneMonitor()
+    }
+  }, [stopMicrophoneMonitor])
+
   return (
     <div
       className={cn(
@@ -300,6 +388,18 @@ const VoiceModeButtonInner = ({ context, className }: VoiceModeButtonProps) => {
         )}
         <span>{isActive ? "Stop voice mode" : "Ask with voice"}</span>
       </Button>
+
+      <div className="space-y-1 px-1" aria-label="Microphone input level">
+        <div className="flex items-center justify-between text-[0.7rem] text-muted-foreground">
+          <span>Mic input</span>
+          <span>{microphoneLevel}%</span>
+        </div>
+        <Progress
+          value={microphoneLevel}
+          aria-label="Microphone input level"
+          className="h-1.5"
+        />
+      </div>
 
       <p
         id="voice-mode-status"

@@ -15,7 +15,8 @@ import {
   getVoiceContextForConversation,
 } from "@/lib/server/voice-context-store"
 
-const DEFAULT_VOICE_MODEL = "google/gemini-2.5-flash"
+const DEFAULT_VOICE_MODEL = "google/gemini-2.5-flash-lite"
+const MAX_VOICE_OUTPUT_TOKENS = 70
 
 const openrouter = createOpenAICompatible({
   name: "openrouter",
@@ -86,7 +87,7 @@ export const generateAnswer = (
         "You are ssh.ldn, a concise London noise analyst.",
         "The user has not bound a location yet.",
         "Ask them to search for and analyse an address before asking location-specific questions.",
-        "Keep spoken answers short.",
+        "Keep spoken answers to one short sentence.",
       ].join("\n")
   const modelId = process.env.OPENROUTER_MODEL ?? DEFAULT_VOICE_MODEL
 
@@ -95,8 +96,31 @@ export const generateAnswer = (
     system,
     prompt: question,
     abortSignal: signal,
-    maxOutputTokens: 180,
+    temperature: 0.2,
+    maxOutputTokens: MAX_VOICE_OUTPUT_TOKENS,
   })
+}
+
+async function* streamFastVoiceAnswer(
+  question: string,
+  context: LocationContext | null,
+  signal: AbortSignal
+) {
+  yield "Got it. "
+
+  try {
+    const result = generateAnswer(question, context, signal)
+
+    for await (const chunk of result.textStream) {
+      yield chunk
+    }
+  } catch (error) {
+    console.error("[SpeechEngine] failed to generate answer", {
+      message: error instanceof Error ? error.message : "Unknown error",
+    })
+
+    yield "I could not answer by voice right now. Press Escape to return to your screen reader."
+  }
 }
 
 const createSpeechEngineCallbacks = (): SpeechEngineCallbacks => ({
@@ -123,21 +147,9 @@ const createSpeechEngineCallbacks = (): SpeechEngineCallbacks => ({
       return
     }
 
-    try {
-      const context = getVoiceContextForConversation(conversationId)
-      const result = generateAnswer(question, context, signal)
+    const context = getVoiceContextForConversation(conversationId)
 
-      await session.sendResponse(result.textStream)
-    } catch (error) {
-      console.error("[SpeechEngine] failed to generate answer", {
-        conversationId,
-        message: error instanceof Error ? error.message : "Unknown error",
-      })
-
-      await session.sendResponse(
-        "I could not answer by voice right now. You can stop voice mode and return to your screen reader."
-      )
-    }
+    await session.sendResponse(streamFastVoiceAnswer(question, context, signal))
   },
   onClose: (session) => {
     if (session.conversationId) {
