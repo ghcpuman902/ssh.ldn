@@ -10,6 +10,7 @@ import type { NoiseLayerVisibility } from "@/components/map/noise-map-layers"
 import { Tooltip, TooltipTrigger } from "@/components/ui/tooltip"
 import { getDefraCredit, OSM_NIGHTLIFE_CREDIT } from "@/lib/map/data-credits"
 import { DEFRA_MAP_LAYERS } from "@/lib/map/defra-layers"
+import { NOISE_CONTRIBUTOR_META } from "@/lib/map/noise-contributor-meta"
 import { cn } from "@/lib/utils"
 import type { NoiseTimeSlot } from "@/lib/map/noise-time"
 
@@ -31,25 +32,25 @@ type LayerMeta = {
 
 const LAYER_META: Record<LayerKey, LayerMeta> = {
   road: {
-    emoji: "🚗",
+    emoji: NOISE_CONTRIBUTOR_META.road.emoji,
     label: DEFRA_MAP_LAYERS.road.label,
     description: DEFRA_MAP_LAYERS.road.description,
     datasetUrl: getDefraCredit("road").datasetUrl,
   },
   rail: {
-    emoji: "🚆",
+    emoji: NOISE_CONTRIBUTOR_META.rail.emoji,
     label: DEFRA_MAP_LAYERS.rail.label,
     description: DEFRA_MAP_LAYERS.rail.description,
     datasetUrl: getDefraCredit("rail").datasetUrl,
   },
   airport: {
-    emoji: "✈️",
+    emoji: NOISE_CONTRIBUTOR_META.airport.emoji,
     label: DEFRA_MAP_LAYERS.airport.label,
     description: DEFRA_MAP_LAYERS.airport.description,
     datasetUrl: getDefraCredit("airport").datasetUrl,
   },
   nightlife: {
-    emoji: "🔊",
+    emoji: NOISE_CONTRIBUTOR_META.nightlife.emoji,
     label: "Local noise sources",
     description:
       "OSM pubs, bars, clubs, music venues, and hospitals — activity from opening hours",
@@ -128,7 +129,7 @@ export const NoiseLayerControls = ({
   return (
     <section
       aria-label="Noise map layers"
-      className="inline-flex w-fit max-w-[calc(100vw-2rem)] flex-col items-end rounded-2xl bg-transparent p-3"
+      className="inline-flex w-fit max-w-[calc(100vw-2rem)] flex-col items-end rounded-2xl bg-transparent pt-3 pl-3"
     >
       <NoiseTimeGrid value={timeSlot} onChange={onTimeSlotChange} />
 

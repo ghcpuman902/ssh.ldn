@@ -23,7 +23,10 @@ import { MapDataCredits } from "@/components/map/map-data-credits"
 import { MapSearchBar, type MapSearchSelection } from "@/components/map/map-search-bar"
 import { NoiseLayerControls } from "@/components/map/noise-layer-controls"
 import type { MapTheme } from "@/lib/map/config"
-import { DEFAULT_NOISE_TIME_SLOT } from "@/lib/map/noise-time"
+import {
+  DEFAULT_NOISE_TIME_SLOT,
+  encodeNoiseTimeSlot,
+} from "@/lib/map/noise-time"
 import { locationContextFromAnalyse } from "@/lib/voice/location-context"
 import type { GeocodeResult } from "@/lib/server/geocode-types"
 import {
@@ -51,6 +54,16 @@ type ScoreResponse = {
   dominantSources: string[]
   contributors: { source: string; weight: number; score: number }[]
   timeProfile: { day: number; evening: number; night: number }
+  planningApplications: {
+    applicationId: string | null
+    reference: string | null
+    description: string | null
+    status: string | null
+    decisionDate: string | null
+    distanceMeters: number | null
+    planningAuthority: string | null
+    url: string
+  }[]
   caveats: string[]
   recommendedChecks: string[]
 }
@@ -159,7 +172,7 @@ export const MapShell = () => {
         })
 
         const scoreParams = new URLSearchParams({
-          timeSlot: String(timeSlot),
+          timeSlot: encodeNoiseTimeSlot(timeSlot),
         })
 
         if (testPointId ?? geocodeData.testPointId) {
@@ -322,7 +335,7 @@ export const MapShell = () => {
           <div className="pointer-events-none absolute inset-0 z-10">
             <div
               ref={logoRef}
-              className="pointer-events-auto absolute left-4 top-4 flex w-fit flex-col gap-1 pr-4 pb-3 md:left-5 md:top-5 md:pr-5 md:pb-3.5"
+              className="pointer-events-auto absolute left-0 top-0 flex w-fit flex-col gap-1 pb-3 pr-4 md:pb-3.5 md:pr-5"
             >
               <div className="flex items-center gap-1.5 md:gap-2">
                 <span
@@ -409,13 +422,13 @@ export const MapShell = () => {
           className={cn(
             "flex h-full shrink-0 flex-col transition-[width,opacity] duration-300 ease-out",
             analyseOpen
-              ? "w-[min(100%,20rem)] overflow-visible opacity-100"
+              ? "w-[min(100%,26rem)] overflow-visible opacity-100"
               : "pointer-events-none w-0 overflow-hidden opacity-0"
           )}
         >
           <div
             className={cn(
-              "relative z-30 w-[min(100%,20rem)] shrink-0 pb-3 transition-[opacity,transform] duration-300 ease-out",
+              "relative z-30 w-[min(100%,26rem)] shrink-0 pb-3 transition-[opacity,transform] duration-300 ease-out",
               analyseOpen
                 ? "translate-x-0 opacity-100"
                 : "pointer-events-none translate-x-3 opacity-0"
@@ -427,7 +440,7 @@ export const MapShell = () => {
           <MapAnalysePanel state={analyseState} onClose={handleCloseAnalyse} />
 
           {analyseOpen ? (
-            <div className="px-4 pt-3 pb-4">
+            <div className="px-0 pt-3 pb-4">
               <VoiceModeButton context={voiceContext} />
             </div>
           ) : null}

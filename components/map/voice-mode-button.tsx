@@ -1,10 +1,7 @@
 "use client"
 
-import { useCallback, useMemo, useRef, useState } from "react"
-import {
-  ConversationProvider,
-  useConversation,
-} from "@elevenlabs/react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { ConversationProvider, useConversation } from "@elevenlabs/react"
 import { Loader2, Mic, MicOff } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -22,6 +19,27 @@ type VoiceModeButtonProps = {
 }
 
 type VoiceSessionState = "idle" | "connecting" | "active" | "error"
+
+const readVoiceError = async (response: Response, fallback: string) => {
+  try {
+    const data = (await response.json()) as { error?: string }
+    return data.error ?? fallback
+  } catch {
+    return fallback
+  }
+}
+
+const formatVoiceStartError = (error: unknown) => {
+  if (!(error instanceof Error)) {
+    return "Failed to start voice mode. Return to your screen reader and try again."
+  }
+
+  if (error.message === "Failed to fetch") {
+    return "Voice mode could not reach the voice service. Return to your screen reader and try again."
+  }
+
+  return error.message
+}
 
 const bindVoiceContext = async (
   contextSessionId: string,
@@ -41,20 +59,21 @@ const bindVoiceContext = async (
   })
 
   if (!response.ok) {
-    const data = (await response.json()) as { error?: string }
-    throw new Error(data.error ?? "Failed to bind voice context")
+    throw new Error(
+      await readVoiceError(response, "Failed to bind voice context")
+    )
   }
 }
 
-const VoiceModeButtonInner = ({
-  context,
-  className,
-}: VoiceModeButtonProps) => {
+const VoiceModeButtonInner = ({ context, className }: VoiceModeButtonProps) => {
   const [sessionState, setSessionState] = useState<VoiceSessionState>("idle")
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const contextSessionIdRef = useRef<string | null>(null)
   const contextRef = useRef<LocationContext | null>(null)
-  const conversationRef = useRef<ReturnType<typeof useConversation> | null>(null)
+  const conversationRef = useRef<ReturnType<typeof useConversation> | null>(
+    null
+  )
+  const buttonRef = useRef<HTMLButtonElement | null>(null)
 
   const conversation = useConversation({
     onConnect: () => {
@@ -108,14 +127,14 @@ const VoiceModeButtonInner = ({
 
     if (isActive) {
       if (conversation.isSpeaking) {
-        return "Voice mode speaking"
+        return "Voice mode speaking. Press Escape to stop and return to your screen reader."
       }
 
       if (conversation.isListening) {
-        return "Voice mode listening"
+        return "Voice mode listening. Press Escape to stop and return to your screen reader."
       }
 
-      return "Voice mode active"
+      return "Voice mode active. Press Escape to stop and return to your screen reader."
     }
 
     if (process.env.NODE_ENV === "development") {
@@ -151,20 +170,26 @@ const VoiceModeButtonInner = ({
         body: JSON.stringify({ context }),
       })
 
+      if (!response.ok) {
+        throw new Error(
+          await readVoiceError(response, "Failed to start voice mode")
+        )
+      }
+
       const data = (await response.json()) as {
         token?: string
         contextSessionId?: string
         error?: string
       }
 
-      if (!response.ok || !data.token || !data.contextSessionId) {
+      if (!data.token || !data.contextSessionId) {
         throw new Error(data.error ?? "Failed to start voice mode")
       }
 
       contextSessionIdRef.current = data.contextSessionId
       contextRef.current = context
 
-      conversation.startSession({
+      await conversation.startSession({
         conversationToken: data.token,
         connectionType: "webrtc",
         dynamicVariables: toDynamicVariables(context, data.contextSessionId),
@@ -178,9 +203,8 @@ const VoiceModeButtonInner = ({
       contextSessionIdRef.current = null
       contextRef.current = null
       setSessionState("error")
-      setErrorMessage(
-        error instanceof Error ? error.message : "Failed to start voice mode"
-      )
+      setErrorMessage(formatVoiceStartError(error))
+      buttonRef.current?.focus()
     }
   }, [context, conversation])
 
@@ -190,6 +214,7 @@ const VoiceModeButtonInner = ({
     contextRef.current = null
     setSessionState("idle")
     setErrorMessage(null)
+    buttonRef.current?.focus()
   }, [conversation])
 
   const handleToggle = useCallback(() => {
@@ -203,6 +228,12 @@ const VoiceModeButtonInner = ({
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLButtonElement>) => {
+      if (event.key === "Escape" && isActive) {
+        event.preventDefault()
+        handleStopSession()
+        return
+      }
+
       if (event.key !== "Enter" && event.key !== " ") {
         return
       }
@@ -210,8 +241,29 @@ const VoiceModeButtonInner = ({
       event.preventDefault()
       handleToggle()
     },
-    [handleToggle]
+    [handleStopSession, handleToggle, isActive]
   )
+
+  useEffect(() => {
+    if (!isActive) {
+      return
+    }
+
+    const handleDocumentKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") {
+        return
+      }
+
+      event.preventDefault()
+      handleStopSession()
+    }
+
+    document.addEventListener("keydown", handleDocumentKeyDown)
+
+    return () => {
+      document.removeEventListener("keydown", handleDocumentKeyDown)
+    }
+  }, [handleStopSession, isActive])
 
   return (
     <div
@@ -221,6 +273,7 @@ const VoiceModeButtonInner = ({
       )}
     >
       <Button
+        ref={buttonRef}
         type="button"
         variant={isActive ? "default" : "outline"}
         size="sm"
@@ -232,6 +285,7 @@ const VoiceModeButtonInner = ({
         aria-pressed={isActive}
         aria-describedby="voice-mode-status"
         aria-busy={sessionState === "connecting"}
+        aria-keyshortcuts="Enter Space Escape"
         disabled={isDisabled}
         onClick={handleToggle}
         onKeyDown={handleKeyDown}
@@ -249,9 +303,14 @@ const VoiceModeButtonInner = ({
 
       <p
         id="voice-mode-status"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
         className={cn(
           "px-1 text-xs",
-          sessionState === "error" ? "text-destructive" : "text-muted-foreground"
+          sessionState === "error"
+            ? "text-destructive"
+            : "text-muted-foreground"
         )}
       >
         {statusLabel}

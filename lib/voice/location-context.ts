@@ -155,6 +155,7 @@ export const buildLocationContextPrompt = (context: LocationContext) => {
     "Answer only using the trusted location context below.",
     "If the question is outside this context, say you only have data for the analysed location.",
     "Keep spoken answers short: two to four sentences unless the user asks for detail.",
+    "This voice mode is designed for screen-reader users. If they ask to stop, tell them to press Escape or the Stop voice mode button to return to normal screen-reader navigation.",
     "You may use ElevenLabs v3 audio tags sparingly for emphasis, for example [thoughtful] or [reassuring], but do not overuse them.",
     "",
     "Location context:",
@@ -178,5 +179,5 @@ export const buildVoiceFirstMessage = (context: LocationContext) => {
       ? ` The noise score is ${context.noiseScore}, rated ${context.noiseBand}.`
       : " I do not have a score for this spot yet."
 
-  return `I am ready to talk about ${context.normalizedAddress}.${scoreLabel} What would you like to know about noise here?`
+  return `I am ready to talk about ${context.normalizedAddress}.${scoreLabel} Ask a quick question, or press Escape to stop voice mode and return to your screen reader.`
 }

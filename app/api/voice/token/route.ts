@@ -1,11 +1,11 @@
 import { type NextRequest } from "next/server"
 
+import { issueVoiceConversationToken } from "@/lib/server/speech-engine"
 import {
-  issueVoiceConversationToken,
-} from "@/lib/server/speech-engine"
-import {
-  storePendingVoiceContext,
-} from "@/lib/server/voice-context-store"
+  getVoiceCorsHeaders,
+  voiceOptionsResponse,
+} from "@/lib/server/voice-cors"
+import { storePendingVoiceContext } from "@/lib/server/voice-context-store"
 import type { LocationContext } from "@/lib/voice/location-context"
 
 type VoiceTokenRequest = {
@@ -34,24 +34,32 @@ const isLocationContext = (value: unknown): value is LocationContext => {
   )
 }
 
+export const OPTIONS = async (request: NextRequest) =>
+  voiceOptionsResponse(request)
+
 export const POST = async (request: NextRequest) => {
+  const headers = getVoiceCorsHeaders(request)
+
   try {
     const body = (await request.json()) as VoiceTokenRequest
 
     if (!isLocationContext(body.context)) {
       return Response.json(
         { error: "A valid location context is required" },
-        { status: 400 }
+        { status: 400, headers }
       )
     }
 
     const contextSessionId = storePendingVoiceContext(body.context)
     const token = await issueVoiceConversationToken()
 
-    return Response.json({
-      token,
-      contextSessionId,
-    })
+    return Response.json(
+      {
+        token,
+        contextSessionId,
+      },
+      { headers }
+    )
   } catch (error) {
     return Response.json(
       {
@@ -60,7 +68,7 @@ export const POST = async (request: NextRequest) => {
             ? error.message
             : "Failed to issue voice conversation token",
       },
-      { status: 502 }
+      { status: 502, headers }
     )
   }
 }

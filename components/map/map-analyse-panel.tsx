@@ -1,7 +1,8 @@
 "use client"
 
-import { Loader2, X } from "lucide-react"
+import { ExternalLink, Loader2, X } from "lucide-react"
 
+import { getNoiseContributorMeta } from "@/lib/map/noise-contributor-meta"
 import type { GeocodeResult } from "@/lib/server/geocode-types"
 import { cn } from "@/lib/utils"
 
@@ -17,6 +18,17 @@ type ScoreTimeProfile = {
   night: number
 }
 
+type ScorePlanningApplication = {
+  applicationId: string | null
+  reference: string | null
+  description: string | null
+  status: string | null
+  decisionDate: string | null
+  distanceMeters: number | null
+  planningAuthority: string | null
+  url: string
+}
+
 type ScoreSummary = {
   noiseScore: number
   noiseBand: string
@@ -25,6 +37,7 @@ type ScoreSummary = {
   dominantSources: string[]
   contributors: ScoreContributor[]
   timeProfile: ScoreTimeProfile
+  planningApplications: ScorePlanningApplication[]
   caveats: string[]
   recommendedChecks: string[]
 }
@@ -55,24 +68,7 @@ const TIME_PROFILE_ORDER: [keyof ScoreTimeProfile, string][] = [
   ["night", "Night"],
 ]
 
-const formatSourceLabel = (source: string) => {
-  switch (source) {
-    case "road":
-      return "Road"
-    case "rail":
-      return "Rail"
-    case "airport":
-      return "Aircraft"
-    case "nightlife":
-      return "Local sources"
-    case "traffic":
-      return "Traffic"
-    case "planning":
-      return "Development"
-    default:
-      return source
-  }
-}
+const formatSourceLabel = (source: string) => getNoiseContributorMeta(source).label
 
 export const MapAnalysePanel = ({
   state,
@@ -144,18 +140,18 @@ export const MapAnalysePanel = ({
                 </div>
 
                 {score ? (
-                  <div className="rounded-2xl bg-muted/60 p-3">
+                  <div className="rounded-3xl bg-muted/60 p-4">
                     <div className="flex items-end justify-between gap-3">
                       <div>
                         <p className="text-xs text-muted-foreground">
                           Noise score
                         </p>
-                        <p className="text-3xl leading-none font-semibold text-foreground">
+                        <p className="text-5xl leading-none font-semibold tracking-tight text-foreground">
                           {score.noiseScore}
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-medium text-foreground">
+                        <p className="text-base font-medium text-foreground">
                           {score.noiseBand}
                         </p>
                         <p className="text-xs text-muted-foreground">
@@ -175,28 +171,42 @@ export const MapAnalysePanel = ({
                     ) : null}
 
                     {score.contributors.length > 0 ? (
-                      <div className="mt-4 space-y-2">
-                        {score.contributors.map((contributor) => (
-                          <div
-                            key={contributor.source}
-                            className="flex items-center gap-2"
-                          >
-                            <p className="w-24 shrink-0 text-xs text-muted-foreground">
-                              {formatSourceLabel(contributor.source)}
-                            </p>
-                            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-border/60">
-                              <div
-                                className="h-full rounded-full bg-primary"
-                                style={{
-                                  width: `${clampPercent(contributor.score)}%`,
-                                }}
-                              />
+                      <div className="mt-4 space-y-2.5">
+                        {score.contributors.map((contributor) => {
+                          const meta = getNoiseContributorMeta(
+                            contributor.source
+                          )
+                          return (
+                            <div
+                              key={contributor.source}
+                              className="flex items-center gap-2.5"
+                            >
+                              <span
+                                className="w-5 shrink-0 text-center text-sm"
+                                aria-hidden="true"
+                              >
+                                {meta.emoji}
+                              </span>
+                              <p className="w-24 shrink-0 text-xs font-medium text-foreground">
+                                {meta.label}
+                              </p>
+                              <div className="h-3 flex-1 overflow-hidden rounded-full bg-white">
+                                <div
+                                  className={cn(
+                                    "h-full rounded-full transition-[width] duration-300 ease-out",
+                                    meta.barClassName
+                                  )}
+                                  style={{
+                                    width: `${clampPercent(contributor.score)}%`,
+                                  }}
+                                />
+                              </div>
+                              <p className="w-9 shrink-0 text-right text-xs font-medium tabular-nums text-foreground">
+                                {contributor.score}%
+                              </p>
                             </div>
-                            <p className="w-6 shrink-0 text-right text-xs tabular-nums text-muted-foreground">
-                              {contributor.score}
-                            </p>
-                          </div>
-                        ))}
+                          )
+                        })}
                       </div>
                     ) : null}
 
@@ -218,6 +228,48 @@ export const MapAnalysePanel = ({
                     {scoreError ?? "Score unavailable for this location."}
                   </p>
                 )}
+
+                {score && score.planningApplications.length > 0 ? (
+                  <div className="space-y-1.5">
+                    <p className="text-xs font-medium text-muted-foreground">
+                      Nearby planning applications
+                    </p>
+                    <ul className="space-y-1.5">
+                      {score.planningApplications.map((application) => (
+                        <li key={application.applicationId ?? application.url}>
+                          <a
+                            href={application.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="flex items-start justify-between gap-2 rounded-xl bg-muted/60 px-3 py-2 text-xs transition-colors hover:bg-muted"
+                          >
+                            <span className="min-w-0 flex-1">
+                              <span className="line-clamp-2 block text-foreground">
+                                {application.description ??
+                                  application.reference ??
+                                  "Planning application"}
+                              </span>
+                              <span className="mt-0.5 block text-muted-foreground">
+                                {[
+                                  application.status,
+                                  application.distanceMeters !== null
+                                    ? `${application.distanceMeters}m away`
+                                    : null,
+                                ]
+                                  .filter(Boolean)
+                                  .join(" · ")}
+                              </span>
+                            </span>
+                            <ExternalLink
+                              className="mt-0.5 size-3.5 shrink-0 text-muted-foreground"
+                              aria-hidden="true"
+                            />
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
 
                 {score && score.caveats.length > 0 ? (
                   <div className="space-y-1">

@@ -1,5 +1,9 @@
 import { type NextRequest } from "next/server"
 
+import {
+  getVoiceCorsHeaders,
+  voiceOptionsResponse,
+} from "@/lib/server/voice-cors"
 import { bindVoiceContextToConversation } from "@/lib/server/voice-context-store"
 import type { LocationContext } from "@/lib/voice/location-context"
 
@@ -31,7 +35,12 @@ const isLocationContext = (value: unknown): value is LocationContext => {
   )
 }
 
+export const OPTIONS = async (request: NextRequest) =>
+  voiceOptionsResponse(request)
+
 export const POST = async (request: NextRequest) => {
+  const headers = getVoiceCorsHeaders(request)
+
   try {
     const body = (await request.json()) as BindVoiceContextRequest
     const contextSessionId = body.contextSessionId?.trim()
@@ -41,7 +50,7 @@ export const POST = async (request: NextRequest) => {
     if (!contextSessionId || !conversationId) {
       return Response.json(
         { error: "contextSessionId and conversationId are required" },
-        { status: 400 }
+        { status: 400, headers }
       )
     }
 
@@ -54,11 +63,11 @@ export const POST = async (request: NextRequest) => {
     if (!bound) {
       return Response.json(
         { error: "Voice context session expired or not found" },
-        { status: 404 }
+        { status: 404, headers }
       )
     }
 
-    return Response.json({ ok: true })
+    return Response.json({ ok: true }, { headers })
   } catch (error) {
     return Response.json(
       {
@@ -67,7 +76,7 @@ export const POST = async (request: NextRequest) => {
             ? error.message
             : "Failed to bind voice context",
       },
-      { status: 502 }
+      { status: 502, headers }
     )
   }
 }

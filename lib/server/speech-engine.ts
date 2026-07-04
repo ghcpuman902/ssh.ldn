@@ -1,4 +1,4 @@
-import { createGoogleGenerativeAI } from "@ai-sdk/google"
+import { createOpenAICompatible } from "@ai-sdk/openai-compatible"
 import { ElevenLabsClient, SpeechEngineServer } from "@elevenlabs/elevenlabs-js"
 import type {
   SpeechEngineCallbacks,
@@ -15,12 +15,13 @@ import {
   getVoiceContextForConversation,
 } from "@/lib/server/voice-context-store"
 
-const DEFAULT_VOICE_MODEL = "gemini-2.5-flash"
+const DEFAULT_VOICE_MODEL = "google/gemini-2.5-flash"
 
-const google = createGoogleGenerativeAI({
-  apiKey:
-    process.env.GOOGLE_API_KEY ??
-    process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+const openrouter = createOpenAICompatible({
+  name: "openrouter",
+  apiKey: process.env.OPENROUTER_API_KEY,
+  baseURL: "https://openrouter.ai/api/v1",
+  includeUsage: true,
 })
 
 let elevenLabsClient: ElevenLabsClient | null = null
@@ -51,7 +52,8 @@ export const getSpeechEngine = async () => {
   }
 
   if (!speechEngineResourcePromise) {
-    speechEngineResourcePromise = getElevenLabsClient().speechEngine.get(engineId)
+    speechEngineResourcePromise =
+      getElevenLabsClient().speechEngine.get(engineId)
   }
 
   return speechEngineResourcePromise
@@ -74,6 +76,10 @@ export const generateAnswer = (
   context: LocationContext | null,
   signal: AbortSignal
 ) => {
+  if (!process.env.OPENROUTER_API_KEY) {
+    throw new Error("OPENROUTER_API_KEY is not configured")
+  }
+
   const system = context
     ? buildLocationContextPrompt(context)
     : [
@@ -82,12 +88,14 @@ export const generateAnswer = (
         "Ask them to search for and analyse an address before asking location-specific questions.",
         "Keep spoken answers short.",
       ].join("\n")
+  const modelId = process.env.OPENROUTER_MODEL ?? DEFAULT_VOICE_MODEL
 
   return streamText({
-    model: google(DEFAULT_VOICE_MODEL),
+    model: openrouter.chatModel(modelId),
     system,
     prompt: question,
     abortSignal: signal,
+    maxOutputTokens: 180,
   })
 }
 
@@ -115,10 +123,21 @@ const createSpeechEngineCallbacks = (): SpeechEngineCallbacks => ({
       return
     }
 
-    const context = getVoiceContextForConversation(conversationId)
-    const result = generateAnswer(question, context, signal)
+    try {
+      const context = getVoiceContextForConversation(conversationId)
+      const result = generateAnswer(question, context, signal)
 
-    await session.sendResponse(result.textStream)
+      await session.sendResponse(result.textStream)
+    } catch (error) {
+      console.error("[SpeechEngine] failed to generate answer", {
+        conversationId,
+        message: error instanceof Error ? error.message : "Unknown error",
+      })
+
+      await session.sendResponse(
+        "I could not answer by voice right now. You can stop voice mode and return to your screen reader."
+      )
+    }
   },
   onClose: (session) => {
     if (session.conversationId) {

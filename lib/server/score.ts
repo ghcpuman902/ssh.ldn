@@ -69,6 +69,20 @@ const isPlanningApplicationActive = (
   return ageYears <= PLANNING_RECENCY_YEARS
 }
 
+const PLANNING_DATA_GOV_UK_ENTITY_BASE_URL =
+  "https://www.planning.data.gov.uk/entity"
+const LONDON_PLANNING_DATAHUB_URL = "https://planningdata.london.gov.uk/"
+
+const planningApplicationUrl = (application: {
+  applicationId: string | null
+  source: string
+}) => {
+  if (application.source === "planning.data.gov.uk" && application.applicationId) {
+    return `${PLANNING_DATA_GOV_UK_ENTITY_BASE_URL}/${application.applicationId}`
+  }
+  return LONDON_PLANNING_DATAHUB_URL
+}
+
 /** Nearby construction/development activity is a plausible near-term noise source. */
 const computePlanningScore = (applications: PlanningApplicationLike[]) => {
   const now = Date.now()
@@ -219,6 +233,16 @@ export const scoreFromBundle = async ({
     },
     dominantSources: contributors.slice(0, 2).map((item) => item.source),
     evidenceRows: bundle.sources.osm.features.slice(0, 8),
+    planningApplications: planningApplications.slice(0, 5).map((application) => ({
+      applicationId: application.applicationId,
+      reference: application.reference,
+      description: application.description,
+      status: application.status,
+      decisionDate: application.decisionDate,
+      distanceMeters: application.distanceMeters,
+      planningAuthority: application.planningAuthority,
+      url: planningApplicationUrl(application),
+    })),
     caveats: bundle.warnings,
     recommendedChecks: [
       "Visit during the active period if nearby venues, hospitals, or rail metrics are elevated.",

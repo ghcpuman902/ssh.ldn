@@ -243,7 +243,7 @@ export const MapSearchBar = ({
           )}
         >
           <label htmlFor={`${listboxId}-input`} className="sr-only">
-            Search London address or postcode
+            Search London location, address, or postcode
           </label>
           <input
             ref={inputRef}
@@ -259,7 +259,7 @@ export const MapSearchBar = ({
                 ? `${listboxId}-option-${activeIndex}`
                 : undefined
             }
-            placeholder="Address or postcode"
+            placeholder="Location, address or postcode"
             value={query}
             onChange={(event) => {
               setQuery(event.target.value)
@@ -279,7 +279,7 @@ export const MapSearchBar = ({
         <ul
           id={`${listboxId}-listbox`}
           role="listbox"
-          aria-label="Address suggestions"
+          aria-label="Location suggestions"
           className={cn(
             "absolute top-[calc(100%+0.5rem)] z-30 max-h-72 overflow-y-auto rounded-2xl border border-border/60 bg-white p-1.5",
             isDocked
@@ -290,7 +290,7 @@ export const MapSearchBar = ({
           {isLoadingSuggestions ? (
             <li className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground">
               <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
-              Searching postcodes…
+              Searching locations…
             </li>
           ) : null}
 
@@ -319,6 +319,10 @@ export const MapSearchBar = ({
                   {suggestion.source === "preset" ? (
                     <span className="mt-0.5 block text-xs text-muted-foreground">
                       Demo address
+                    </span>
+                  ) : suggestion.source === "nominatim" ? (
+                    <span className="mt-0.5 block text-xs text-muted-foreground">
+                      Location
                     </span>
                   ) : null}
                 </span>

@@ -4,6 +4,7 @@ import {
   filterPresetSuggestions,
   mergeSearchSuggestions,
 } from "@/lib/map/search-suggestions";
+import { autocompleteWithNominatim } from "@/lib/server/nominatim-autocomplete";
 import { autocompleteWithPostcodesIo } from "@/lib/server/postcodes-io-autocomplete";
 
 export const GET = async (request: NextRequest) => {
@@ -17,26 +18,35 @@ export const GET = async (request: NextRequest) => {
     });
   }
 
-  try {
-    const postcodes = await autocompleteWithPostcodesIo(query);
+  const [postcodesResult, locationsResult] = await Promise.allSettled([
+    autocompleteWithPostcodesIo(query),
+    autocompleteWithNominatim(query),
+  ]);
 
-    return Response.json({
-      query,
-      suggestions: mergeSearchSuggestions(presets, postcodes),
-    });
-  } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Postcodes.io autocomplete failed";
+  const postcodes =
+    postcodesResult.status === "fulfilled" ? postcodesResult.value : [];
+  const locations =
+    locationsResult.status === "fulfilled" ? locationsResult.value : [];
+  const errors = [
+    postcodesResult.status === "rejected"
+      ? `Postcodes.io: ${
+          postcodesResult.reason instanceof Error
+            ? postcodesResult.reason.message
+            : "autocomplete failed"
+        }`
+      : null,
+    locationsResult.status === "rejected"
+      ? `Nominatim: ${
+          locationsResult.reason instanceof Error
+            ? locationsResult.reason.message
+            : "autocomplete failed"
+        }`
+      : null,
+  ].filter(Boolean);
 
-    return Response.json(
-      {
-        query,
-        suggestions: presets,
-        error: message,
-      },
-      { status: 502 }
-    );
-  }
+  return Response.json({
+    query,
+    suggestions: mergeSearchSuggestions(presets, postcodes, locations),
+    ...(errors.length > 0 ? { error: errors.join("; ") } : {}),
+  });
 };

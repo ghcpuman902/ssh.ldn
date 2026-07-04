@@ -6,7 +6,7 @@ export type SearchSuggestion = {
   address: string;
   testPointId?: string;
   postcode?: string;
-  source: "preset" | "postcodes.io";
+  source: "preset" | "postcodes.io" | "nominatim";
 };
 
 export const PRESET_SEARCH_SUGGESTIONS: SearchSuggestion[] = TEST_POINTS.map(
@@ -33,12 +33,13 @@ export const filterPresetSuggestions = (query: string): SearchSuggestion[] => {
 
 export const mergeSearchSuggestions = (
   presets: SearchSuggestion[],
-  postcodes: SearchSuggestion[]
+  postcodes: SearchSuggestion[],
+  locations: SearchSuggestion[] = []
 ): SearchSuggestion[] => {
   const seen = new Set<string>();
   const merged: SearchSuggestion[] = [];
 
-  for (const suggestion of [...presets, ...postcodes]) {
+  for (const suggestion of [...presets, ...locations, ...postcodes]) {
     const key = suggestion.address.toLowerCase();
 
     if (seen.has(key)) continue;
