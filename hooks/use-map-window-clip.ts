@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useRef } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import {
-  buildMapClipPathWithInlet,
+  buildMapClipGeometry,
   toClipPath,
   type InletRect,
+  type MapClipDebugPoint,
 } from "@/lib/map/squircle-path"
 
 const CORNER_RADIUS = 40
@@ -10,10 +11,14 @@ const LOGO_INLET_MARGIN = 6
 /** Simple cubic radius for logo notch — not squircle. */
 const LOGO_INLET_RADIUS = 18
 
+/** Set false to hide red debug dots on the clip path. */
+export const MAP_CLIP_DEBUG = true
+
 export const useMapWindowClip = () => {
   const clipContainerRef = useRef<HTMLDivElement>(null)
   const mapWindowRef = useRef<HTMLDivElement>(null)
   const logoRef = useRef<HTMLImageElement>(null)
+  const [debugPoints, setDebugPoints] = useState<MapClipDebugPoint[]>([])
 
   const updateClip = useCallback(() => {
     const container = clipContainerRef.current
@@ -39,7 +44,7 @@ export const useMapWindowClip = () => {
       }
     }
 
-    const path = buildMapClipPathWithInlet(
+    const { path, debugPoints: points } = buildMapClipGeometry(
       0,
       0,
       mapRect.width,
@@ -49,6 +54,7 @@ export const useMapWindowClip = () => {
     )
 
     container.style.clipPath = toClipPath(path)
+    setDebugPoints(MAP_CLIP_DEBUG ? points : [])
   }, [])
 
   useEffect(() => {
@@ -81,6 +87,7 @@ export const useMapWindowClip = () => {
     clipContainerRef,
     mapWindowRef,
     logoRef,
+    debugPoints,
     updateClip,
   }
 }

@@ -35,7 +35,7 @@ export const NoiseLayerControls = ({
   return (
     <section
       aria-label="Noise map layers"
-      className="pointer-events-auto w-[min(100%,20rem)] rounded-2xl border border-border/60 bg-background/90 p-3 shadow-lg backdrop-blur-md"
+      className="pointer-events-auto w-[min(100%,20rem)] rounded-2xl border border-border/60 bg-background/95 p-3 shadow-lg backdrop-blur-md"
     >
       <NoiseTimeGrid value={timeSlot} onChange={onTimeSlotChange} />
 

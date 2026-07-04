@@ -1,7 +1,7 @@
 {
   "version": 1,
   "description": "Local DEFRA noise tile cache for Greater London. Regenerate with pnpm download-noise-tiles.",
-  "downloadedAt": "2026-07-04T11:06:39.131Z",
+  "downloadedAt": "2026-07-04T11:23:53.598Z",
   "bbox": {
     "west": -0.52,
     "south": 51.28,
@@ -10,19 +10,24 @@
   },
   "zoomRange": {
     "min": 10,
-    "max": 10
+    "max": 12
   },
   "kinds": [
-    "road"
+    "road",
+    "rail",
+    "airport"
   ],
   "periods": [
-    "day"
+    "day",
+    "night",
+    "evening",
+    "all"
   ],
-  "tileCount": 9,
+  "tileCount": 1325,
   "stats": {
-    "downloaded": 9,
-    "skipped": 0,
-    "failed": 0
+    "downloaded": 1316,
+    "skipped": 9,
+    "failed": 55
   },
   "credits": [
     {

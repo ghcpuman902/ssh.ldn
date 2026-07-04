@@ -67,6 +67,77 @@ export type InletRect = {
   radius: number
 }
 
+/** Debug anchor — see red overlays in map-shell when MAP_CLIP_DEBUG is on. */
+export type MapClipDebugPoint = {
+  id: string
+  label: string
+  x: number
+  y: number
+}
+
+export type MapClipGeometry = {
+  path: string
+  debugPoints: MapClipDebugPoint[]
+}
+
+const buildInletDebugPoints = (
+  x: number,
+  iy: number,
+  iRight: number,
+  iBottom: number,
+  r: number,
+  leftBelowPocket: number
+): MapClipDebugPoint[] => [
+  {
+    id: "path-m",
+    label: "M — path start / left-bend end (line 219)",
+    x,
+    y: leftBelowPocket,
+  },
+  {
+    id: "pocket-br-line-start",
+    label: "L before simpleBr (line 228)",
+    x: iRight,
+    y: iBottom - r,
+  },
+  {
+    id: "pocket-br-end",
+    label: "simpleBr end (line 229)",
+    x: iRight - r,
+    y: iBottom,
+  },
+  {
+    id: "pocket-bottom-line-end",
+    label: "L before simpleBl (line 230)",
+    x: x + r,
+    y: iBottom,
+  },
+  {
+    id: "pocket-bl-end",
+    label: "simpleBl end (line 231)",
+    x,
+    y: iBottom - r,
+  },
+  {
+    id: "left-bend-start",
+    label: "simpleLogoLeftBend start (line 232)",
+    x,
+    y: iBottom - r,
+  },
+  {
+    id: "left-bend-end",
+    label: "simpleLogoLeftBend end → path-m (line 232)",
+    x,
+    y: leftBelowPocket,
+  },
+  {
+    id: "pocket-tr-end",
+    label: "simpleTr end — good reference (line 227)",
+    x: iRight,
+    y: iy + r,
+  },
+]
+
 /** Frame without logo — squircle TR/BR/BL, simple bezier top-left. */
 export const buildSquirclePath = (
   x: number,
@@ -106,9 +177,19 @@ export const buildMapClipPathWithInlet = (
   h: number,
   cornerRadius: number,
   inlet?: InletRect | null
-): string => {
+): string => buildMapClipGeometry(x, y, w, h, cornerRadius, inlet).path
+
+/** Path + red debug anchor positions for the logo pocket. */
+export const buildMapClipGeometry = (
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  cornerRadius: number,
+  inlet?: InletRect | null
+): MapClipGeometry => {
   if (!inlet || inlet.width <= 0 || inlet.height <= 0) {
-    return buildSquirclePath(x, y, w, h, cornerRadius)
+    return { path: buildSquirclePath(x, y, w, h, cornerRadius), debugPoints: [] }
   }
 
   const a = squircleRadius(cornerRadius, w, h)
@@ -131,11 +212,11 @@ export const buildMapClipPathWithInlet = (
   const leftBelowPocket = iBottom + r
 
   if (topEntryX >= right - a - 1) {
-    return buildSquirclePath(x, y, w, h, cornerRadius)
+    return { path: buildSquirclePath(x, y, w, h, cornerRadius), debugPoints: [] }
   }
 
-  return [
-    `M ${x} ${leftBelowPocket}`,
+  const path = [
+    `M ${x} ${leftBelowPocket}`, // DEBUG: path-m
     `L ${x} ${bottom - a}`,
     ...squircleBl(x, bottom, a),
     `L ${right - a} ${bottom}`,
@@ -143,14 +224,26 @@ export const buildMapClipPathWithInlet = (
     `L ${right} ${y + a}`,
     ...squircleTr(right, y, a),
     `L ${topEntryX} ${iy}`,
-    simpleTr(iRight, iy, r),
-    `L ${iRight} ${iBottom - r}`,
-    simpleBr(iRight, iBottom, r),
-    `L ${ix + r} ${iBottom}`,
-    simpleBl(x, iBottom, r),
-    simpleLogoLeftBend(x, iBottom - r, leftBelowPocket, r),
+    simpleTr(iRight, iy, r), // DEBUG: pocket-tr-end (good reference)
+    `L ${iRight} ${iBottom - r}`, // DEBUG: pocket-br-line-start
+    simpleBr(iRight, iBottom, r), // DEBUG: pocket-br-end
+    `L ${ix + r} ${iBottom}`, // DEBUG: pocket-bottom-line-end
+    simpleBl(x, iBottom, r), // DEBUG: pocket-bl-end / left-bend-start
+    simpleLogoLeftBend(x, iBottom - r, leftBelowPocket, r), // DEBUG: left-bend-end → path-m
     "Z",
   ].join(" ")
+
+  return {
+    path,
+    debugPoints: buildInletDebugPoints(
+      x,
+      iy,
+      iRight,
+      iBottom,
+      r,
+      leftBelowPocket
+    ),
+  }
 }
 
 export const toClipPath = (path: string) =>

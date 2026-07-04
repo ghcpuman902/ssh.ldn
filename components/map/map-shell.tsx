@@ -9,6 +9,7 @@ import Map, {
 } from "react-map-gl/maplibre"
 import { useTheme } from "next-themes"
 import { useMapWindowClip } from "@/hooks/use-map-window-clip"
+import { useMapZoomControlStyles } from "@/hooks/use-map-zoom-control-styles"
 import {
   DEFAULT_NOISE_LAYER_VISIBILITY,
   NoiseMapLayers,
@@ -27,6 +28,7 @@ import {
 } from "@/lib/map/config"
 
 import "maplibre-gl/dist/maplibre-gl.css"
+import "@/components/map/map-controls.css"
 
 const LOGO_PATH = "/ssh.ldn logo.svg"
 const RAIL_FETCH_RADIUS_METERS = 8_000
@@ -44,8 +46,9 @@ export const MapShell = () => {
   const [railGeoJson, setRailGeoJson] =
     useState<RailLineFeatureCollection | null>(null)
   const mapRef = useRef<MapRef>(null)
-  const { clipContainerRef, mapWindowRef, logoRef, updateClip } =
+  const { clipContainerRef, mapWindowRef, logoRef, debugPoints, updateClip } =
     useMapWindowClip()
+  const applyZoomControlStyles = useMapZoomControlStyles(mapRef)
 
   useEffect(() => {
     setMounted(true)
@@ -118,7 +121,7 @@ export const MapShell = () => {
         />
       </div>
 
-      <div className="pointer-events-none absolute bottom-6 left-4 z-20 md:bottom-8 md:left-5">
+      <div className="absolute bottom-6 left-4 z-30 md:bottom-8 md:left-5">
         <NoiseLayerControls
           visibility={layerVisibility}
           timeSlot={timeSlot}
@@ -146,6 +149,7 @@ export const MapShell = () => {
             onLoad={() => {
               updateClip()
               mapRef.current?.resize()
+              applyZoomControlStyles()
             }}
           >
             <NoiseMapLayers
@@ -166,6 +170,41 @@ export const MapShell = () => {
             aria-hidden
             className="pointer-events-none absolute inset-0 bg-linear-to-b from-background/10 via-transparent to-background/20"
           />
+
+          {debugPoints.length > 0 ? (
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-0 z-30"
+            >
+              {debugPoints.map((point) => {
+                const isBottom =
+                  point.id.includes("br") ||
+                  point.id.includes("bl") ||
+                  point.id.includes("bottom") ||
+                  point.id.includes("left-bend") ||
+                  point.id === "path-m"
+
+                return (
+                  <div
+                    key={point.id}
+                    className="absolute -translate-x-1/2 -translate-y-1/2"
+                    style={{ left: point.x, top: point.y }}
+                  >
+                    <div
+                      className={
+                        isBottom
+                          ? "size-3.5 rounded-full bg-red-500 ring-2 ring-white"
+                          : "size-2.5 rounded-full bg-red-400/80 ring-1 ring-white"
+                      }
+                    />
+                    <span className="mt-0.5 block max-w-36 text-[9px] font-medium leading-tight text-red-600">
+                      {point.id}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          ) : null}
         </div>
       </div>
     </div>
