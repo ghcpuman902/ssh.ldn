@@ -13,6 +13,12 @@ export const WEEK_SEGMENT_LABELS: Record<NoiseWeekSegment, string> = {
   weekend: "Weekend",
 };
 
+/** Short letter-day markers used as grid column headers (Mon–Fri / Sat–Sun). */
+export const WEEK_SEGMENT_LETTERS: Record<NoiseWeekSegment, string> = {
+  weekday: "M T W T F",
+  weekend: "S S",
+};
+
 export const NOISE_DAY_PARTS: Array<{
   part: NoiseDayPart;
   label: string;

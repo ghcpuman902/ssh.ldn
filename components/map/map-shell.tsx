@@ -46,7 +46,7 @@ export const MapShell = () => {
   const [railGeoJson, setRailGeoJson] =
     useState<RailLineFeatureCollection | null>(null)
   const mapRef = useRef<MapRef>(null)
-  const { clipContainerRef, mapWindowRef, logoRef, debugPoints, updateClip } =
+  const { clipContainerRef, mapWindowRef, logoRef, updateClip } =
     useMapWindowClip()
   const applyZoomControlStyles = useMapZoomControlStyles(mapRef)
 
@@ -109,31 +109,10 @@ export const MapShell = () => {
 
   return (
     <div className="relative h-svh w-full bg-white p-4 md:p-5">
-      <div className="pointer-events-none absolute left-4 top-4 z-20 md:left-5 md:top-5">
-        <Image
-          ref={logoRef}
-          src={LOGO_PATH}
-          alt="ssh.ldn"
-          width={924}
-          height={179}
-          priority
-          className="h-7 w-auto md:h-8"
-        />
-      </div>
-
-      <div className="absolute bottom-6 left-4 z-30 md:bottom-8 md:left-5">
-        <NoiseLayerControls
-          visibility={layerVisibility}
-          timeSlot={timeSlot}
-          onVisibilityChange={setLayerVisibility}
-          onTimeSlotChange={setTimeSlot}
-        />
-      </div>
-
       <div
         ref={mapWindowRef}
         data-map-window
-        className="relative h-full w-full"
+        className="relative z-0 h-full w-full"
       >
         <div ref={clipContainerRef} className="absolute inset-0">
           <Map
@@ -170,41 +149,39 @@ export const MapShell = () => {
             aria-hidden
             className="pointer-events-none absolute inset-0 bg-linear-to-b from-background/10 via-transparent to-background/20"
           />
+        </div>
+      </div>
 
-          {debugPoints.length > 0 ? (
-            <div
-              aria-hidden
-              className="pointer-events-none absolute inset-0 z-30"
-            >
-              {debugPoints.map((point) => {
-                const isBottom =
-                  point.id.includes("br") ||
-                  point.id.includes("bl") ||
-                  point.id.includes("bottom") ||
-                  point.id.includes("left-bend") ||
-                  point.id === "path-m"
+      <div className="pointer-events-none absolute inset-0 z-10">
+        <div
+          ref={logoRef}
+          className="pointer-events-auto absolute left-4 top-4 flex w-fit items-center gap-1.5 pr-4 pb-3 md:left-5 md:top-5 md:gap-2 md:pr-5 md:pb-3.5"
+        >
+          <span aria-hidden className="text-[1.3lh] leading-none translate-y-1"
+            style={{
+              textBoxTrim: 'trim-both',
+              textBoxEdge: 'cap alphabetic',
+            }}
+          >
+            🤫
+          </span>
+          <Image
+            src={LOGO_PATH}
+            alt="ssh.ldn"
+            width={924}
+            height={179}
+            priority
+            className="h-7 w-auto md:h-8"
+          />
+        </div>
 
-                return (
-                  <div
-                    key={point.id}
-                    className="absolute -translate-x-1/2 -translate-y-1/2"
-                    style={{ left: point.x, top: point.y }}
-                  >
-                    <div
-                      className={
-                        isBottom
-                          ? "size-3.5 rounded-full bg-red-500 ring-2 ring-white"
-                          : "size-2.5 rounded-full bg-red-400/80 ring-1 ring-white"
-                      }
-                    />
-                    <span className="mt-0.5 block max-w-36 text-[9px] font-medium leading-tight text-red-600">
-                      {point.id}
-                    </span>
-                  </div>
-                )
-              })}
-            </div>
-          ) : null}
+        <div className="pointer-events-auto absolute bottom-6 left-4 w-fit max-w-[calc(100vw-2rem)] md:bottom-8 md:left-5">
+          <NoiseLayerControls
+            visibility={layerVisibility}
+            timeSlot={timeSlot}
+            onVisibilityChange={setLayerVisibility}
+            onTimeSlotChange={setTimeSlot}
+          />
         </div>
       </div>
     </div>

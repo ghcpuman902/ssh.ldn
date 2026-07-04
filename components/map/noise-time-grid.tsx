@@ -1,21 +1,31 @@
 "use client"
 
+import { Fragment } from "react"
+import { Info } from "lucide-react"
+
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 import {
   DEFRA_TIME_SLOT_NOTE,
   encodeNoiseTimeSlot,
-  formatNoiseTimeSlot,
   NOISE_DAY_PARTS,
   type NoiseDayPart,
   type NoiseTimeSlot,
   type NoiseWeekSegment,
   WEEK_SEGMENT_LABELS,
+  WEEK_SEGMENT_LETTERS,
 } from "@/lib/map/noise-time"
 
 type NoiseTimeGridProps = {
   value: NoiseTimeSlot;
   onChange: (slot: NoiseTimeSlot) => void;
 };
+
+const WEEK_SEGMENTS = ["weekday", "weekend"] as const;
 
 const WEEKDAY_BAR_COUNT = 5;
 const WEEKEND_BAR_COUNT = 2;
@@ -88,32 +98,37 @@ const TimeSlotButton = ({
   const isSelected = slotId === selectedId;
   const partMeta = NOISE_DAY_PARTS.find((p) => p.part === slot.part);
   const partLabel = partMeta?.label ?? "";
+  const hours = partMeta?.hours ?? "";
   const barCount = BAR_COUNT[slot.week];
 
   return (
-    <button
-      type="button"
-      aria-pressed={isSelected}
-      aria-label={`${WEEK_SEGMENT_LABELS[slot.week]} ${partLabel}`}
-      onClick={() => onChange(slot)}
-      className={cn(
-        "inline-flex items-stretch rounded-2xl border p-1.5 transition-colors",
-        slot.part === "day" ? "h-10" : "h-7",
-        getButtonStyles(slot, isSelected)
-      )}
-    >
-      <div className="flex items-stretch gap-0.5" aria-hidden="true">
-        {Array.from({ length: barCount }, (_, index) => (
-          <span
-            key={index}
-            className={cn(
-              "w-2 rounded-lg",
-              getBarStyles(slot, isSelected)
-            )}
-          />
-        ))}
-      </div>
-    </button>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          aria-pressed={isSelected}
+          aria-label={`${WEEK_SEGMENT_LABELS[slot.week]} ${partLabel}, ${hours}`}
+          onClick={() => onChange(slot)}
+          className={cn(
+            "inline-flex w-fit items-center justify-center rounded-2xl border p-1.5 transition-colors",
+            slot.part === "day" ? "h-10" : "h-7",
+            getButtonStyles(slot, isSelected)
+          )}
+        >
+          <div className="flex h-full items-stretch gap-0.5" aria-hidden="true">
+            {Array.from({ length: barCount }, (_, index) => (
+              <span
+                key={index}
+                className={cn("w-2 rounded-lg", getBarStyles(slot, isSelected))}
+              />
+            ))}
+          </div>
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="top">
+        {WEEK_SEGMENT_LABELS[slot.week]} {partLabel.toLowerCase()} · {hours}
+      </TooltipContent>
+    </Tooltip>
   );
 };
 
@@ -121,35 +136,56 @@ export const NoiseTimeGrid = ({ value, onChange }: NoiseTimeGridProps) => {
   const selectedId = encodeNoiseTimeSlot(value);
 
   return (
-    <div className="space-y-2 border-b border-border/50 pb-3">
-      <div>
+    <div className="w-fit space-y-1.5 border-b border-border/50 pb-3">
+      <div className="flex items-center gap-1">
         <p className="text-sm font-medium text-foreground">When</p>
-        <p className="text-xs text-muted-foreground">
-          {formatNoiseTimeSlot(value)} ·{" "}
-          {NOISE_DAY_PARTS.find((p) => p.part === value.part)?.hours}
-        </p>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              aria-label="About these time periods"
+              className="text-muted-foreground/70 transition-colors hover:text-muted-foreground"
+            >
+              <Info className="size-3.5" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="right" className="max-w-56 flex-col items-start whitespace-normal">
+            {DEFRA_TIME_SLOT_NOTE}
+          </TooltipContent>
+        </Tooltip>
       </div>
 
       <div
         role="group"
         aria-label="Weekday or weekend and day or night noise period"
-        className="inline-grid w-fit grid-cols-[auto_auto] gap-1"
+        className="grid w-fit grid-cols-[auto_auto_auto] items-center gap-1.5"
       >
-        {NOISE_DAY_PARTS.flatMap(({ part }) =>
-          (["weekday", "weekend"] as const).map((week) => (
-            <TimeSlotButton
-              key={encodeNoiseTimeSlot({ week, part })}
-              slot={{ week, part: part as NoiseDayPart }}
-              selectedId={selectedId}
-              onChange={onChange}
-            />
-          ))
-        )}
-      </div>
+        <div aria-hidden="true" />
+        {WEEK_SEGMENTS.map((week) => (
+          <p
+            key={week}
+            className="text-center text-[10px] font-medium tracking-wide text-muted-foreground"
+          >
+            {WEEK_SEGMENT_LETTERS[week]}
+          </p>
+        ))}
 
-      <p className="text-[10px] leading-snug text-muted-foreground">
-        {DEFRA_TIME_SLOT_NOTE}
-      </p>
+        {NOISE_DAY_PARTS.map(({ part, label }) => (
+          <Fragment key={part}>
+            <p className="pr-1 text-xs font-medium text-muted-foreground">
+              {label}
+            </p>
+            {WEEK_SEGMENTS.map((week) => (
+              <TimeSlotButton
+                key={encodeNoiseTimeSlot({ week, part: part as NoiseDayPart })}
+                slot={{ week, part: part as NoiseDayPart }}
+                selectedId={selectedId}
+                onChange={onChange}
+              />
+            ))}
+          </Fragment>
+        ))}
+      </div>
     </div>
   );
 };
