@@ -1,4 +1,7 @@
-import type { LocationContext } from "@/lib/voice/location-context"
+import {
+  enrichLocationContext,
+  type LocationContext,
+} from "@/lib/voice/location-context"
 
 type StoredVoiceContext = {
   context: LocationContext
@@ -30,7 +33,7 @@ export const storePendingVoiceContext = (context: LocationContext) => {
 
   const contextSessionId = crypto.randomUUID()
   pendingContexts.set(contextSessionId, {
-    context,
+    context: enrichLocationContext(context),
     expiresAt: Date.now() + CONTEXT_TTL_MS,
   })
 
@@ -47,13 +50,16 @@ export const bindVoiceContextToConversation = (
 
   const pending = pendingContexts.get(contextSessionId)
   const resolvedContext = pending?.context ?? context
+  const enrichedContext = resolvedContext
+    ? enrichLocationContext(resolvedContext)
+    : undefined
 
-  if (!resolvedContext) {
+  if (!enrichedContext) {
     return false
   }
 
   conversationContexts.set(conversationId, {
-    context: resolvedContext,
+    context: enrichedContext,
     expiresAt: Date.now() + CONTEXT_TTL_MS,
   })
   pendingContexts.delete(contextSessionId)

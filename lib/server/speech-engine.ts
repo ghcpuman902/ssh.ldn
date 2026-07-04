@@ -4,10 +4,11 @@ import type {
   SpeechEngineCallbacks,
   TranscriptMessage,
 } from "@elevenlabs/elevenlabs-js/wrapper/speech-engine"
-import { streamText } from "ai"
+import { generateText, streamText } from "ai"
 
 import {
   buildLocationContextPrompt,
+  enrichLocationContext,
   type LocationContext,
 } from "@/lib/voice/location-context"
 import {
@@ -15,14 +16,19 @@ import {
   getVoiceContextForConversation,
 } from "@/lib/server/voice-context-store"
 
-const DEFAULT_VOICE_MODEL = "google/gemini-2.5-flash-lite"
-const MAX_VOICE_OUTPUT_TOKENS = 70
+const DEFAULT_VOICE_MODEL = "google/gemini-2.5-flash"
+const MAX_VOICE_OUTPUT_TOKENS = 80
 
 const openrouter = createOpenAICompatible({
   name: "openrouter",
   apiKey: process.env.OPENROUTER_API_KEY,
   baseURL: "https://openrouter.ai/api/v1",
   includeUsage: true,
+  headers: {
+    "HTTP-Referer":
+      process.env.OPENROUTER_SITE_URL ?? "https://sshldn.vercel.app",
+    "X-Title": "ssh.ldn",
+  },
 })
 
 let elevenLabsClient: ElevenLabsClient | null = null
@@ -72,7 +78,7 @@ const extractLatestUserQuestion = (transcript: TranscriptMessage[]) => {
   return null
 }
 
-export const generateAnswer = (
+const buildVoiceAnswerParams = (
   question: string,
   context: LocationContext | null,
   signal: AbortSignal
@@ -82,7 +88,7 @@ export const generateAnswer = (
   }
 
   const system = context
-    ? buildLocationContextPrompt(context)
+    ? buildLocationContextPrompt(enrichLocationContext(context))
     : [
         "You are ssh.ldn, a concise London noise analyst.",
         "The user has not bound a location yet.",
@@ -91,29 +97,61 @@ export const generateAnswer = (
       ].join("\n")
   const modelId = process.env.OPENROUTER_MODEL ?? DEFAULT_VOICE_MODEL
 
-  return streamText({
+  return {
     model: openrouter.chatModel(modelId),
     system,
     prompt: question,
     abortSignal: signal,
     temperature: 0.2,
     maxOutputTokens: MAX_VOICE_OUTPUT_TOKENS,
-  })
+  }
 }
 
-async function* streamFastVoiceAnswer(
+export const generateAnswer = (
+  question: string,
+  context: LocationContext | null,
+  signal: AbortSignal
+) => streamText(buildVoiceAnswerParams(question, context, signal))
+
+async function* streamVoiceAnswer(
   question: string,
   context: LocationContext | null,
   signal: AbortSignal
 ) {
-  yield "Got it. "
-
   try {
-    const result = generateAnswer(question, context, signal)
+    const params = buildVoiceAnswerParams(question, context, signal)
+    const result = streamText(params)
+    let streamedAny = false
 
     for await (const chunk of result.textStream) {
+      if (!chunk) {
+        continue
+      }
+
+      streamedAny = true
       yield chunk
     }
+
+    if (streamedAny) {
+      return
+    }
+
+    const streamedText = (await result.text).trim()
+
+    if (streamedText) {
+      yield streamedText
+      return
+    }
+
+    const fallback = await generateText(params)
+    const fallbackText = fallback.text.trim()
+
+    if (fallbackText) {
+      yield fallbackText
+      return
+    }
+
+    yield "I could not generate an answer for that question."
   } catch (error) {
     console.error("[SpeechEngine] failed to generate answer", {
       message: error instanceof Error ? error.message : "Unknown error",
@@ -148,8 +186,11 @@ const createSpeechEngineCallbacks = (): SpeechEngineCallbacks => ({
     }
 
     const context = getVoiceContextForConversation(conversationId)
+    const enrichedContext = context ? enrichLocationContext(context) : null
 
-    await session.sendResponse(streamFastVoiceAnswer(question, context, signal))
+    await session.sendResponse(
+      streamVoiceAnswer(question, enrichedContext, signal)
+    )
   },
   onClose: (session) => {
     if (session.conversationId) {

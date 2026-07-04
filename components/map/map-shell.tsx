@@ -440,7 +440,7 @@ export const MapShell = () => {
           <MapAnalysePanel state={analyseState} onClose={handleCloseAnalyse} />
 
           {analyseOpen ? (
-            <div className="px-0 pt-3 pb-4">
+            <div className="px-0 pt-3">
               <VoiceModeButton context={voiceContext} />
             </div>
           ) : null}
