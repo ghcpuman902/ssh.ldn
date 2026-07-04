@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "description": "Local DEFRA noise tile cache for Greater London. Regenerate with pnpm download-noise-tiles.",
+  "downloadedAt": "2026-07-04T11:06:39.131Z",
+  "bbox": {
+    "west": -0.52,
+    "south": 51.28,
+    "east": 0.24,
+    "north": 51.72
+  },
+  "zoomRange": {
+    "min": 10,
+    "max": 10
+  },
+  "kinds": [
+    "road"
+  ],
+  "periods": [
+    "day"
+  ],
+  "tileCount": 9,
+  "stats": {
+    "downloaded": 9,
+    "skipped": 0,
+    "failed": 0
+  },
+  "credits": [
+    {
+      "id": "defra-road-noise-r4",
+      "licence": "Open Government Licence v3.0",
+      "datasetUrl": "https://environment.data.gov.uk/dataset/562c9d56-7c2d-4d42-83bb-578d6e97a517"
+    },
+    {
+      "id": "defra-rail-noise-r4",
+      "licence": "Open Government Licence v3.0",
+      "datasetUrl": "https://environment.data.gov.uk/dataset/3fb3c2d7-292c-4e0a-bd5b-d8e4e1fe2947"
+    },
+    {
+      "id": "defra-airport-noise-r4",
+      "licence": "Open Government Licence v3.0",
+      "datasetUrl": "https://environment.data.gov.uk/dataset/dac9cba4-abe7-43bd-b8e9-8a83da52edd8"
+    }
+  ]
+}
