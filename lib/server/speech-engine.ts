@@ -16,8 +16,8 @@ import {
   getVoiceContextForConversation,
 } from "@/lib/server/voice-context-store"
 
-const DEFAULT_VOICE_MODEL = "google/gemini-2.5-flash"
-const MAX_VOICE_OUTPUT_TOKENS = 80
+const DEFAULT_VOICE_MODEL = "openai/gpt-5-mini"
+const MAX_VOICE_OUTPUT_TOKENS = 500
 
 const openrouter = createOpenAICompatible({
   name: "openrouter",
@@ -104,6 +104,11 @@ const buildVoiceAnswerParams = (
     abortSignal: signal,
     temperature: 0.2,
     maxOutputTokens: MAX_VOICE_OUTPUT_TOKENS,
+    providerOptions: {
+      openrouter: {
+        reasoning: { effort: "minimal" },
+      },
+    },
   }
 }
 

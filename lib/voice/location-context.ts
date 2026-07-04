@@ -1,10 +1,32 @@
 import type { AnalyseState } from "@/components/map/map-analyse-panel"
+import { getNoiseContributorMeta } from "@/lib/map/noise-contributor-meta"
 import {
   encodeNoiseTimeSlot,
   type NoiseTimeSlot,
   WEEK_SEGMENT_LABELS,
   NOISE_DAY_PARTS,
 } from "@/lib/map/noise-time"
+
+export type LocationContributor = {
+  source: string
+  weight: number
+  score: number
+}
+
+export type LocationTimeProfile = {
+  day: number
+  evening: number
+  night: number
+}
+
+export type LocationPlanningApplication = {
+  reference: string | null
+  description: string | null
+  status: string | null
+  decisionDate: string | null
+  distanceMeters: number | null
+  planningAuthority: string | null
+}
 
 export type LocationContext = {
   address: string
@@ -20,6 +42,11 @@ export type LocationContext = {
   confidenceScore: number | null
   confidenceBand: string | null
   dominantSources: string[]
+  contributors: LocationContributor[]
+  timeProfile: LocationTimeProfile | null
+  planningApplications: LocationPlanningApplication[]
+  caveats: string[]
+  recommendedChecks: string[]
   timeSlot: NoiseTimeSlot
   warnings: string[]
 }
@@ -97,6 +124,11 @@ export const enrichLocationContext = (
         context.normalizedAddress
       ),
     postcode: context.postcode ?? null,
+    contributors: context.contributors ?? [],
+    timeProfile: context.timeProfile ?? null,
+    planningApplications: context.planningApplications ?? [],
+    caveats: context.caveats ?? [],
+    recommendedChecks: context.recommendedChecks ?? [],
   }
 }
 
@@ -125,6 +157,24 @@ export const locationContextFromAnalyse = (
     confidenceScore: state.score?.confidenceScore ?? null,
     confidenceBand: state.score?.confidenceBand ?? null,
     dominantSources: state.score?.dominantSources ?? [],
+    contributors:
+      state.score?.contributors.map((contributor) => ({
+        source: contributor.source,
+        weight: contributor.weight,
+        score: contributor.score,
+      })) ?? [],
+    timeProfile: state.score?.timeProfile ?? null,
+    planningApplications:
+      state.score?.planningApplications.map((application) => ({
+        reference: application.reference,
+        description: application.description,
+        status: application.status,
+        decisionDate: application.decisionDate,
+        distanceMeters: application.distanceMeters,
+        planningAuthority: application.planningAuthority,
+      })) ?? [],
+    caveats: state.score?.caveats ?? [],
+    recommendedChecks: state.score?.recommendedChecks ?? [],
     timeSlot,
     warnings: state.geocode.warnings,
   })
@@ -210,15 +260,55 @@ export const buildLocationContextPrompt = (context: LocationContext) => {
       ? enriched.dominantSources.map(formatSourceLabel).join(", ")
       : "none identified"
 
+  const contributorLines =
+    enriched.contributors.length > 0
+      ? enriched.contributors.map(
+          (contributor) =>
+            `  - ${getNoiseContributorMeta(contributor.source).label}: contributes ${contributor.score}% of the noise (weighting ${contributor.weight})`
+        )
+      : ["  - No per-source breakdown available"]
+
+  const timeProfileLine = enriched.timeProfile
+    ? `- Noise by time of day: day ${enriched.timeProfile.day}, evening ${enriched.timeProfile.evening}, night ${enriched.timeProfile.night}`
+    : "- Noise by time of day: unavailable"
+
+  const planningLines =
+    enriched.planningApplications.length > 0
+      ? enriched.planningApplications.map((application) => {
+          const details = [
+            application.description ??
+              application.reference ??
+              "Planning application",
+            application.status ? `status ${application.status}` : null,
+            application.distanceMeters !== null
+              ? `${application.distanceMeters}m away`
+              : null,
+            application.planningAuthority,
+          ]
+            .filter(Boolean)
+            .join(" · ")
+          return `  - ${details}`
+        })
+      : ["  - None found nearby"]
+
+  const caveatLines =
+    enriched.caveats.length > 0
+      ? enriched.caveats.map((caveat) => `  - ${caveat}`)
+      : ["  - None"]
+
+  const recommendedCheckLines =
+    enriched.recommendedChecks.length > 0
+      ? enriched.recommendedChecks.map((check) => `  - ${check}`)
+      : ["  - None"]
+
   const warnings =
-    enriched.warnings.length > 0
-      ? enriched.warnings.slice(0, 3).join(" ")
-      : "none"
+    enriched.warnings.length > 0 ? enriched.warnings.join(" ") : "none"
 
   return [
     "You are ssh.ldn, a concise London noise analyst helping someone understand a specific address.",
-    "Answer only using the trusted location context below.",
-    "If the question is outside this context, say you only have data for the analysed location.",
+    "The location context below is the complete noise analysis for this address. Answer questions using it.",
+    "The noise sources — aircraft (airport), road, rail, local venues, and traffic — and their percentage contributions are all part of this analysis, so explain any of them when asked (for example, aircraft/airport noise, rail noise, or how noisy it is at night).",
+    "Only decline if a question is genuinely unrelated to this location or its noise (for example, general trivia); then say you only have the noise analysis for this address.",
     "When the user asks about the address, property, or where this is, always give the full property address from Primary address below.",
     "Do not answer with only the postcode unless they specifically ask for the postcode.",
     "Keep spoken answers extremely short: one sentence by default, two only when necessary.",
@@ -232,12 +322,21 @@ export const buildLocationContextPrompt = (context: LocationContext) => {
     `- Postcode: ${enriched.postcode ?? "unknown"}`,
     `- Coordinates: ${enriched.latitude.toFixed(5)}, ${enriched.longitude.toFixed(5)}`,
     `- Coordinate precision: ${enriched.coordinatePrecision.replaceAll("_", " ")}`,
-    `- Time profile: ${formatTimeSlotLabel(enriched.timeSlot)} (${encodeNoiseTimeSlot(enriched.timeSlot)})`,
+    `- Time slot analysed: ${formatTimeSlotLabel(enriched.timeSlot)} (${encodeNoiseTimeSlot(enriched.timeSlot)})`,
     `- Noise score: ${enriched.noiseScore ?? "unavailable"}`,
     `- Noise band: ${enriched.noiseBand ?? "unavailable"}`,
     `- Confidence score: ${enriched.confidenceScore ?? "unavailable"}`,
     `- Confidence band: ${enriched.confidenceBand ?? "unavailable"}`,
     `- Dominant sources: ${dominantSources}`,
+    "- Noise source breakdown:",
+    ...contributorLines,
+    timeProfileLine,
+    "- Nearby planning applications:",
+    ...planningLines,
+    "- Caveats:",
+    ...caveatLines,
+    "- Recommended checks:",
+    ...recommendedCheckLines,
     `- Notes: ${warnings}`,
   ].join("\n")
 }
