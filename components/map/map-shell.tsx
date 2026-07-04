@@ -272,7 +272,7 @@ export const MapShell = () => {
       <div
         className={cn(
           "flex h-full min-h-0",
-          analyseOpen && "gap-3 md:gap-4"
+          analyseOpen && "md:gap-4"
         )}
       >
         <div
@@ -420,15 +420,16 @@ export const MapShell = () => {
 
         <div
           className={cn(
-            "flex h-full shrink-0 flex-col transition-[width,opacity] duration-300 ease-out",
+            "flex flex-col transition-[transform,opacity] duration-300 ease-out",
+            "fixed inset-x-3 bottom-3 z-40 max-h-[82svh] md:static md:inset-auto md:z-auto md:h-full md:max-h-none md:shrink-0 md:transition-[width,opacity]",
             analyseOpen
-              ? "w-[min(100%,26rem)] overflow-visible opacity-100"
-              : "pointer-events-none w-0 overflow-hidden opacity-0"
+              ? "translate-y-0 opacity-100 md:w-[min(100%,26rem)] md:translate-y-0 md:overflow-visible"
+              : "pointer-events-none translate-y-[calc(100%+1.5rem)] opacity-0 md:w-0 md:translate-y-0 md:overflow-hidden"
           )}
         >
           <div
             className={cn(
-              "relative z-30 w-[min(100%,26rem)] shrink-0 pb-3 transition-[opacity,transform] duration-300 ease-out",
+              "relative z-30 w-full shrink-0 pb-3 transition-[opacity,transform] duration-300 ease-out md:w-[min(100%,26rem)]",
               analyseOpen
                 ? "translate-x-0 opacity-100"
                 : "pointer-events-none translate-x-3 opacity-0"
@@ -440,7 +441,7 @@ export const MapShell = () => {
           <MapAnalysePanel state={analyseState} onClose={handleCloseAnalyse} />
 
           {analyseOpen ? (
-            <div className="px-0 pt-3">
+            <div className="shrink-0 px-0 pt-3">
               <VoiceModeButton context={voiceContext} />
             </div>
           ) : null}
