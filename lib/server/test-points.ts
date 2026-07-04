@@ -8,6 +8,15 @@ export type TestPoint = {
 
 export const TEST_POINTS: TestPoint[] = [
   {
+    id: "ramen_space_dalston",
+    inputAddress:
+      "Ramen Space Unit 6, Sledge Tower, Dalston Square, London E8 3GP",
+    expectedStory:
+      "Hackathon venue in Dalston; mixed urban context with nearby Overground and local nightlife.",
+    latitude: 51.545061,
+    longitude: -0.073901,
+  },
+  {
     id: "wapping_pub_quiet_aircraft",
     inputAddress: "78-80 Wapping Ln, London E1W 2RT",
     expectedStory:

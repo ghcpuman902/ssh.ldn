@@ -26,6 +26,7 @@ const DEFAULT_STOP_TYPES = [
 ] as const;
 
 const TEST_POINT_SEARCH_QUERIES: Record<string, string> = {
+  ramen_space_dalston: "Dalston Junction",
   kings_cross_euston_road_noisy: "Kings Cross",
   wapping_pub_quiet_aircraft: "Wapping",
   fabric_day_night_pattern: "Farringdon",
