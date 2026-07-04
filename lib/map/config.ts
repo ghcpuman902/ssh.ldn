@@ -74,3 +74,11 @@ export const MAP_CONFIG = {
   bounds: LONDON_BOUNDS,
   defaultViewport: LONDON_VIEWPORT,
 } as const
+
+/**
+ * DEFRA strategic noise rasters are cached locally at z10–12 only (~13 MB for London).
+ * MapLibre overzooms these tiles when the user zooms in — appropriate for coarse
+ * Lden/Lnight contours; no need to cache z13+ (would be GB-scale).
+ */
+export const NOISE_TILE_MIN_ZOOM = 10
+export const NOISE_TILE_MAX_ZOOM = 12

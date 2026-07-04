@@ -1,4 +1,8 @@
 import {
+  NOISE_TILE_MAX_ZOOM,
+  NOISE_TILE_MIN_ZOOM,
+} from "@/lib/map/config";
+import {
   DEFRA_MAP_LAYERS,
   type DefraMapKind,
   type DefraNoisePeriod,
@@ -29,6 +33,12 @@ export const fetchDefraWmsTile = async ({
   x: number;
   y: number;
 }) => {
+  if (z < NOISE_TILE_MIN_ZOOM || z > NOISE_TILE_MAX_ZOOM) {
+    throw new Error(
+      `Noise tiles only available at z${NOISE_TILE_MIN_ZOOM}–${NOISE_TILE_MAX_ZOOM}`
+    );
+  }
+
   const source = tileSource();
 
   if (source !== "live") {

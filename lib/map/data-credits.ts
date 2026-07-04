@@ -66,6 +66,19 @@ export const OSM_RAIL_CREDIT: DataCredit = {
   notes: "Overground rail lines only; tube/tunnel segments excluded.",
 };
 
+export const OSM_NIGHTLIFE_CREDIT: DataCredit = {
+  id: "osm-nightlife",
+  title: "OpenStreetMap nightlife venues",
+  provider: "OpenStreetMap contributors",
+  licence: "ODbL 1.0",
+  licenceUrl: "https://opendatacommons.org/licenses/odbl/1-0/",
+  datasetUrl: "https://www.openstreetmap.org/copyright",
+  version: "Live Overpass extract",
+  attribution: "© OpenStreetMap contributors · ODbL",
+  notes:
+    "Pubs, bars, clubs, and music venues. Opening hours are partial; time-slot activity uses heuristics when hours are missing.",
+};
+
 export const CARTO_BASEMAP_CREDIT: DataCredit = {
   id: "carto-basemap",
   title: "CARTO basemap (Positron / Dark Matter)",
@@ -79,9 +92,10 @@ export const CARTO_BASEMAP_CREDIT: DataCredit = {
 
 /** All credits shown on the map page — deduped by id. */
 export const MAP_DATA_CREDITS: DataCredit[] = [
+  CARTO_BASEMAP_CREDIT,
   ...Object.values(DEFRA_NOISE_CREDITS),
   OSM_RAIL_CREDIT,
-  CARTO_BASEMAP_CREDIT,
+  OSM_NIGHTLIFE_CREDIT,
 ];
 
 export const getDefraCredit = (kind: DefraNoiseKind) => DEFRA_NOISE_CREDITS[kind];

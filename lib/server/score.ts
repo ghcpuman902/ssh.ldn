@@ -1,4 +1,12 @@
 import { buildEvidenceBundle, buildEvidenceBundleFromCoordinates } from "@/lib/server/bundle";
+import {
+  computeNightlifeScore,
+  isNightlifeAmenity,
+} from "@/lib/map/venue-time";
+import {
+  DEFAULT_NOISE_TIME_SLOT,
+  type NoiseTimeSlot,
+} from "@/lib/map/noise-time";
 
 const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value));
@@ -29,6 +37,7 @@ export type ScoreInput = {
   lng?: number;
   floor?: number;
   facing?: string;
+  timeSlot?: NoiseTimeSlot;
 };
 
 export const scoreFromBundle = async ({
@@ -37,6 +46,7 @@ export const scoreFromBundle = async ({
   lng,
   floor = 0,
   facing = "unknown",
+  timeSlot = DEFAULT_NOISE_TIME_SLOT,
 }: ScoreInput) => {
   const bundle =
     testPointId !== undefined
@@ -54,13 +64,15 @@ export const scoreFromBundle = async ({
   const airport = bundle.sources.airport.airportLden as number | null;
 
   const nightlifeFeatures = bundle.sources.osm.features.filter((feature) =>
-    ["pub", "bar", "nightclub"].includes(feature.amenity ?? "")
+    isNightlifeAmenity(feature.amenity)
   );
-  const nightlifeScore = Math.min(
-    100,
-    nightlifeFeatures.length * 12 +
-      nightlifeFeatures.filter((feature) => feature.distanceMeters <= 150).length *
-        8
+  const nightlifeScore = computeNightlifeScore(
+    nightlifeFeatures.map((feature) => ({
+      amenity: feature.amenity,
+      openingHours: feature.openingHours,
+      distanceMeters: feature.distanceMeters,
+    })),
+    timeSlot
   );
 
   const roadScore = normalizeDb(road);
@@ -111,6 +123,7 @@ export const scoreFromBundle = async ({
     longitude: bundle.longitude,
     floor,
     facing,
+    timeSlot,
     noiseScore,
     noiseBand: bandFromScore(noiseScore),
     confidenceScore,

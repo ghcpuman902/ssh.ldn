@@ -9,7 +9,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { getDefraCredit, OSM_RAIL_CREDIT } from "@/lib/map/data-credits"
+import { getDefraCredit, OSM_NIGHTLIFE_CREDIT, OSM_RAIL_CREDIT } from "@/lib/map/data-credits"
 import { DEFRA_MAP_LAYERS } from "@/lib/map/defra-layers"
 import { cn } from "@/lib/utils"
 import type { NoiseTimeSlot } from "@/lib/map/noise-time"
@@ -25,7 +25,6 @@ type LayerKey = keyof NoiseLayerVisibility;
 
 type LayerMeta = {
   emoji: string;
-  shortLabel: string;
   label: string;
   description: string;
   datasetUrl: string;
@@ -34,35 +33,39 @@ type LayerMeta = {
 const LAYER_META: Record<LayerKey, LayerMeta> = {
   road: {
     emoji: "🚗",
-    shortLabel: "Road",
     label: DEFRA_MAP_LAYERS.road.label,
     description: DEFRA_MAP_LAYERS.road.description,
     datasetUrl: getDefraCredit("road").datasetUrl,
   },
   rail: {
     emoji: "🚆",
-    shortLabel: "Rail",
     label: DEFRA_MAP_LAYERS.rail.label,
     description: DEFRA_MAP_LAYERS.rail.description,
     datasetUrl: getDefraCredit("rail").datasetUrl,
   },
   airport: {
     emoji: "✈️",
-    shortLabel: "Air",
     label: DEFRA_MAP_LAYERS.airport.label,
     description: DEFRA_MAP_LAYERS.airport.description,
     datasetUrl: getDefraCredit("airport").datasetUrl,
   },
   railLines: {
     emoji: "🛤️",
-    shortLabel: "Tracks",
     label: "Rail tracks",
-    description: "OSM overground lines (excludes tube tunnels)",
+    description:
+      "OSM overground track geometry — reference layer under rail noise heatmap",
     datasetUrl: OSM_RAIL_CREDIT.datasetUrl,
+  },
+  nightlife: {
+    emoji: "🍺",
+    label: "Nightlife venues",
+    description:
+      "OSM pubs, bars, clubs, and music venues. Time-slot activity from opening hours or amenity heuristics.",
+    datasetUrl: OSM_NIGHTLIFE_CREDIT.datasetUrl,
   },
 };
 
-const LAYER_ORDER: LayerKey[] = ["road", "rail", "airport", "railLines"];
+const LAYER_ORDER: LayerKey[] = ["road", "rail", "airport", "railLines", "nightlife"];
 
 const LayerToggle = ({
   layerKey,
@@ -84,22 +87,22 @@ const LayerToggle = ({
           aria-label={`Toggle ${meta.label}`}
           onClick={() => onToggle(layerKey, !active)}
           className={cn(
-            "flex flex-col items-center gap-1 rounded-xl border p-2 transition-colors",
+            "flex size-10 items-center justify-center rounded-full border transition-colors",
             active
-              ? "border-primary bg-primary/10 ring-1 ring-primary/30"
-              : "border-border/50 bg-muted/30 opacity-55 hover:opacity-90"
+              ? "border-primary bg-primary ring-1 ring-primary/30"
+              : "border-border bg-muted hover:bg-accent"
           )}
         >
-          <span className="text-xl leading-none" aria-hidden="true">
+          <span
+            className={cn("text-lg leading-none", !active && "opacity-60")}
+            aria-hidden="true"
+          >
             {meta.emoji}
-          </span>
-          <span className="text-[10px] font-medium leading-none text-foreground">
-            {meta.shortLabel}
           </span>
         </button>
       </TooltipTrigger>
       <TooltipContent
-        side="top"
+        side="left"
         className="max-w-56 flex-col items-start gap-1 whitespace-normal py-2"
       >
         <p className="font-medium">{meta.label}</p>
@@ -130,7 +133,7 @@ export const NoiseLayerControls = ({
   return (
     <section
       aria-label="Noise map layers"
-      className="inline-flex w-fit max-w-[calc(100vw-2rem)] flex-col items-start rounded-2xl border border-border/60 bg-background/95 p-3 shadow-lg backdrop-blur-md"
+      className="inline-flex w-fit max-w-[calc(100vw-2rem)] flex-col items-end rounded-2xl bg-transparent p-3"
     >
       <NoiseTimeGrid value={timeSlot} onChange={onTimeSlotChange} />
 
@@ -146,7 +149,7 @@ export const NoiseLayerControls = ({
               <Info className="size-3.5" />
             </button>
           </TooltipTrigger>
-          <TooltipContent side="right" className="max-w-56 flex-col items-start whitespace-normal">
+          <TooltipContent side="left" className="max-w-56 flex-col items-start whitespace-normal">
             Strategic DEFRA maps — annual averages, not live measurement.
           </TooltipContent>
         </Tooltip>
@@ -155,7 +158,7 @@ export const NoiseLayerControls = ({
       <div
         role="group"
         aria-label="Noise layer visibility"
-        className="grid w-fit grid-cols-4 gap-2"
+        className="flex w-fit flex-col gap-2"
       >
         {LAYER_ORDER.map((key) => (
           <LayerToggle

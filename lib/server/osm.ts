@@ -23,8 +23,10 @@ type OverpassElement = {
 const buildOverpassQuery = (lat: number, lng: number, radiusMeters: number) =>
   `[out:json][timeout:25];
 (
-  node(around:${radiusMeters},${lat},${lng})["amenity"~"pub|bar|nightclub"];
-  way(around:${radiusMeters},${lat},${lng})["amenity"~"pub|bar|nightclub"];
+  node(around:${radiusMeters},${lat},${lng})["amenity"~"pub|bar|nightclub|music_venue"];
+  way(around:${radiusMeters},${lat},${lng})["amenity"~"pub|bar|nightclub|music_venue"];
+  node(around:${radiusMeters},${lat},${lng})["amenity"~"pub|bar"]["live_music"="yes"];
+  way(around:${radiusMeters},${lat},${lng})["amenity"~"pub|bar"]["live_music"="yes"];
   node(around:${radiusMeters},${lat},${lng})["railway"~"rail|subway|light_rail|station"];
   way(around:${radiusMeters},${lat},${lng})["railway"~"rail|subway|light_rail"];
   way(around:${radiusMeters},${lat},${lng})["highway"~"motorway|trunk|primary|secondary"];

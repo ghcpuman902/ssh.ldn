@@ -2,11 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import Image from "next/image"
-import Map, {
-  AttributionControl,
-  NavigationControl,
-  type MapRef,
-} from "react-map-gl/maplibre"
+import Map, { NavigationControl, type MapRef } from "react-map-gl/maplibre"
 import { useTheme } from "next-themes"
 import { useMapWindowClip } from "@/hooks/use-map-window-clip"
 import { useMapZoomControlStyles } from "@/hooks/use-map-zoom-control-styles"
@@ -15,9 +11,13 @@ import {
   NoiseMapLayers,
   type NoiseLayerVisibility,
 } from "@/components/map/noise-map-layers"
+import { MapDataCredits } from "@/components/map/map-data-credits"
 import { NoiseLayerControls } from "@/components/map/noise-layer-controls"
 import type { MapTheme } from "@/lib/map/config"
-import type { RailLineFeatureCollection } from "@/lib/map/geojson-types"
+import type {
+  NightlifeFeatureCollection,
+  RailLineFeatureCollection,
+} from "@/lib/map/geojson-types"
 import { DEFAULT_NOISE_TIME_SLOT } from "@/lib/map/noise-time"
 import {
   getMapStyle,
@@ -32,6 +32,7 @@ import "@/components/map/map-controls.css"
 
 const LOGO_PATH = "/ssh.ldn logo.svg"
 const RAIL_FETCH_RADIUS_METERS = 8_000
+const NIGHTLIFE_FETCH_RADIUS_METERS = 8_000
 
 const resolveMapTheme = (resolvedTheme: string | undefined): MapTheme =>
   resolvedTheme === "dark" ? "dark" : "light"
@@ -45,6 +46,8 @@ export const MapShell = () => {
   const [timeSlot, setTimeSlot] = useState(DEFAULT_NOISE_TIME_SLOT)
   const [railGeoJson, setRailGeoJson] =
     useState<RailLineFeatureCollection | null>(null)
+  const [nightlifeGeoJson, setNightlifeGeoJson] =
+    useState<NightlifeFeatureCollection | null>(null)
   const mapRef = useRef<MapRef>(null)
   const { clipContainerRef, mapWindowRef, logoRef, updateClip } =
     useMapWindowClip()
@@ -62,7 +65,7 @@ export const MapShell = () => {
   }, [mounted, updateClip])
 
   useEffect(() => {
-    if (!mounted || !layerVisibility.railLines) return
+    if (!mounted) return
 
     const controller = new AbortController()
 
@@ -92,7 +95,40 @@ export const MapShell = () => {
     void loadRailLines()
 
     return () => controller.abort()
-  }, [mounted, layerVisibility.railLines])
+  }, [mounted])
+
+  useEffect(() => {
+    if (!mounted) return
+
+    const controller = new AbortController()
+
+    const loadNightlife = async () => {
+      try {
+        const params = new URLSearchParams({
+          lat: String(LONDON_CENTER.latitude),
+          lng: String(LONDON_CENTER.longitude),
+          radiusMeters: String(NIGHTLIFE_FETCH_RADIUS_METERS),
+        })
+        const response = await fetch(
+          `/api/discovery/osm/nightlife?${params.toString()}`,
+          { signal: controller.signal }
+        )
+
+        if (!response.ok) return
+
+        const data = (await response.json()) as NightlifeFeatureCollection
+        setNightlifeGeoJson(data)
+      } catch {
+        if (!controller.signal.aborted) {
+          setNightlifeGeoJson(null)
+        }
+      }
+    }
+
+    void loadNightlife()
+
+    return () => controller.abort()
+  }, [mounted])
 
   const mapTheme = resolveMapTheme(resolvedTheme)
 
@@ -135,6 +171,7 @@ export const MapShell = () => {
               visibility={layerVisibility}
               timeSlot={timeSlot}
               railGeoJson={railGeoJson}
+              nightlifeGeoJson={nightlifeGeoJson}
               mapTheme={mapTheme}
             />
             <NavigationControl
@@ -142,7 +179,6 @@ export const MapShell = () => {
               showCompass={false}
               visualizePitch={false}
             />
-            <AttributionControl compact />
           </Map>
 
           <div
@@ -175,13 +211,17 @@ export const MapShell = () => {
           />
         </div>
 
-        <div className="pointer-events-auto absolute bottom-6 left-4 w-fit max-w-[calc(100vw-2rem)] md:bottom-8 md:left-5">
+        <div className="pointer-events-auto absolute bottom-24 right-4 w-fit max-w-[calc(100vw-2rem)] md:bottom-28 md:right-5">
           <NoiseLayerControls
             visibility={layerVisibility}
             timeSlot={timeSlot}
             onVisibilityChange={setLayerVisibility}
             onTimeSlotChange={setTimeSlot}
           />
+        </div>
+
+        <div className="pointer-events-auto absolute inset-x-4 bottom-0 z-20 flex h-4 items-center md:inset-x-5 md:h-5">
+          <MapDataCredits />
         </div>
       </div>
     </div>
