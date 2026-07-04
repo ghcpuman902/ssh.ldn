@@ -39,19 +39,21 @@ export const storePendingVoiceContext = (context: LocationContext) => {
 
 export const bindVoiceContextToConversation = (
   contextSessionId: string,
-  conversationId: string
+  conversationId: string,
+  context?: LocationContext
 ) => {
   pruneExpired(pendingContexts)
   pruneExpired(conversationContexts)
 
   const pending = pendingContexts.get(contextSessionId)
+  const resolvedContext = pending?.context ?? context
 
-  if (!pending) {
+  if (!resolvedContext) {
     return false
   }
 
   conversationContexts.set(conversationId, {
-    context: pending.context,
+    context: resolvedContext,
     expiresAt: Date.now() + CONTEXT_TTL_MS,
   })
   pendingContexts.delete(contextSessionId)

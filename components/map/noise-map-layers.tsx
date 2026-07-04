@@ -5,8 +5,8 @@ import type { ExpressionSpecification } from "maplibre-gl"
 import { Layer, Source } from "react-map-gl/maplibre"
 
 import {
-  DEFRA_MAP_KINDS,
   DEFRA_MAP_LAYERS,
+  DEFRA_MAP_RENDER_ORDER,
   defraPeriodFromDayPart,
   type DefraMapKind,
 } from "@/lib/map/defra-layers"
@@ -148,7 +148,7 @@ const DefraNoiseRasterLayers = ({
 
   return (
     <>
-      {DEFRA_MAP_KINDS.map((kind) => (
+      {DEFRA_MAP_RENDER_ORDER.map((kind) => (
         <Source
           key={`defra-${kind}-${period}-${timeSlot.week}`}
           id={`defra-noise-${kind}-${period}`}
@@ -193,7 +193,7 @@ const NightlifeVenueLayers = ({
   return (
     <Source id="nightlife-venues" type="geojson" data={data}>
       <Layer
-        id="nightlife-venues-noise-points"
+        id="nightlife-venues-noise-aura"
         type="circle"
         layout={{
           visibility: layerVisibility(visible),
@@ -202,60 +202,226 @@ const NightlifeVenueLayers = ({
           "circle-radius": [
             "interpolate",
             ["linear"],
-            ["coalesce", ["get", "heatWeight"], 0],
+            ["zoom"],
+            9.8,
             0,
-            3,
-            0.5,
-            7,
-            1,
             11,
-          ],
-          "circle-color": [
-            "match",
-            ["get", "amenity"],
-            "pub",
-            "rgba(249, 115, 22, 0.82)",
-            "bar",
-            "rgba(249, 115, 22, 0.82)",
-            "nightclub",
-            "rgba(239, 68, 68, 0.86)",
-            "music_venue",
-            "rgba(239, 68, 68, 0.82)",
-            "hospital",
-            "rgba(59, 130, 246, 0.58)",
-            "rgba(234, 179, 8, 0.56)",
-          ],
-          "circle-opacity": [
-            "*",
-            opacity,
             [
               "interpolate",
               ["linear"],
               ["coalesce", ["get", "heatWeight"], 0],
               0,
-              0.12,
+              2,
               0.5,
-              0.52,
+              7,
               1,
-              0.82,
+              12,
+            ],
+            13.5,
+            [
+              "interpolate",
+              ["linear"],
+              ["coalesce", ["get", "heatWeight"], 0],
+              0,
+              5,
+              0.5,
+              13,
+              1,
+              22,
+            ],
+            16,
+            [
+              "interpolate",
+              ["linear"],
+              ["coalesce", ["get", "heatWeight"], 0],
+              0,
+              6,
+              0.5,
+              16,
+              1,
+              26,
+            ],
+          ],
+          "circle-color": [
+            "match",
+            ["get", "amenity"],
+            "pub",
+            "rgba(249, 115, 22, 0.58)",
+            "bar",
+            "rgba(249, 115, 22, 0.58)",
+            "nightclub",
+            "rgba(239, 68, 68, 0.62)",
+            "music_venue",
+            "rgba(239, 68, 68, 0.6)",
+            "hospital",
+            "rgba(59, 130, 246, 0.42)",
+            "rgba(234, 179, 8, 0.44)",
+          ],
+          "circle-opacity": [
+            "interpolate",
+            ["linear"],
+            ["zoom"],
+            9.8,
+            0,
+            11,
+            [
+              "*",
+              opacity * 0.14,
+              [
+                "interpolate",
+                ["linear"],
+                ["coalesce", ["get", "heatWeight"], 0],
+                0,
+                0.04,
+                0.5,
+                0.26,
+                1,
+                0.42,
+              ],
+            ],
+            13.5,
+            [
+              "*",
+              opacity * 0.22,
+              [
+                "interpolate",
+                ["linear"],
+                ["coalesce", ["get", "heatWeight"], 0],
+                0,
+                0.05,
+                0.5,
+                0.3,
+                1,
+                0.5,
+              ],
+            ],
+            16,
+            [
+              "*",
+              opacity * 0.16,
+              [
+                "interpolate",
+                ["linear"],
+                ["coalesce", ["get", "heatWeight"], 0],
+                0,
+                0.04,
+                0.5,
+                0.24,
+                1,
+                0.42,
+              ],
             ],
           ],
           "circle-blur": [
             "match",
             ["get", "amenity"],
             "pub",
-            0,
+            0.7,
             "bar",
-            0,
+            0.7,
             "nightclub",
-            0,
+            0.65,
             "music_venue",
-            0,
-            0.15,
+            0.65,
+            0.85,
           ],
-          "circle-stroke-color": "rgba(255, 255, 255, 0.7)",
-          "circle-stroke-width": 1,
-          "circle-stroke-opacity": 0.6,
+          "circle-stroke-width": 0,
+        }}
+      />
+      <Layer
+        id="nightlife-venues-noise-core"
+        type="circle"
+        layout={{
+          visibility: layerVisibility(visible),
+        }}
+        paint={{
+          "circle-radius": [
+            "interpolate",
+            ["linear"],
+            ["zoom"],
+            10.8,
+            0,
+            12,
+            [
+              "interpolate",
+              ["linear"],
+              ["coalesce", ["get", "heatWeight"], 0],
+              0,
+              1,
+              0.5,
+              3,
+              1,
+              5,
+            ],
+            15,
+            [
+              "interpolate",
+              ["linear"],
+              ["coalesce", ["get", "heatWeight"], 0],
+              0,
+              2,
+              0.5,
+              5,
+              1,
+              8,
+            ],
+          ],
+          "circle-color": [
+            "match",
+            ["get", "amenity"],
+            "pub",
+            "rgba(251, 146, 60, 0.88)",
+            "bar",
+            "rgba(251, 146, 60, 0.88)",
+            "nightclub",
+            "rgba(248, 113, 113, 0.92)",
+            "music_venue",
+            "rgba(248, 113, 113, 0.9)",
+            "hospital",
+            "rgba(96, 165, 250, 0.7)",
+            "rgba(250, 204, 21, 0.78)",
+          ],
+          "circle-opacity": [
+            "interpolate",
+            ["linear"],
+            ["zoom"],
+            10.8,
+            0,
+            12,
+            [
+              "*",
+              opacity * 0.22,
+              [
+                "interpolate",
+                ["linear"],
+                ["coalesce", ["get", "heatWeight"], 0],
+                0,
+                0.08,
+                0.5,
+                0.36,
+                1,
+                0.58,
+              ],
+            ],
+            15,
+            [
+              "*",
+              opacity * 0.3,
+              [
+                "interpolate",
+                ["linear"],
+                ["coalesce", ["get", "heatWeight"], 0],
+                0,
+                0.1,
+                0.5,
+                0.42,
+                1,
+                0.68,
+              ],
+            ],
+          ],
+          "circle-blur": 0.35,
+          "circle-stroke-width": 0,
         }}
       />
       <Layer

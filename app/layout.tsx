@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import { Geist, Geist_Mono, Inter } from "next/font/google"
 
 import "./globals.css"
@@ -11,6 +12,21 @@ const fontMono = Geist_Mono({
   subsets: ["latin"],
   variable: "--font-mono",
 })
+
+export const metadata: Metadata = {
+  title: "ssh.ldn — London soundscape before you sign",
+  description:
+    "Search a London address, explore noise layers, and ask voice questions before you sign the lease.",
+  metadataBase: new URL("https://sshldn.vercel.app"),
+  openGraph: {
+    title: "ssh.ldn",
+    description:
+      "Understand London's soundscape before you sign the lease.",
+    url: "https://sshldn.vercel.app",
+    siteName: "ssh.ldn",
+    images: [{ url: "/readme-screenshot.png", width: 1200, height: 630 }],
+  },
+}
 
 export default function RootLayout({
   children,

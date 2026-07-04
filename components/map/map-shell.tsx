@@ -39,6 +39,8 @@ import "maplibre-gl/dist/maplibre-gl.css"
 import "@/components/map/map-controls.css"
 
 const LOGO_PATH = "/ssh.ldn logo.svg"
+const LIVE_DEMO_URL = "https://sshldn.vercel.app"
+const GITHUB_REPO_URL = "https://github.com/ghcpuman902/ssh.ldn"
 const SEARCH_RESULT_ZOOM = 15
 
 type ScoreResponse = {
@@ -320,31 +322,54 @@ export const MapShell = () => {
           <div className="pointer-events-none absolute inset-0 z-10">
             <div
               ref={logoRef}
-              className="pointer-events-auto absolute left-4 top-4 flex w-fit items-center gap-1.5 pr-4 pb-3 md:left-5 md:top-5 md:gap-2 md:pr-5 md:pb-3.5"
+              className="pointer-events-auto absolute left-4 top-4 flex w-fit flex-col gap-1 pr-4 pb-3 md:left-5 md:top-5 md:pr-5 md:pb-3.5"
             >
-              <span
-                aria-hidden
-                className="text-[1.3lh] leading-none translate-y-1"
-                style={{
-                  textBoxTrim: "trim-both",
-                  textBoxEdge: "cap alphabetic",
-                }}
-              >
-                🤫
-              </span>
-              <Image
-                src={LOGO_PATH}
-                alt="ssh.ldn"
-                width={924}
-                height={179}
-                priority
-                className="h-7 w-auto md:h-8"
-              />
+              <div className="flex items-center gap-1.5 md:gap-2">
+                <span
+                  aria-hidden
+                  className="text-[1.3lh] leading-none translate-y-1"
+                  style={{
+                    textBoxTrim: "trim-both",
+                    textBoxEdge: "cap alphabetic",
+                  }}
+                >
+                  🤫
+                </span>
+                <Image
+                  src={LOGO_PATH}
+                  alt="ssh.ldn"
+                  width={924}
+                  height={179}
+                  priority
+                  className="h-7 w-auto md:h-8"
+                />
+              </div>
+              <p className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] leading-none text-muted-foreground md:text-xs">
+                <span>Londonmaxxing 003</span>
+                <span aria-hidden>·</span>
+                <a
+                  href={LIVE_DEMO_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline-offset-2 hover:text-foreground hover:underline"
+                >
+                  sshldn.vercel.app
+                </a>
+                <span aria-hidden>·</span>
+                <a
+                  href={GITHUB_REPO_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline-offset-2 hover:text-foreground hover:underline"
+                >
+                  GitHub
+                </a>
+              </p>
             </div>
 
             <div
               className={cn(
-                "pointer-events-auto absolute right-4 top-4 transition-[opacity,transform] duration-300 ease-out md:right-5 md:top-5",
+                "pointer-events-auto absolute right-4 top-4 z-20 transition-[opacity,transform] duration-300 ease-out md:right-5 md:top-5",
                 analyseOpen
                   ? "pointer-events-none translate-x-3 opacity-0"
                   : "translate-x-0 opacity-100"
@@ -402,7 +427,7 @@ export const MapShell = () => {
           <MapAnalysePanel state={analyseState} onClose={handleCloseAnalyse} />
 
           {analyseOpen ? (
-            <div className="border-t border-border/60 px-4 py-4">
+            <div className="px-4 pt-3 pb-4">
               <VoiceModeButton context={voiceContext} />
             </div>
           ) : null}

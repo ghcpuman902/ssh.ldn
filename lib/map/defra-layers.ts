@@ -83,6 +83,13 @@ export const DEFRA_MAP_LAYERS = {
 
 export const DEFRA_MAP_KINDS = Object.keys(DEFRA_MAP_LAYERS) as DefraMapKind[];
 
+/** Bottom → top paint order when multiple DEFRA rasters are visible. */
+export const DEFRA_MAP_RENDER_ORDER: DefraMapKind[] = [
+  "airport",
+  "rail",
+  "road",
+];
+
 export const isDefraMapKind = (value: string): value is DefraMapKind =>
   value in DEFRA_MAP_LAYERS;
 

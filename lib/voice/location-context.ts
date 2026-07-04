@@ -155,6 +155,7 @@ export const buildLocationContextPrompt = (context: LocationContext) => {
     "Answer only using the trusted location context below.",
     "If the question is outside this context, say you only have data for the analysed location.",
     "Keep spoken answers short: two to four sentences unless the user asks for detail.",
+    "You may use ElevenLabs v3 audio tags sparingly for emphasis, for example [thoughtful] or [reassuring], but do not overuse them.",
     "",
     "Location context:",
     `- Search address: ${context.address}`,

@@ -13,6 +13,7 @@ import {
   toDynamicVariables,
   type LocationContext,
 } from "@/lib/voice/location-context"
+import { voiceApiUrl } from "@/lib/voice/voice-api"
 import { cn } from "@/lib/utils"
 
 type VoiceModeButtonProps = {
@@ -24,9 +25,10 @@ type VoiceSessionState = "idle" | "connecting" | "active" | "error"
 
 const bindVoiceContext = async (
   contextSessionId: string,
-  conversationId: string
+  conversationId: string,
+  context: LocationContext
 ) => {
-  const response = await fetch("/api/voice/context/bind", {
+  const response = await fetch(voiceApiUrl("/api/voice/context/bind"), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -34,6 +36,7 @@ const bindVoiceContext = async (
     body: JSON.stringify({
       contextSessionId,
       conversationId,
+      context,
     }),
   })
 
@@ -50,6 +53,7 @@ const VoiceModeButtonInner = ({
   const [sessionState, setSessionState] = useState<VoiceSessionState>("idle")
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const contextSessionIdRef = useRef<string | null>(null)
+  const contextRef = useRef<LocationContext | null>(null)
   const conversationRef = useRef<ReturnType<typeof useConversation> | null>(null)
 
   const conversation = useConversation({
@@ -59,18 +63,24 @@ const VoiceModeButtonInner = ({
 
       const conversationId = conversationRef.current?.getId()
       const contextSessionId = contextSessionIdRef.current
+      const activeContext = contextRef.current
 
-      if (!conversationId || !contextSessionId) {
+      if (!conversationId || !contextSessionId || !activeContext) {
         return
       }
 
-      void bindVoiceContext(contextSessionId, conversationId).catch((error) => {
+      void bindVoiceContext(
+        contextSessionId,
+        conversationId,
+        activeContext
+      ).catch((error) => {
         console.error("[VoiceMode] failed to bind context", error)
       })
     },
     onDisconnect: () => {
       setSessionState("idle")
       contextSessionIdRef.current = null
+      contextRef.current = null
     },
     onError: (message) => {
       setSessionState("error")
@@ -108,6 +118,10 @@ const VoiceModeButtonInner = ({
       return "Voice mode active"
     }
 
+    if (process.env.NODE_ENV === "development") {
+      return "Start voice mode. In development, voice routes use the deployed server."
+    }
+
     return "Start voice mode to ask about this location"
   }, [
     context,
@@ -129,7 +143,7 @@ const VoiceModeButtonInner = ({
     try {
       await navigator.mediaDevices.getUserMedia({ audio: true })
 
-      const response = await fetch("/api/voice/token", {
+      const response = await fetch(voiceApiUrl("/api/voice/token"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -148,6 +162,7 @@ const VoiceModeButtonInner = ({
       }
 
       contextSessionIdRef.current = data.contextSessionId
+      contextRef.current = context
 
       conversation.startSession({
         conversationToken: data.token,
@@ -161,6 +176,7 @@ const VoiceModeButtonInner = ({
       })
     } catch (error) {
       contextSessionIdRef.current = null
+      contextRef.current = null
       setSessionState("error")
       setErrorMessage(
         error instanceof Error ? error.message : "Failed to start voice mode"
@@ -171,6 +187,7 @@ const VoiceModeButtonInner = ({
   const handleStopSession = useCallback(() => {
     conversation.endSession()
     contextSessionIdRef.current = null
+    contextRef.current = null
     setSessionState("idle")
     setErrorMessage(null)
   }, [conversation])
@@ -197,7 +214,12 @@ const VoiceModeButtonInner = ({
   )
 
   return (
-    <div className={cn("space-y-2", className)}>
+    <div
+      className={cn(
+        "space-y-2 rounded-2xl border border-border/60 bg-white p-3",
+        className
+      )}
+    >
       <Button
         type="button"
         variant={isActive ? "default" : "outline"}
@@ -213,7 +235,7 @@ const VoiceModeButtonInner = ({
         disabled={isDisabled}
         onClick={handleToggle}
         onKeyDown={handleKeyDown}
-        className="w-full justify-start gap-2"
+        className="h-11 w-full justify-start gap-2 rounded-2xl border-border/60 text-sm"
       >
         {sessionState === "connecting" ? (
           <Loader2 className="size-4 animate-spin" aria-hidden="true" />
@@ -228,7 +250,7 @@ const VoiceModeButtonInner = ({
       <p
         id="voice-mode-status"
         className={cn(
-          "text-xs",
+          "px-1 text-xs",
           sessionState === "error" ? "text-destructive" : "text-muted-foreground"
         )}
       >

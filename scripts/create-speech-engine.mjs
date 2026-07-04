@@ -26,7 +26,12 @@ const engine = await elevenlabs.speechEngine.create({
     firstMessage: true,
   },
   tts: {
-    modelId: "eleven_flash_v2_5",
+    modelId: "eleven_v3_conversational",
+    expressiveMode: true,
+    suggestedAudioTags: [
+      { tag: "thoughtful", description: "Measured, analytical tone" },
+      { tag: "reassuring", description: "Calm and helpful delivery" },
+    ],
   },
   asr: {
     provider: "scribe_realtime",

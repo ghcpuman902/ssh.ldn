@@ -11,7 +11,8 @@
     "format": "prettier --write \"**/*.{ts,tsx}\"",
     "typecheck": "tsc --noEmit",
     "download-noise-tiles": "node scripts/download-noise-tiles.mjs",
-    "create-speech-engine": "node scripts/create-speech-engine.mjs"
+    "create-speech-engine": "node scripts/create-speech-engine.mjs",
+    "update-speech-engine": "node scripts/update-speech-engine.mjs"
   },
   "dependencies": {
     "@ai-sdk/google": "^4.0.8",
