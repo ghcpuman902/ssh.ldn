@@ -37,3 +37,7 @@ next-env.d.ts
 
 # cached map tiles (regenerate with pnpm download-noise-tiles)
 /data/noise/tiles/
+
+# cached Overpass GeoJSON (auto-regenerates on demand)
+/data/osm-cache/
+.vercel

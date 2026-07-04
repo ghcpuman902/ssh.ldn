@@ -3,10 +3,19 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react"
 
 import { cn } from "@/lib/utils"
-import { MAP_DATA_CREDITS } from "@/lib/map/data-credits"
+import {
+  MAP_DATA_CREDITS,
+  MAP_STRATEGIC_DISCLAIMER,
+} from "@/lib/map/data-credits"
 
 const CreditItems = () => (
   <>
+    <span
+      className="whitespace-nowrap after:mx-1.5 after:content-['·']"
+      title={MAP_STRATEGIC_DISCLAIMER}
+    >
+      {MAP_STRATEGIC_DISCLAIMER}
+    </span>
     {MAP_DATA_CREDITS.map((credit) => (
       <span
         key={credit.id}

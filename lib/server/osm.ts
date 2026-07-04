@@ -1,46 +1,46 @@
-import { execFile } from "node:child_process";
-import { promisify } from "node:util";
+import { execFile } from "node:child_process"
+import { promisify } from "node:util"
 
-import { bearingDegrees, haversineMeters } from "@/lib/server/geo";
+import { bearingDegrees, haversineMeters } from "@/lib/server/geo"
 
-const execFileAsync = promisify(execFile);
+const execFileAsync = promisify(execFile)
 
 export type OsmContextInput = {
-  lat: number;
-  lng: number;
-  radiusMeters?: number;
-};
+  lat: number
+  lng: number
+  radiusMeters?: number
+}
 
 type OverpassElement = {
-  type: "node" | "way" | "relation";
-  id: number;
-  lat?: number;
-  lon?: number;
-  center?: { lat: number; lon: number };
-  tags?: Record<string, string>;
-};
+  type: "node" | "way" | "relation"
+  id: number
+  lat?: number
+  lon?: number
+  center?: { lat: number; lon: number }
+  tags?: Record<string, string>
+}
 
 const buildOverpassQuery = (lat: number, lng: number, radiusMeters: number) =>
   `[out:json][timeout:25];
 (
-  node(around:${radiusMeters},${lat},${lng})["amenity"~"pub|bar|nightclub|music_venue"];
-  way(around:${radiusMeters},${lat},${lng})["amenity"~"pub|bar|nightclub|music_venue"];
+  node(around:${radiusMeters},${lat},${lng})["amenity"~"^(pub|bar|nightclub|music_venue|hospital)$"];
+  way(around:${radiusMeters},${lat},${lng})["amenity"~"^(pub|bar|nightclub|music_venue|hospital)$"];
   node(around:${radiusMeters},${lat},${lng})["amenity"~"pub|bar"]["live_music"="yes"];
   way(around:${radiusMeters},${lat},${lng})["amenity"~"pub|bar"]["live_music"="yes"];
   node(around:${radiusMeters},${lat},${lng})["railway"~"rail|subway|light_rail|station"];
   way(around:${radiusMeters},${lat},${lng})["railway"~"rail|subway|light_rail"];
   way(around:${radiusMeters},${lat},${lng})["highway"~"motorway|trunk|primary|secondary"];
 );
-out center 120 tags;`;
+out center 120 tags;`
 
 const OVERPASS_ENDPOINTS = [
   "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
   "https://overpass-api.de/api/interpreter",
   "https://overpass.kumi.systems/api/interpreter",
-] as const;
+] as const
 
 const fetchOverpass = async (query: string) => {
-  let lastError: Error | null = null;
+  let lastError: Error | null = null
 
   for (const endpoint of OVERPASS_ENDPOINTS) {
     try {
@@ -60,62 +60,64 @@ const fetchOverpass = async (query: string) => {
           "45",
         ],
         { maxBuffer: 10 * 1024 * 1024 }
-      );
+      )
 
-      const payload = JSON.parse(stdout) as { elements?: OverpassElement[] };
-      return { payload, endpoint };
+      const payload = JSON.parse(stdout) as { elements?: OverpassElement[] }
+      return { payload, endpoint }
     } catch (error) {
       lastError =
-        error instanceof Error ? error : new Error("Overpass curl request failed");
+        error instanceof Error
+          ? error
+          : new Error("Overpass curl request failed")
     }
   }
 
-  throw lastError ?? new Error("Overpass request failed");
-};
+  throw lastError ?? new Error("Overpass request failed")
+}
 
 const getElementLatLng = (element: OverpassElement) => {
   if (typeof element.lat === "number" && typeof element.lon === "number") {
-    return { latitude: element.lat, longitude: element.lon };
+    return { latitude: element.lat, longitude: element.lon }
   }
 
   if (element.center) {
     return {
       latitude: element.center.lat,
       longitude: element.center.lon,
-    };
+    }
   }
 
-  return null;
-};
+  return null
+}
 
 export const getOsmLocalContext = async ({
   lat,
   lng,
   radiusMeters = 300,
 }: OsmContextInput) => {
-  const query = buildOverpassQuery(lat, lng, radiusMeters);
-  const { payload, endpoint } = await fetchOverpass(query);
+  const query = buildOverpassQuery(lat, lng, radiusMeters)
+  const { payload, endpoint } = await fetchOverpass(query)
 
-  const seen = new Set<string>();
+  const seen = new Set<string>()
   const features = (payload.elements ?? [])
     .map((element) => {
-      const coordinates = getElementLatLng(element);
+      const coordinates = getElementLatLng(element)
       if (!coordinates) {
-        return null;
+        return null
       }
 
-      const featureId = `${element.type}/${element.id}`;
+      const featureId = `${element.type}/${element.id}`
       if (seen.has(featureId)) {
-        return null;
+        return null
       }
-      seen.add(featureId);
+      seen.add(featureId)
 
       const distanceMeters = haversineMeters(
         lat,
         lng,
         coordinates.latitude,
         coordinates.longitude
-      );
+      )
 
       return {
         featureId,
@@ -136,18 +138,15 @@ export const getOsmLocalContext = async ({
         },
         distanceMeters: Math.round(distanceMeters),
         bearingDegrees: Math.round(
-          bearingDegrees(
-            lat,
-            lng,
-            coordinates.latitude,
-            coordinates.longitude
-          )
+          bearingDegrees(lat, lng, coordinates.latitude, coordinates.longitude)
         ),
         sourceProperties: element.tags ?? {},
-      };
+      }
     })
-    .filter((feature): feature is NonNullable<typeof feature> => feature !== null)
-    .sort((a, b) => a.distanceMeters - b.distanceMeters);
+    .filter(
+      (feature): feature is NonNullable<typeof feature> => feature !== null
+    )
+    .sort((a, b) => a.distanceMeters - b.distanceMeters)
 
   return {
     source: "osm",
@@ -160,6 +159,7 @@ export const getOsmLocalContext = async ({
     radiusMeters,
     featureCount: features.length,
     features,
-    warnings: features.length === 0 ? ["No OSM features returned in radius."] : [],
-  };
-};
+    warnings:
+      features.length === 0 ? ["No OSM features returned in radius."] : [],
+  }
+}

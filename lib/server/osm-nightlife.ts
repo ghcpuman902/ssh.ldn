@@ -1,16 +1,18 @@
-import { execFile } from "node:child_process";
-import { promisify } from "node:util";
+import { execFile } from "node:child_process"
+import { promisify } from "node:util"
 
-const execFileAsync = promisify(execFile);
+import { withOsmDiskCache } from "@/lib/server/osm-cache"
+
+const execFileAsync = promisify(execFile)
 
 type OverpassElement = {
-  type: "node" | "way" | "relation";
-  id: number;
-  lat?: number;
-  lon?: number;
-  center?: { lat: number; lon: number };
-  tags?: Record<string, string>;
-};
+  type: "node" | "way" | "relation"
+  id: number
+  lat?: number
+  lon?: number
+  center?: { lat: number; lon: number }
+  tags?: Record<string, string>
+}
 
 const buildNightlifeQuery = (
   lat: number,
@@ -18,19 +20,19 @@ const buildNightlifeQuery = (
   radiusMeters: number
 ) => `[out:json][timeout:60];
 (
-  nwr(around:${radiusMeters},${lat},${lng})["amenity"~"^(pub|bar|nightclub|music_venue)$"];
+  nwr(around:${radiusMeters},${lat},${lng})["amenity"~"^(pub|bar|nightclub|music_venue|hospital)$"];
   nwr(around:${radiusMeters},${lat},${lng})["amenity"~"^(pub|bar)$"]["live_music"="yes"];
 );
-out center tags;`;
+out center tags;`
 
 const OVERPASS_ENDPOINTS = [
   "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
   "https://overpass.kumi.systems/api/interpreter",
   "https://overpass-api.de/api/interpreter",
-] as const;
+] as const
 
 const fetchOverpass = async (query: string) => {
-  let lastError: Error | null = null;
+  let lastError: Error | null = null
 
   for (const endpoint of OVERPASS_ENDPOINTS) {
     try {
@@ -50,63 +52,74 @@ const fetchOverpass = async (query: string) => {
           "60",
         ],
         { maxBuffer: 20 * 1024 * 1024 }
-      );
+      )
 
-      return JSON.parse(stdout) as { elements?: OverpassElement[] };
+      return JSON.parse(stdout) as { elements?: OverpassElement[] }
     } catch (error) {
       lastError =
-        error instanceof Error ? error : new Error("Overpass request failed");
+        error instanceof Error ? error : new Error("Overpass request failed")
     }
   }
 
-  throw lastError ?? new Error("Overpass request failed");
-};
+  throw lastError ?? new Error("Overpass request failed")
+}
 
 const getElementLatLng = (element: OverpassElement) => {
   if (typeof element.lat === "number" && typeof element.lon === "number") {
-    return { latitude: element.lat, longitude: element.lon };
+    return { latitude: element.lat, longitude: element.lon }
   }
 
   if (element.center) {
     return {
       latitude: element.center.lat,
       longitude: element.center.lon,
-    };
+    }
   }
 
-  return null;
-};
+  return null
+}
 
 export type OsmNightlifeInput = {
-  lat: number;
-  lng: number;
-  radiusMeters?: number;
-};
+  lat: number
+  lng: number
+  radiusMeters?: number
+}
 
 export const getNightlifeGeoJson = async ({
   lat,
   lng,
   radiusMeters = 8_000,
-}: OsmNightlifeInput) => {
-  const query = buildNightlifeQuery(lat, lng, radiusMeters);
-  const payload = await fetchOverpass(query);
+}: OsmNightlifeInput) =>
+  withOsmDiskCache(
+    "nightlife",
+    ["v2-local-noise-sources", lat.toFixed(3), lng.toFixed(3), radiusMeters],
+    () => fetchNightlifeGeoJson({ lat, lng, radiusMeters })
+  )
 
-  const seen = new Set<string>();
+const fetchNightlifeGeoJson = async ({
+  lat,
+  lng,
+  radiusMeters = 8_000,
+}: OsmNightlifeInput) => {
+  const query = buildNightlifeQuery(lat, lng, radiusMeters)
+  const payload = await fetchOverpass(query)
+
+  const seen = new Set<string>()
   const features = (payload.elements ?? [])
     .map((element) => {
-      const coordinates = getElementLatLng(element);
+      const coordinates = getElementLatLng(element)
       if (!coordinates) {
-        return null;
+        return null
       }
 
-      const featureId = `${element.type}/${element.id}`;
+      const featureId = `${element.type}/${element.id}`
       if (seen.has(featureId)) {
-        return null;
+        return null
       }
-      seen.add(featureId);
+      seen.add(featureId)
 
-      const amenity = element.tags?.amenity ?? null;
-      const liveMusic = element.tags?.live_music === "yes";
+      const amenity = element.tags?.amenity ?? null
+      const liveMusic = element.tags?.live_music === "yes"
 
       return {
         type: "Feature" as const,
@@ -125,20 +138,22 @@ export const getNightlifeGeoJson = async ({
             number,
           ],
         },
-      };
+      }
     })
-    .filter((feature): feature is NonNullable<typeof feature> => feature !== null);
+    .filter(
+      (feature): feature is NonNullable<typeof feature> => feature !== null
+    )
 
   return {
     type: "FeatureCollection" as const,
     features,
     meta: {
       source: "osm-overpass",
-      filter: "pub|bar|nightclub|music_venue|live_music=yes",
+      filter: "pub|bar|nightclub|music_venue|hospital|live_music=yes",
       radiusMeters,
       center: { lat, lng },
       featureCount: features.length,
       retrievedAt: new Date().toISOString(),
     },
-  };
-};
+  }
+}

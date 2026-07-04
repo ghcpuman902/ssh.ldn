@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo } from "react"
+import type { ExpressionSpecification } from "maplibre-gl"
 import { Layer, Source } from "react-map-gl/maplibre"
 
 import {
@@ -9,166 +10,129 @@ import {
   defraPeriodFromDayPart,
   type DefraMapKind,
 } from "@/lib/map/defra-layers"
-import {
-  NOISE_TILE_MAX_ZOOM,
-  NOISE_TILE_MIN_ZOOM,
-  type MapTheme,
-} from "@/lib/map/config"
-import type {
-  NightlifeFeatureCollection,
-  RailLineFeatureCollection,
-} from "@/lib/map/geojson-types"
+import { NOISE_TILE_MAX_ZOOM, NOISE_TILE_MIN_ZOOM } from "@/lib/map/config"
+import { nightlifeEmojiImageId } from "@/lib/map/nightlife-emoji-images"
+import type { NightlifeFeatureCollection } from "@/lib/map/geojson-types"
 import { isWeekendNight, type NoiseTimeSlot } from "@/lib/map/noise-time"
-import { venueSlotActivity } from "@/lib/map/venue-time"
+import {
+  isLocalNoiseAmenity,
+  type LocalNoiseAmenity,
+  venueSlotActivity,
+} from "@/lib/map/venue-time"
 
-export type NoiseLayerVisibility = Record<
-  DefraMapKind | "railLines" | "nightlife",
-  boolean
->
+export type NoiseLayerVisibility = Record<DefraMapKind | "nightlife", boolean>
 
 export const DEFAULT_NOISE_LAYER_VISIBILITY: NoiseLayerVisibility = {
   road: true,
   rail: true,
   airport: true,
-  railLines: true,
   nightlife: true,
-};
+}
 
 export const DEFAULT_NOISE_LAYER_OPACITY: Record<
-  DefraMapKind | "railLines" | "nightlife",
+  DefraMapKind | "nightlife",
   number
 > = {
   road: DEFRA_MAP_LAYERS.road.defaultOpacity,
   rail: DEFRA_MAP_LAYERS.rail.defaultOpacity,
   airport: DEFRA_MAP_LAYERS.airport.defaultOpacity,
-  railLines: 0.9,
   nightlife: 0.95,
-};
+}
 
-/** Reference geometry — sits above basemap, below DEFRA noise rasters. */
-const RAIL_TRACK_COLORS: Record<MapTheme, { casing: string; line: string }> = {
-  light: {
-    casing: "#c7d2fe",
-    line: "#4f46e5",
-  },
-  dark: {
-    casing: "#312e81",
-    line: "#818cf8",
-  },
-};
+const activityRadiusScale = (activity: number) => {
+  if (activity <= 0) return 0.6
+  if (activity >= 1) return 1.15
+  if (activity <= 0.5) return 0.6 + (activity / 0.5) * (0.85 - 0.6)
+  return 0.85 + ((activity - 0.5) / 0.5) * (1.15 - 0.85)
+}
 
-const NIGHTLIFE_AMENITY_COLORS: Record<MapTheme, Record<string, string>> = {
-  light: {
-    pub: "#d97706",
-    bar: "#ea580c",
-    nightclub: "#7c3aed",
-    music_venue: "#db2777",
-    default: "#78716c",
-  },
-  dark: {
-    pub: "#fbbf24",
-    bar: "#fb923c",
-    nightclub: "#a78bfa",
-    music_venue: "#f472b6",
-    default: "#a8a29e",
-  },
-};
+const LOCAL_POINT_IMPACT_BOOST: Record<LocalNoiseAmenity, number> = {
+  pub: 1.9,
+  bar: 1.8,
+  nightclub: 1.6,
+  music_venue: 1.7,
+  hospital: 0.85,
+}
+
+const localPointImpactWeight = (amenity: string | null, activity: number) => {
+  if (!isLocalNoiseAmenity(amenity)) return activity
+
+  return Math.min(1, activity * LOCAL_POINT_IMPACT_BOOST[amenity])
+}
+
+/** zoom must be top-level; activity scale is precomputed on each feature. */
+const NIGHTLIFE_ICON_SIZE: ExpressionSpecification = [
+  "interpolate",
+  ["linear"],
+  ["zoom"],
+  9,
+  ["*", 0.35, ["coalesce", ["get", "radiusScale"], 0.85]],
+  12,
+  ["*", 0.55, ["coalesce", ["get", "radiusScale"], 0.85]],
+  15,
+  ["*", 0.9, ["coalesce", ["get", "radiusScale"], 0.85]],
+]
+
+const NIGHTLIFE_ICON_IMAGE: ExpressionSpecification = [
+  "match",
+  ["get", "amenity"],
+  "pub",
+  nightlifeEmojiImageId("pub"),
+  "bar",
+  nightlifeEmojiImageId("bar"),
+  "nightclub",
+  nightlifeEmojiImageId("nightclub"),
+  "music_venue",
+  nightlifeEmojiImageId("music_venue"),
+  "hospital",
+  nightlifeEmojiImageId("hospital"),
+  nightlifeEmojiImageId("default"),
+]
+
+const layerVisibility = (visible: boolean): "visible" | "none" =>
+  visible ? "visible" : "none"
 
 const defraTileUrl = (kind: DefraMapKind, period: string) =>
-  `/api/map/defra/${kind}/{z}/{x}/{y}.png?period=${period}`;
+  `/api/map/defra/${kind}/{z}/{x}/{y}.png?period=${period}`
 
 const enrichNightlifeGeoJson = (
   data: NightlifeFeatureCollection | null,
   timeSlot: NoiseTimeSlot
 ): NightlifeFeatureCollection | null => {
-  if (!data) return null;
+  if (!data) return null
 
   return {
     ...data,
-    features: data.features.map((feature) => ({
-      ...feature,
-      properties: {
-        ...feature.properties,
-        activity: venueSlotActivity(
-          feature.properties.openingHours,
-          feature.properties.amenity,
-          timeSlot
-        ),
-      },
-    })),
-  };
-};
+    features: data.features.map((feature) => {
+      const activity = venueSlotActivity(
+        feature.properties.openingHours,
+        feature.properties.amenity,
+        timeSlot
+      )
+      const heatWeight = localPointImpactWeight(
+        feature.properties.amenity,
+        activity
+      )
 
-type RailTrackLayersProps = {
-  visible: boolean;
-  data: RailLineFeatureCollection | null;
-  mapTheme: MapTheme;
-  opacity: number;
-};
-
-/** Physical rail geometry — highlights where DEFRA rail noise originates. */
-const RailTrackLayers = ({
-  visible,
-  data,
-  mapTheme,
-  opacity,
-}: RailTrackLayersProps) => {
-  if (!visible || !data || data.features.length === 0) return null;
-
-  const colors = RAIL_TRACK_COLORS[mapTheme];
-
-  return (
-    <Source id="rail-tracks" type="geojson" data={data}>
-      <Layer
-        id="rail-tracks-casing"
-        type="line"
-        layout={{ "line-cap": "round", "line-join": "round" }}
-        paint={{
-          "line-color": colors.casing,
-          "line-width": [
-            "interpolate",
-            ["linear"],
-            ["zoom"],
-            9,
-            2,
-            12,
-            4,
-            15,
-            7,
-          ],
-          "line-opacity": opacity * 0.55,
-        }}
-      />
-      <Layer
-        id="rail-tracks-line"
-        type="line"
-        layout={{ "line-cap": "round", "line-join": "round" }}
-        paint={{
-          "line-color": colors.line,
-          "line-width": [
-            "interpolate",
-            ["linear"],
-            ["zoom"],
-            9,
-            1,
-            12,
-            2.5,
-            15,
-            5,
-          ],
-          "line-opacity": opacity * 0.95,
-        }}
-      />
-    </Source>
-  );
-};
+      return {
+        ...feature,
+        properties: {
+          ...feature.properties,
+          activity,
+          heatWeight,
+          radiusScale: activityRadiusScale(activity),
+        },
+      }
+    }),
+  }
+}
 
 type DefraNoiseRasterLayersProps = {
-  visibility: Pick<NoiseLayerVisibility, DefraMapKind>;
-  timeSlot: NoiseTimeSlot;
-  opacity: Partial<Record<DefraMapKind, number>>;
-  weekendNightBoost: number;
-};
+  visibility: Pick<NoiseLayerVisibility, DefraMapKind>
+  timeSlot: NoiseTimeSlot
+  opacity: Partial<Record<DefraMapKind, number>>
+  weekendNightBoost: number
+}
 
 const DefraNoiseRasterLayers = ({
   visibility,
@@ -176,91 +140,90 @@ const DefraNoiseRasterLayers = ({
   opacity,
   weekendNightBoost,
 }: DefraNoiseRasterLayersProps) => {
-  const period = defraPeriodFromDayPart(timeSlot.part);
+  const period = defraPeriodFromDayPart(timeSlot.part)
 
   const getOpacity = (kind: DefraMapKind) =>
     (opacity[kind] ?? DEFAULT_NOISE_LAYER_OPACITY[kind]) *
-    (kind === "road" && timeSlot.part === "night" ? weekendNightBoost : 1);
+    (kind === "road" && timeSlot.part === "night" ? weekendNightBoost : 1)
 
   return (
     <>
-      {DEFRA_MAP_KINDS.map((kind) =>
-        visibility[kind] ? (
-          <Source
-            key={`defra-${kind}-${period}-${timeSlot.week}`}
-            id={`defra-noise-${kind}-${period}`}
+      {DEFRA_MAP_KINDS.map((kind) => (
+        <Source
+          key={`defra-${kind}-${period}-${timeSlot.week}`}
+          id={`defra-noise-${kind}-${period}`}
+          type="raster"
+          tiles={[defraTileUrl(kind, period)]}
+          tileSize={256}
+          minzoom={NOISE_TILE_MIN_ZOOM}
+          maxzoom={NOISE_TILE_MAX_ZOOM}
+        >
+          <Layer
+            id={`defra-noise-${kind}-${period}-layer`}
             type="raster"
-            tiles={[defraTileUrl(kind, period)]}
-            tileSize={256}
-            minzoom={NOISE_TILE_MIN_ZOOM}
-            maxzoom={NOISE_TILE_MAX_ZOOM}
-          >
-            <Layer
-              id={`defra-noise-${kind}-${period}-layer`}
-              type="raster"
-              paint={{
-                "raster-opacity": Math.min(getOpacity(kind), 0.95),
-                "raster-fade-duration": 250,
-              }}
-            />
-          </Source>
-        ) : null
-      )}
+            layout={{ visibility: layerVisibility(visibility[kind]) }}
+            paint={{
+              "raster-opacity": Math.min(getOpacity(kind), 0.95),
+              "raster-fade-duration": 250,
+              // DEFRA noise is categorical dB bands — keep crisp band edges
+              // when overzooming past the cached level instead of blurring.
+              "raster-resampling": "nearest",
+            }}
+          />
+        </Source>
+      ))}
     </>
-  );
-};
+  )
+}
 
 type NightlifeVenueLayersProps = {
-  visible: boolean;
-  data: NightlifeFeatureCollection | null;
-  mapTheme: MapTheme;
-  opacity: number;
-};
+  visible: boolean
+  data: NightlifeFeatureCollection | null
+  opacity: number
+}
 
-/** Point markers — always on top of noise heatmaps. */
+/** Local source markers — always on top of noise heatmaps. */
 const NightlifeVenueLayers = ({
   visible,
   data,
-  mapTheme,
   opacity,
 }: NightlifeVenueLayersProps) => {
-  if (!visible || !data || data.features.length === 0) return null;
-
-  const colors = NIGHTLIFE_AMENITY_COLORS[mapTheme];
+  if (!data || data.features.length === 0) return null
 
   return (
     <Source id="nightlife-venues" type="geojson" data={data}>
       <Layer
-        id="nightlife-venues-circle"
+        id="nightlife-venues-noise-points"
         type="circle"
+        layout={{
+          visibility: layerVisibility(visible),
+        }}
         paint={{
+          "circle-radius": [
+            "interpolate",
+            ["linear"],
+            ["coalesce", ["get", "heatWeight"], 0],
+            0,
+            3,
+            0.5,
+            7,
+            1,
+            11,
+          ],
           "circle-color": [
             "match",
             ["get", "amenity"],
             "pub",
-            colors.pub,
+            "rgba(249, 115, 22, 0.82)",
             "bar",
-            colors.bar,
+            "rgba(249, 115, 22, 0.82)",
             "nightclub",
-            colors.nightclub,
+            "rgba(239, 68, 68, 0.86)",
             "music_venue",
-            colors.music_venue,
-            colors.default,
-          ],
-          "circle-radius": [
-            "*",
-            ["interpolate", ["linear"], ["zoom"], 9, 3, 12, 5, 15, 9],
-            [
-              "interpolate",
-              ["linear"],
-              ["coalesce", ["get", "activity"], 0.5],
-              0,
-              0.6,
-              0.5,
-              0.85,
-              1,
-              1.15,
-            ],
+            "rgba(239, 68, 68, 0.82)",
+            "hospital",
+            "rgba(59, 130, 246, 0.58)",
+            "rgba(234, 179, 8, 0.56)",
           ],
           "circle-opacity": [
             "*",
@@ -268,64 +231,128 @@ const NightlifeVenueLayers = ({
             [
               "interpolate",
               ["linear"],
-              ["coalesce", ["get", "activity"], 0.5],
+              ["coalesce", ["get", "heatWeight"], 0],
               0,
-              0.35,
+              0.12,
               0.5,
-              0.65,
+              0.52,
               1,
-              0.95,
+              0.82,
             ],
           ],
-          "circle-stroke-width": 1.5,
-          "circle-stroke-color": mapTheme === "dark" ? "#1c1917" : "#ffffff",
-          "circle-stroke-opacity": 0.9,
+          "circle-blur": [
+            "match",
+            ["get", "amenity"],
+            "pub",
+            0,
+            "bar",
+            0,
+            "nightclub",
+            0,
+            "music_venue",
+            0,
+            0.15,
+          ],
+          "circle-stroke-color": "rgba(255, 255, 255, 0.7)",
+          "circle-stroke-width": 1,
+          "circle-stroke-opacity": 0.6,
+        }}
+      />
+      <Layer
+        id="nightlife-venues-symbol"
+        type="symbol"
+        layout={{
+          visibility: layerVisibility(visible),
+          "icon-image": NIGHTLIFE_ICON_IMAGE,
+          "icon-size": NIGHTLIFE_ICON_SIZE,
+          "icon-allow-overlap": true,
+          "icon-ignore-placement": true,
+        }}
+        paint={{
+          "icon-opacity": [
+            "interpolate",
+            ["linear"],
+            ["zoom"],
+            9,
+            [
+              "*",
+              opacity * 0.15,
+              [
+                "interpolate",
+                ["linear"],
+                ["coalesce", ["get", "activity"], 0.5],
+                0,
+                0.35,
+                0.5,
+                0.65,
+                1,
+                0.95,
+              ],
+            ],
+            12,
+            [
+              "*",
+              opacity * 0.45,
+              [
+                "interpolate",
+                ["linear"],
+                ["coalesce", ["get", "activity"], 0.5],
+                0,
+                0.35,
+                0.5,
+                0.65,
+                1,
+                0.95,
+              ],
+            ],
+            15,
+            [
+              "*",
+              opacity,
+              [
+                "interpolate",
+                ["linear"],
+                ["coalesce", ["get", "activity"], 0.5],
+                0,
+                0.35,
+                0.5,
+                0.65,
+                1,
+                0.95,
+              ],
+            ],
+          ],
         }}
       />
     </Source>
-  );
-};
+  )
+}
 
 type NoiseMapLayersProps = {
-  visibility: NoiseLayerVisibility;
-  timeSlot: NoiseTimeSlot;
-  opacity?: Partial<Record<DefraMapKind | "railLines" | "nightlife", number>>;
-  railGeoJson: RailLineFeatureCollection | null;
-  nightlifeGeoJson: NightlifeFeatureCollection | null;
-  mapTheme?: MapTheme;
-};
+  visibility: NoiseLayerVisibility
+  timeSlot: NoiseTimeSlot
+  opacity?: Partial<Record<DefraMapKind | "nightlife", number>>
+  nightlifeGeoJson: NightlifeFeatureCollection | null
+}
 
 export const NoiseMapLayers = ({
   visibility,
   timeSlot,
   opacity = {},
-  railGeoJson,
   nightlifeGeoJson,
-  mapTheme = "light",
 }: NoiseMapLayersProps) => {
-  const weekendNightBoost = isWeekendNight(timeSlot) ? 1.08 : 1;
+  const weekendNightBoost = isWeekendNight(timeSlot) ? 1.08 : 1
 
   const enrichedNightlife = useMemo(
     () => enrichNightlifeGeoJson(nightlifeGeoJson, timeSlot),
     [nightlifeGeoJson, timeSlot]
-  );
+  )
 
-  const railTrackOpacity =
-    opacity.railLines ?? DEFAULT_NOISE_LAYER_OPACITY.railLines;
   const nightlifeOpacity =
-    opacity.nightlife ?? DEFAULT_NOISE_LAYER_OPACITY.nightlife;
+    opacity.nightlife ?? DEFAULT_NOISE_LAYER_OPACITY.nightlife
 
   return (
     <>
-      {/* 1. Reference geometry — under noise rasters */}
-      <RailTrackLayers
-        visible={visibility.railLines}
-        data={railGeoJson}
-        mapTheme={mapTheme}
-        opacity={railTrackOpacity}
-      />
-
-      {/* 2. DEFRA strategic noise heatmaps */}
       <DefraNoiseRasterLayers
         visibility={{
           road: visibility.road,
@@ -337,13 +364,11 @@ export const NoiseMapLayers = ({
         weekendNightBoost={weekendNightBoost}
       />
 
-      {/* 3. Nightlife venues — on top so markers stay visible */}
       <NightlifeVenueLayers
         visible={visibility.nightlife}
         data={enrichedNightlife}
-        mapTheme={mapTheme}
         opacity={nightlifeOpacity}
       />
     </>
-  );
-};
+  )
+}

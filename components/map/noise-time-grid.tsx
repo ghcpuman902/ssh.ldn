@@ -1,6 +1,6 @@
 "use client"
 
-import { Fragment } from "react"
+import { Fragment, type ComponentProps } from "react"
 import { Info } from "lucide-react"
 
 import {
@@ -25,6 +25,22 @@ type NoiseTimeGridProps = {
   onChange: (slot: NoiseTimeSlot) => void;
 };
 
+export const MAP_TOOLTIP_CONTENT_CLASS =
+  "border border-border bg-white text-foreground shadow-md";
+
+export const MAP_TOOLTIP_ARROW_CLASS = "bg-white fill-white";
+
+export const MapTooltipContent = ({
+  className,
+  ...props
+}: ComponentProps<typeof TooltipContent>) => (
+  <TooltipContent
+    arrowClassName={MAP_TOOLTIP_ARROW_CLASS}
+    className={cn(MAP_TOOLTIP_CONTENT_CLASS, className)}
+    {...props}
+  />
+);
+
 const WEEK_SEGMENTS = ["weekday", "weekend"] as const;
 
 const WEEKDAY_BAR_COUNT = 5;
@@ -44,28 +60,22 @@ const getButtonStyles = (
   const isWeekend = week === "weekend";
 
   if (isSelected) {
-    if (isWeekend && isNight) {
-      return "border-violet-400/70 bg-violet-200/50 ring-1 ring-violet-400/30";
-    }
-    if (isWeekend) {
-      return "border-violet-500 bg-violet-500/10 ring-1 ring-violet-500/30";
-    }
-    if (isNight) {
-      return "border-zinc-400 bg-zinc-300/70 ring-1 ring-zinc-400/30";
-    }
-    return "border-primary bg-primary/10 ring-1 ring-primary/30";
+    if (isWeekend && isNight) return "border-violet-700 bg-white";
+    if (isWeekend) return "border-violet-500 bg-white";
+    if (isNight) return "border-zinc-600 bg-white";
+    return "border-primary bg-white";
   }
 
   if (isWeekend && isNight) {
-    return "border-zinc-300/80 bg-zinc-200/70 hover:border-violet-400/50 hover:bg-violet-100/70";
+    return "border-transparent bg-zinc-200/55 hover:bg-zinc-200/70";
   }
   if (isWeekend) {
-    return "border-violet-200/80 bg-violet-50/80 hover:border-violet-300 hover:bg-violet-100/80";
+    return "border-transparent bg-white/30 hover:bg-white/45";
   }
   if (isNight) {
-    return "border-zinc-300/80 bg-zinc-200/70 hover:border-zinc-400 hover:bg-zinc-300/70";
+    return "border-transparent bg-zinc-200/55 hover:bg-zinc-200/70";
   }
-  return "border-border/60 bg-muted/30 hover:border-border hover:bg-muted/50";
+  return "border-transparent bg-white/30 hover:bg-white/45";
 };
 
 const getBarStyles = (slot: NoiseTimeSlot, isSelected: boolean): string => {
@@ -74,15 +84,16 @@ const getBarStyles = (slot: NoiseTimeSlot, isSelected: boolean): string => {
   const isWeekend = week === "weekend";
 
   if (isSelected) {
+    if (isWeekend && isNight) return "bg-violet-700";
     if (isWeekend) return "bg-violet-500";
-    if (isNight) return "bg-zinc-500";
+    if (isNight) return "bg-zinc-600";
     return "bg-primary";
   }
 
-  if (isWeekend && isNight) return "bg-violet-400/65";
-  if (isWeekend) return "bg-violet-400/55";
-  if (isNight) return "bg-zinc-400/70";
-  return "bg-foreground/25";
+  if (isWeekend && isNight) return "bg-violet-600/50";
+  if (isWeekend) return "bg-violet-500/40";
+  if (isNight) return "bg-zinc-400/55";
+  return "bg-primary/35";
 };
 
 const TimeSlotButton = ({
@@ -125,9 +136,9 @@ const TimeSlotButton = ({
           </div>
         </button>
       </TooltipTrigger>
-      <TooltipContent side="top">
+      <MapTooltipContent side="top">
         {WEEK_SEGMENT_LABELS[slot.week]} {partLabel.toLowerCase()} · {hours}
-      </TooltipContent>
+      </MapTooltipContent>
     </Tooltip>
   );
 };
@@ -137,7 +148,7 @@ export const NoiseTimeGrid = ({ value, onChange }: NoiseTimeGridProps) => {
 
   return (
     <div className="w-fit space-y-1.5 border-b border-border/50 pb-3">
-      <div className="flex items-center gap-1">
+      <div className="flex w-full items-center justify-end gap-1">
         <p className="text-sm font-medium text-foreground">When</p>
         <Tooltip>
           <TooltipTrigger asChild>
@@ -149,9 +160,12 @@ export const NoiseTimeGrid = ({ value, onChange }: NoiseTimeGridProps) => {
               <Info className="size-3.5" />
             </button>
           </TooltipTrigger>
-          <TooltipContent side="right" className="max-w-56 flex-col items-start whitespace-normal">
+          <MapTooltipContent
+            side="right"
+            className="max-w-56 flex-col items-start whitespace-normal"
+          >
             {DEFRA_TIME_SLOT_NOTE}
-          </TooltipContent>
+          </MapTooltipContent>
         </Tooltip>
       </div>
 

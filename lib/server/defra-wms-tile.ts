@@ -1,6 +1,7 @@
 import {
   NOISE_TILE_MAX_ZOOM,
   NOISE_TILE_MIN_ZOOM,
+  NOISE_TILE_PRECACHE_MAX_ZOOM,
 } from "@/lib/map/config";
 import {
   DEFRA_MAP_LAYERS,
@@ -9,7 +10,10 @@ import {
   resolveDefraWmsConfig,
 } from "@/lib/map/defra-layers";
 import { xyzToWebMercatorBbox } from "@/lib/map/web-mercator";
-import { readLocalNoiseTile } from "@/lib/server/local-noise-tile";
+import {
+  readLocalNoiseTile,
+  writeLocalNoiseTile,
+} from "@/lib/server/local-noise-tile";
 
 /** local = disk only; live = WMS only; auto = disk then WMS (default). */
 const tileSource = (): "local" | "live" | "auto" => {
@@ -84,6 +88,10 @@ export const fetchDefraWmsTile = async ({
 
   if (header.startsWith("<?xml") || header.startsWith("<ServiceException")) {
     throw new Error("DEFRA WMS returned error XML instead of PNG");
+  }
+
+  if (z > NOISE_TILE_PRECACHE_MAX_ZOOM) {
+    void writeLocalNoiseTile({ kind, period, z, x, y }, buffer);
   }
 
   return buffer;

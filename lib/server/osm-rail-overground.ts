@@ -1,6 +1,8 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 
+import { withOsmDiskCache } from "@/lib/server/osm-cache";
+
 const execFileAsync = promisify(execFile);
 
 type OverpassWay = {
@@ -67,6 +69,17 @@ export type OsmRailLinesInput = {
 };
 
 export const getOvergroundRailGeoJson = async ({
+  lat,
+  lng,
+  radiusMeters = 6_000,
+}: OsmRailLinesInput) =>
+  withOsmDiskCache(
+    "rail-lines",
+    [lat.toFixed(3), lng.toFixed(3), radiusMeters],
+    () => fetchOvergroundRailGeoJson({ lat, lng, radiusMeters })
+  );
+
+const fetchOvergroundRailGeoJson = async ({
   lat,
   lng,
   radiusMeters = 6_000,

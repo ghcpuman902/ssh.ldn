@@ -19,6 +19,8 @@ export type NightlifeVenueProperties = {
   liveMusic: boolean;
   /** Computed client-side from opening hours + time slot. */
   activity?: number;
+  heatWeight?: number;
+  radiusScale?: number;
 };
 
 export type NightlifeFeatureCollection = {

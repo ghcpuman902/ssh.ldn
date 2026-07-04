@@ -33,3 +33,45 @@ export const parseTileParams = (z: string, x: string, y: string) => {
 
   return { z: zi, x: xi, y: yi };
 };
+
+const WEB_MERCATOR_MAX_LATITUDE = 85.05112878;
+
+export const lngLatToTilePixel = ({
+  longitude,
+  latitude,
+  z,
+  tileSize = 256,
+}: {
+  longitude: number;
+  latitude: number;
+  z: number;
+  tileSize?: number;
+}) => {
+  const clampedLatitude = Math.min(
+    WEB_MERCATOR_MAX_LATITUDE,
+    Math.max(-WEB_MERCATOR_MAX_LATITUDE, latitude)
+  );
+  const scale = 2 ** z;
+  const x = ((longitude + 180) / 360) * scale;
+  const latRad = (clampedLatitude * Math.PI) / 180;
+  const y =
+    ((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2) *
+    scale;
+
+  const tileX = Math.min(scale - 1, Math.max(0, Math.floor(x)));
+  const tileY = Math.min(scale - 1, Math.max(0, Math.floor(y)));
+
+  return {
+    z,
+    x: tileX,
+    y: tileY,
+    pixelX: Math.min(
+      tileSize - 1,
+      Math.max(0, Math.floor((x - tileX) * tileSize))
+    ),
+    pixelY: Math.min(
+      tileSize - 1,
+      Math.max(0, Math.floor((y - tileY) * tileSize))
+    ),
+  };
+};

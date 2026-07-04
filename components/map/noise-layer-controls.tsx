@@ -2,33 +2,32 @@
 
 import { Info } from "lucide-react"
 
-import { NoiseTimeGrid } from "@/components/map/noise-time-grid"
-import type { NoiseLayerVisibility } from "@/components/map/noise-map-layers"
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
-import { getDefraCredit, OSM_NIGHTLIFE_CREDIT, OSM_RAIL_CREDIT } from "@/lib/map/data-credits"
+  MapTooltipContent,
+  NoiseTimeGrid,
+} from "@/components/map/noise-time-grid"
+import type { NoiseLayerVisibility } from "@/components/map/noise-map-layers"
+import { Tooltip, TooltipTrigger } from "@/components/ui/tooltip"
+import { getDefraCredit, OSM_NIGHTLIFE_CREDIT } from "@/lib/map/data-credits"
 import { DEFRA_MAP_LAYERS } from "@/lib/map/defra-layers"
 import { cn } from "@/lib/utils"
 import type { NoiseTimeSlot } from "@/lib/map/noise-time"
 
 type NoiseLayerControlsProps = {
-  visibility: NoiseLayerVisibility;
-  timeSlot: NoiseTimeSlot;
-  onVisibilityChange: (next: NoiseLayerVisibility) => void;
-  onTimeSlotChange: (slot: NoiseTimeSlot) => void;
-};
+  visibility: NoiseLayerVisibility
+  timeSlot: NoiseTimeSlot
+  onVisibilityChange: (next: NoiseLayerVisibility) => void
+  onTimeSlotChange: (slot: NoiseTimeSlot) => void
+}
 
-type LayerKey = keyof NoiseLayerVisibility;
+type LayerKey = keyof NoiseLayerVisibility
 
 type LayerMeta = {
-  emoji: string;
-  label: string;
-  description: string;
-  datasetUrl: string;
-};
+  emoji: string
+  label: string
+  description: string
+  datasetUrl: string
+}
 
 const LAYER_META: Record<LayerKey, LayerMeta> = {
   road: {
@@ -49,34 +48,27 @@ const LAYER_META: Record<LayerKey, LayerMeta> = {
     description: DEFRA_MAP_LAYERS.airport.description,
     datasetUrl: getDefraCredit("airport").datasetUrl,
   },
-  railLines: {
-    emoji: "🛤️",
-    label: "Rail tracks",
-    description:
-      "OSM overground track geometry — reference layer under rail noise heatmap",
-    datasetUrl: OSM_RAIL_CREDIT.datasetUrl,
-  },
   nightlife: {
-    emoji: "🍺",
-    label: "Nightlife venues",
+    emoji: "🔊",
+    label: "Local noise sources",
     description:
-      "OSM pubs, bars, clubs, and music venues. Time-slot activity from opening hours or amenity heuristics.",
+      "OSM pubs, bars, clubs, music venues, and hospitals — activity from opening hours",
     datasetUrl: OSM_NIGHTLIFE_CREDIT.datasetUrl,
   },
-};
+}
 
-const LAYER_ORDER: LayerKey[] = ["road", "rail", "airport", "railLines", "nightlife"];
+const LAYER_ORDER: LayerKey[] = ["road", "rail", "airport", "nightlife"]
 
 const LayerToggle = ({
   layerKey,
   active,
   onToggle,
 }: {
-  layerKey: LayerKey;
-  active: boolean;
-  onToggle: (key: LayerKey, next: boolean) => void;
+  layerKey: LayerKey
+  active: boolean
+  onToggle: (key: LayerKey, next: boolean) => void
 }) => {
-  const meta = LAYER_META[layerKey];
+  const meta = LAYER_META[layerKey]
 
   return (
     <Tooltip>
@@ -87,38 +79,41 @@ const LayerToggle = ({
           aria-label={`Toggle ${meta.label}`}
           onClick={() => onToggle(layerKey, !active)}
           className={cn(
-            "flex size-10 items-center justify-center rounded-full border transition-colors",
-            active
-              ? "border-primary bg-primary ring-1 ring-primary/30"
-              : "border-border bg-muted hover:bg-accent"
+            "relative flex size-10 items-center justify-center overflow-hidden rounded-full border transition-colors",
+            active ? "border-border bg-white" : "border-border/40 bg-white/50"
           )}
         >
-          <span
-            className={cn("text-lg leading-none", !active && "opacity-60")}
-            aria-hidden="true"
-          >
+          <span className="text-lg leading-none" aria-hidden="true">
             {meta.emoji}
           </span>
+          {!active ? (
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 flex items-center justify-center"
+            >
+              <span className="h-px w-[140%] rotate-45 bg-border/70" />
+            </span>
+          ) : null}
         </button>
       </TooltipTrigger>
-      <TooltipContent
+      <MapTooltipContent
         side="left"
-        className="max-w-56 flex-col items-start gap-1 whitespace-normal py-2"
+        className="max-w-56 flex-col items-start gap-1 py-2 whitespace-normal"
       >
         <p className="font-medium">{meta.label}</p>
-        <p className="text-background/75">{meta.description}</p>
+        <p className="text-muted-foreground">{meta.description}</p>
         <a
           href={meta.datasetUrl}
           target="_blank"
           rel="noreferrer"
-          className="underline underline-offset-2 hover:text-background"
+          className="text-foreground underline underline-offset-2 hover:text-primary"
         >
           Dataset details ↗
         </a>
-      </TooltipContent>
+      </MapTooltipContent>
     </Tooltip>
-  );
-};
+  )
+}
 
 export const NoiseLayerControls = ({
   visibility,
@@ -127,8 +122,8 @@ export const NoiseLayerControls = ({
   onTimeSlotChange,
 }: NoiseLayerControlsProps) => {
   const handleToggle = (key: LayerKey, checked: boolean) => {
-    onVisibilityChange({ ...visibility, [key]: checked });
-  };
+    onVisibilityChange({ ...visibility, [key]: checked })
+  }
 
   return (
     <section
@@ -137,7 +132,7 @@ export const NoiseLayerControls = ({
     >
       <NoiseTimeGrid value={timeSlot} onChange={onTimeSlotChange} />
 
-      <div className="mb-2 mt-3 flex items-center gap-1">
+      <div className="mt-3 mb-2 flex w-full items-center justify-end gap-1">
         <p className="text-sm font-medium text-foreground">Noise layers</p>
         <Tooltip>
           <TooltipTrigger asChild>
@@ -149,9 +144,12 @@ export const NoiseLayerControls = ({
               <Info className="size-3.5" />
             </button>
           </TooltipTrigger>
-          <TooltipContent side="left" className="max-w-56 flex-col items-start whitespace-normal">
+          <MapTooltipContent
+            side="left"
+            className="max-w-56 flex-col items-start whitespace-normal"
+          >
             Strategic DEFRA maps — annual averages, not live measurement.
-          </TooltipContent>
+          </MapTooltipContent>
         </Tooltip>
       </div>
 
@@ -170,5 +168,5 @@ export const NoiseLayerControls = ({
         ))}
       </div>
     </section>
-  );
-};
+  )
+}

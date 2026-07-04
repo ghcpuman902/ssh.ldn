@@ -20,6 +20,16 @@ export const LONDON_BOUNDS: LngLatBoundsLike = [
   [0.24, 51.72],
 ]
 
+export const isWithinLondonBounds = (latitude: number, longitude: number) =>
+  longitude >= -0.52 &&
+  longitude <= 0.24 &&
+  latitude >= 51.28 &&
+  latitude <= 51.72
+
+/** Overpass radius scaled to zoom — smaller when zoomed in, capped for London panning. */
+export const viewportFetchRadiusMeters = (zoom: number) =>
+  Math.round(Math.min(8000, Math.max(1500, 8000 / 1.6 ** Math.max(0, zoom - 10))))
+
 const OSM_ATTRIBUTION =
   "© OpenStreetMap contributors · © CARTO"
 
@@ -76,9 +86,10 @@ export const MAP_CONFIG = {
 } as const
 
 /**
- * DEFRA strategic noise rasters are cached locally at z10–12 only (~13 MB for London).
- * MapLibre overzooms these tiles when the user zooms in — appropriate for coarse
- * Lden/Lnight contours; no need to cache z13+ (would be GB-scale).
+ * DEFRA strategic noise: z10–12 pre-cached (~13 MB for London via download script).
+ * z13 loads on demand from DEFRA WMS and is write-through cached as you pan.
+ * z14+ overzooms z13 — avoids GB-scale bulk downloads.
  */
 export const NOISE_TILE_MIN_ZOOM = 10
-export const NOISE_TILE_MAX_ZOOM = 12
+export const NOISE_TILE_PRECACHE_MAX_ZOOM = 12
+export const NOISE_TILE_MAX_ZOOM = 13
