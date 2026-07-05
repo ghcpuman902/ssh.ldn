@@ -20,6 +20,7 @@
     "@elevenlabs/elevenlabs-js": "^2.56.0",
     "@elevenlabs/react": "^1.9.0",
     "@shadcn/react": "^0.2.0",
+    "@vercel/analytics": "^2.0.1",
     "@vercel/functions": "^3.7.5",
     "ai": "^7.0.14",
     "class-variance-authority": "^0.7.1",
