@@ -20,11 +20,7 @@ import {
   type AnalyseState,
 } from "@/components/map/map-analyse-panel"
 import { VoiceModeButton } from "@/components/map/voice-mode-button"
-import {
-  DEFAULT_NOISE_LAYER_VISIBILITY,
-  NoiseMapLayers,
-  type NoiseLayerVisibility,
-} from "@/components/map/noise-map-layers"
+import { NoiseMapLayers } from "@/components/map/noise-map-layers"
 import { MapDataCredits } from "@/components/map/map-data-credits"
 import { MapSearchBar, type MapSearchSelection } from "@/components/map/map-search-bar"
 import { NoiseLayerControls } from "@/components/map/noise-layer-controls"
@@ -55,9 +51,11 @@ import {
   refreshNightlifeEmojiImages,
 } from "@/lib/map/nightlife-emoji-images"
 import {
-  DEFAULT_VISUAL_LAYER_VISIBILITY,
-  type VisualLayerVisibility,
-} from "@/lib/map/visual-layers"
+  readNoiseLayerVisibility,
+  readVisualLayerVisibility,
+  writeNoiseLayerVisibility,
+  writeVisualLayerVisibility,
+} from "@/lib/map/layer-visibility-storage"
 import { cn } from "@/lib/utils"
 
 import "maplibre-gl/dist/maplibre-gl.css"
@@ -90,11 +88,9 @@ export const MapShell = () => {
   const { resolvedTheme } = useTheme()
   const isMobile = useIsMobile()
   const [mounted, setMounted] = useState(false)
-  const [layerVisibility, setLayerVisibility] = useState<NoiseLayerVisibility>(
-    DEFAULT_NOISE_LAYER_VISIBILITY
-  )
+  const [layerVisibility, setLayerVisibility] = useState(readNoiseLayerVisibility)
   const [visualLayerVisibility, setVisualLayerVisibility] =
-    useState<VisualLayerVisibility>(DEFAULT_VISUAL_LAYER_VISIBILITY)
+    useState(readVisualLayerVisibility)
   const [timeSlot, setTimeSlot] = useState(DEFAULT_NOISE_TIME_SLOT)
   const [mapReady, setMapReady] = useState(false)
   const [analyseState, setAnalyseState] = useState<AnalyseState>({
@@ -146,6 +142,14 @@ export const MapShell = () => {
     setMounted(true)
     setTimeSlot(getCurrentNoiseTimeSlot())
   }, [])
+
+  useEffect(() => {
+    writeNoiseLayerVisibility(layerVisibility)
+  }, [layerVisibility])
+
+  useEffect(() => {
+    writeVisualLayerVisibility(visualLayerVisibility)
+  }, [visualLayerVisibility])
 
   useEffect(() => {
     if (!mounted) return
