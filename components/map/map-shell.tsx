@@ -298,7 +298,16 @@ export const MapShell = () => {
               reuseMaps
               onLoad={() => {
                 const map = mapRef.current?.getMap()
-                if (map) bindNightlifeEmojiImages(map)
+                if (map) {
+                  bindNightlifeEmojiImages(map)
+                  if (process.env.NODE_ENV === "development") {
+                    ;(
+                      window as Window & {
+                        __sshMap?: ReturnType<MapRef["getMap"]>
+                      }
+                    ).__sshMap = map
+                  }
+                }
                 setMapReady(true)
                 updateClip()
                 mapRef.current?.resize()
