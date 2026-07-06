@@ -10,13 +10,27 @@ import {
 } from "@/lib/server/osm-nightlife"
 
 const parseBbox = (request: NextRequest) => {
-  const west = Number(request.nextUrl.searchParams.get("west"))
-  const south = Number(request.nextUrl.searchParams.get("south"))
-  const east = Number(request.nextUrl.searchParams.get("east"))
-  const north = Number(request.nextUrl.searchParams.get("north"))
+  const westParam = request.nextUrl.searchParams.get("west")
+  const southParam = request.nextUrl.searchParams.get("south")
+  const eastParam = request.nextUrl.searchParams.get("east")
+  const northParam = request.nextUrl.searchParams.get("north")
+
+  if (
+    westParam === null ||
+    southParam === null ||
+    eastParam === null ||
+    northParam === null
+  ) {
+    return null
+  }
+
+  const west = Number(westParam)
+  const south = Number(southParam)
+  const east = Number(eastParam)
+  const north = Number(northParam)
 
   if (![west, south, east, north].every(Number.isFinite)) {
-    return null
+    return { ok: false as const, error: "bbox params must be numbers" }
   }
 
   if (west >= east || south >= north) {
