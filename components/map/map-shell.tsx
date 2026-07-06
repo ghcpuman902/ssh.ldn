@@ -4,10 +4,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Image from "next/image"
 import Map, { Marker, NavigationControl, type MapRef } from "react-map-gl/maplibre"
 import { useTheme } from "next-themes"
+import { toast } from "sonner"
 import { MapNoiseAudioToggle } from "@/components/map/map-noise-audio-toggle"
 import { useCursorNoise } from "@/hooks/use-cursor-noise"
 import { useMapWindowClip } from "@/hooks/use-map-window-clip"
 import { useMapZoomControlStyles } from "@/hooks/use-map-zoom-control-styles"
+import { useIsMobile } from "@/hooks/use-mobile"
 import { useViewportNightlifeGeoJson } from "@/hooks/use-viewport-nightlife-geojson"
 import {
   MapAnalysePanel,
@@ -76,6 +78,7 @@ const resolveMapTheme = (resolvedTheme: string | undefined): MapTheme =>
 
 export const MapShell = () => {
   const { resolvedTheme } = useTheme()
+  const isMobile = useIsMobile()
   const [mounted, setMounted] = useState(false)
   const [layerVisibility, setLayerVisibility] = useState<NoiseLayerVisibility>(
     DEFAULT_NOISE_LAYER_VISIBILITY
@@ -89,6 +92,8 @@ export const MapShell = () => {
   const [audioEnabled, setAudioEnabled] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [searchExpanded, setSearchExpanded] = useState(false)
+  const audioToggleEventsRef = useRef<number[]>([])
+  const audioHelpShownRef = useRef(false)
   const [selectedLocation, setSelectedLocation] = useState<{
     latitude: number
     longitude: number
@@ -99,12 +104,14 @@ export const MapShell = () => {
   const applyZoomControlStyles = useMapZoomControlStyles(mapRef)
   const nightlifeGeoJson = useViewportNightlifeGeoJson(mapRef, mounted && mapReady)
   const mapTheme = resolveMapTheme(resolvedTheme)
+  const audioSampleMode = isMobile ? "center" : "cursor"
   const { mixPercentages } = useCursorNoise({
     mapRef,
     nightlifeGeoJson,
     timeSlot,
     layerVisibility,
     enabled: mounted && audioEnabled,
+    sampleMode: audioSampleMode,
   })
 
   useEffect(() => {
@@ -236,6 +243,48 @@ export const MapShell = () => {
     setAnalyseState({ status: "idle" })
   }, [])
 
+  const showMobileAudioHelp = useCallback(
+    (reason: "start" | "frustration") => {
+      if (!isMobile) return
+
+      toast.info(
+        reason === "start"
+          ? "Sound samples the map centre now — pan until the crosshair sits over the place you want to hear."
+          : "If you still cannot hear it, check media volume, Silent Mode / ring switch, and Bluetooth output.",
+        {
+          id: reason === "start" ? "mobile-audio-center-help" : "mobile-audio-device-help",
+          duration: reason === "start" ? 4200 : 7000,
+        }
+      )
+    },
+    [isMobile]
+  )
+
+  const handleAudioEnabledChange = useCallback(
+    (nextEnabled: boolean) => {
+      setAudioEnabled(nextEnabled)
+
+      if (!isMobile) return
+
+      const now = Date.now()
+      audioToggleEventsRef.current = [
+        ...audioToggleEventsRef.current.filter((time) => now - time < 18_000),
+        now,
+      ]
+
+      if (nextEnabled && !audioHelpShownRef.current) {
+        audioHelpShownRef.current = true
+        showMobileAudioHelp("start")
+      }
+
+      if (audioToggleEventsRef.current.length >= 4) {
+        showMobileAudioHelp("frustration")
+        audioToggleEventsRef.current = []
+      }
+    },
+    [isMobile, showMobileAudioHelp]
+  )
+
   const analyseOpen = analyseState.status !== "idle"
   const voiceContext = useMemo(() => {
     if (analyseState.status !== "ready") {
@@ -344,6 +393,16 @@ export const MapShell = () => {
               aria-hidden
               className="pointer-events-none absolute inset-0 bg-linear-to-b from-background/10 via-transparent to-background/20"
             />
+            {isMobile && audioEnabled ? (
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute left-1/2 top-1/2 z-20 flex size-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center"
+              >
+                <span className="absolute h-px w-9 rounded-full bg-foreground/80 shadow-[0_0_0_1px_rgba(255,255,255,0.85)]" />
+                <span className="absolute h-9 w-px rounded-full bg-foreground/80 shadow-[0_0_0_1px_rgba(255,255,255,0.85)]" />
+                <span className="size-2 rounded-full border border-white bg-primary shadow-sm" />
+              </div>
+            ) : null}
           </div>
 
           <div className="pointer-events-none absolute inset-0 z-10">
@@ -422,7 +481,8 @@ export const MapShell = () => {
               <MapNoiseAudioToggle
                 enabled={audioEnabled}
                 mixPercentages={mixPercentages}
-                onEnabledChange={setAudioEnabled}
+                onEnabledChange={handleAudioEnabledChange}
+                mode={audioSampleMode}
               />
             </div>
 

@@ -4,6 +4,7 @@ import { Analytics } from "@vercel/analytics/next"
 
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
+import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils";
 
@@ -44,6 +45,7 @@ export default function RootLayout({
         <ThemeProvider>
           <TooltipProvider>{children}</TooltipProvider>
         </ThemeProvider>
+        <Toaster position="top-center" />
         <Analytics />
       </body>
     </html>

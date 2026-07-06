@@ -116,6 +116,7 @@ type UseCursorNoiseInput = {
   timeSlot: NoiseTimeSlot
   layerVisibility: NoiseLayerVisibility
   enabled: boolean
+  sampleMode?: "cursor" | "center"
 }
 
 export const useCursorNoise = ({
@@ -124,6 +125,7 @@ export const useCursorNoise = ({
   timeSlot,
   layerVisibility,
   enabled,
+  sampleMode = "cursor",
 }: UseCursorNoiseInput) => {
   const [levels, setLevels] = useState<NoiseAudioChannelLevels>(() =>
     createEmptyNoiseAudioChannelLevels()
@@ -192,6 +194,20 @@ export const useCursorNoise = ({
       })
     }
 
+    const updateCenterSample = () => {
+      const center = map.getCenter()
+      const container = map.getContainer()
+      latestCursor = {
+        latitude: center.lat,
+        longitude: center.lng,
+      }
+      latestCursorPoint = {
+        x: container.clientWidth / 2,
+        y: container.clientHeight / 2,
+      }
+      scheduleUpdate()
+    }
+
     const handleMouseMove = (event: MapMouseEvent) => {
       latestCursor = {
         latitude: event.lngLat.lat,
@@ -212,7 +228,17 @@ export const useCursorNoise = ({
     const handleZoom = () => {
       latestZoom = map.getZoom()
       noiseAudioEngine.setMasterFromZoom(latestZoom)
+      if (sampleMode === "center") {
+        updateCenterSample()
+        return
+      }
       scheduleUpdate()
+    }
+
+    const handleMove = () => {
+      if (sampleMode !== "center") return
+
+      updateCenterSample()
     }
 
     void noiseAudioEngine.enable().catch(() => {
@@ -221,8 +247,13 @@ export const useCursorNoise = ({
       noiseAudioEngine.setIntensities(emptyLevels)
     })
     noiseAudioEngine.setMasterFromZoom(latestZoom)
-    map.on("mousemove", handleMouseMove)
-    map.on("mouseout", handleMouseLeave)
+    if (sampleMode === "center") {
+      updateCenterSample()
+      map.on("move", handleMove)
+    } else {
+      map.on("mousemove", handleMouseMove)
+      map.on("mouseout", handleMouseLeave)
+    }
     map.on("zoom", handleZoom)
 
     return () => {
@@ -230,14 +261,18 @@ export const useCursorNoise = ({
       if (frameId !== null) {
         window.cancelAnimationFrame(frameId)
       }
-      map.off("mousemove", handleMouseMove)
-      map.off("mouseout", handleMouseLeave)
+      if (sampleMode === "center") {
+        map.off("move", handleMove)
+      } else {
+        map.off("mousemove", handleMouseMove)
+        map.off("mouseout", handleMouseLeave)
+      }
       map.off("zoom", handleZoom)
       const emptyLevels = createEmptyNoiseAudioChannelLevels()
       setLevels(emptyLevels)
       noiseAudioEngine.setIntensities(emptyLevels)
     }
-  }, [enabled, layerVisibility, mapRef, nightlifeGeoJson, timeSlot])
+  }, [enabled, layerVisibility, mapRef, nightlifeGeoJson, sampleMode, timeSlot])
 
   return {
     levels,

@@ -13,6 +13,7 @@ type MapNoiseAudioToggleProps = {
   enabled: boolean
   mixPercentages: NoiseAudioChannelLevels
   onEnabledChange: (enabled: boolean) => void
+  mode?: "cursor" | "center"
 }
 
 const activeMixItems = (mixPercentages: NoiseAudioChannelLevels) =>
@@ -60,6 +61,7 @@ export const MapNoiseAudioToggle = ({
   enabled,
   mixPercentages,
   onEnabledChange,
+  mode = "cursor",
 }: MapNoiseAudioToggleProps) => {
   const items = activeMixItems(mixPercentages)
   const expanded = enabled
@@ -76,8 +78,12 @@ export const MapNoiseAudioToggle = ({
   }
 
   const statusText = enabled
-    ? "Move over visible noise layers."
-    : "Click to hear cursor-point noise."
+    ? mode === "center"
+      ? "Pan the map under the crosshair."
+      : "Move over visible noise layers."
+    : mode === "center"
+      ? "Tap to hear the centre point."
+      : "Click to hear cursor-point noise."
 
   const showMixBars = enabled && items.length > 0
 
