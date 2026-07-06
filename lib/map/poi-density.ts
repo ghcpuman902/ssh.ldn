@@ -15,11 +15,11 @@ export const poiDensitySlotFromParts = ({
 }): PoiDensitySlot => `${week}-${part}`
 
 export const POI_DENSITY_WEIGHTS: Record<LocalNoiseAmenity, number> = {
-  pub: 0.36,
-  bar: 0.44,
+  pub: 0.28,
+  bar: 0.34,
   nightclub: 1,
-  music_venue: 0.92,
-  hospital: 0.82,
+  music_venue: 0.82,
+  hospital: 0.32,
 }
 
 export const POI_EMOJI_PRIORITY_MIN_ZOOM: Record<LocalNoiseAmenity, number> = {

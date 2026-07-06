@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-06T10:23:32.980Z",
+  "generatedAt": "2026-07-06T11:14:00.231Z",
   "source": "OpenStreetMap Overpass",
   "bounds": {
     "west": -0.57,
@@ -17,38 +17,56 @@
     1
   ],
   "weights": {
-    "pub": 0.36,
-    "bar": 0.44,
+    "pub": 0.28,
+    "bar": 0.34,
     "nightclub": 1,
-    "music_venue": 0.92,
-    "hospital": 0.82
+    "music_venue": 0.82,
+    "hospital": 0.32
+  },
+  "reachMeters": {
+    "pub": 34,
+    "bar": 38,
+    "nightclub": 90,
+    "music_venue": 72,
+    "hospital": 120
+  },
+  "maxFeatureContribution": {
+    "pub": 0.22,
+    "bar": 0.26,
+    "nightclub": 0.55,
+    "music_venue": 0.48,
+    "hospital": 0.18
+  },
+  "overviewRadiusBoost": {
+    "10": 1.9,
+    "11": 1.35,
+    "12": 1
   },
   "normalisationCaps": {
-    "10": 1.4,
-    "11": 1.15,
-    "12": 0.95,
-    "13": 0.75
+    "10": 0.9,
+    "11": 0.72,
+    "12": 0.58
   },
   "tileCounts": {
     "weekday-day": {
       "10": 12,
-      "11": 39,
-      "12": 111
+      "11": 38,
+      "12": 110
     },
     "weekday-night": {
       "10": 12,
-      "11": 39,
-      "12": 111
+      "11": 38,
+      "12": 110
     },
     "weekend-day": {
       "10": 12,
-      "11": 39,
-      "12": 111
+      "11": 38,
+      "12": 110
     },
     "weekend-night": {
       "10": 12,
-      "11": 39,
-      "12": 111
+      "11": 38,
+      "12": 110
     }
   }
 }

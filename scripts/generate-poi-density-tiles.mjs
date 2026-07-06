@@ -42,59 +42,77 @@ const DENSITY_SLOTS = [
 ]
 
 const WEIGHTS = {
-  pub: 0.36,
-  bar: 0.44,
+  pub: 0.28,
+  bar: 0.34,
   nightclub: 1,
-  music_venue: 0.92,
-  hospital: 0.82,
+  music_venue: 0.82,
+  hospital: 0.32,
 }
 
 const FALLBACK_ACTIVITY = {
   pub: {
-    "weekday-day": 0.7,
-    "weekday-night": 0.5,
-    "weekend-day": 0.75,
-    "weekend-night": 0.85,
+    "weekday-day": 0.18,
+    "weekday-night": 0.62,
+    "weekend-day": 0.36,
+    "weekend-night": 0.92,
   },
   bar: {
-    "weekday-day": 0.4,
-    "weekday-night": 0.75,
-    "weekend-day": 0.65,
-    "weekend-night": 0.95,
+    "weekday-day": 0.12,
+    "weekday-night": 0.72,
+    "weekend-day": 0.28,
+    "weekend-night": 0.98,
   },
   nightclub: {
-    "weekday-day": 0.05,
-    "weekday-night": 0.85,
-    "weekend-day": 0.1,
+    "weekday-day": 0.01,
+    "weekday-night": 0.62,
+    "weekend-day": 0.03,
     "weekend-night": 1,
   },
   music_venue: {
-    "weekday-day": 0.05,
-    "weekday-night": 0.8,
-    "weekend-day": 0.15,
-    "weekend-night": 0.95,
+    "weekday-day": 0.02,
+    "weekday-night": 0.58,
+    "weekend-day": 0.08,
+    "weekend-night": 0.9,
   },
   hospital: {
-    "weekday-day": 0.9,
-    "weekday-night": 0.65,
-    "weekend-day": 0.8,
-    "weekend-night": 0.65,
+    "weekday-day": 0.34,
+    "weekday-night": 0.42,
+    "weekend-day": 0.3,
+    "weekend-night": 0.42,
   },
 }
 
-const KERNEL_RADIUS_BY_ZOOM = {
-  10: 5,
-  11: 7,
-  12: 10,
-  13: 13,
+/**
+ * Approximate annoying indoor-with-window-open reach in metres.
+ * These are deliberately conservative: the raster is context, not measured dB.
+ */
+const REACH_METERS = {
+  pub: 34,
+  bar: 38,
+  nightclub: 90,
+  music_venue: 72,
+  hospital: 120,
+}
+
+const OVERVIEW_RADIUS_BOOST_BY_ZOOM = {
+  10: 1.9,
+  11: 1.35,
+  12: 1,
 }
 
 // Cap is the 0–1 normalisation denominator before colour ramping.
 const NORMALIZATION_CAP_BY_ZOOM = {
-  10: 1.4,
-  11: 1.15,
-  12: 0.95,
-  13: 0.75,
+  10: 0.9,
+  11: 0.72,
+  12: 0.58,
+}
+
+const MAX_FEATURE_CONTRIBUTION = {
+  pub: 0.22,
+  bar: 0.26,
+  nightclub: 0.55,
+  music_venue: 0.48,
+  hospital: 0.18,
 }
 
 const args = new Set(process.argv.slice(2))
@@ -217,6 +235,9 @@ const lngLatToWorldPixel = (longitude, latitude, z) => {
   return { x, y }
 }
 
+const metersPerPixel = (latitude, z) =>
+  (156543.03392 * Math.cos((latitude * Math.PI) / 180)) / 2 ** z
+
 const tileRangeForBounds = (z) => {
   const nw = lngLatToWorldPixel(BOUNDS.west, BOUNDS.north, z)
   const se = lngLatToWorldPixel(BOUNDS.east, BOUNDS.south, z)
@@ -275,17 +296,16 @@ const encodePng = (rgba, width = TILE_SIZE, height = TILE_SIZE) => {
 }
 
 const colourFor = (normalised) => {
-  if (normalised <= 0.015) return [0, 0, 0, 0]
-  if (normalised < 0.28) return [59, 130, 246, Math.round(normalised * 135)]
-  if (normalised < 0.55) return [250, 204, 21, Math.round(normalised * 170)]
-  if (normalised < 0.78) return [249, 115, 22, Math.round(normalised * 205)]
-  return [239, 68, 68, Math.round(Math.min(0.92, normalised) * 230)]
+  if (normalised <= 0.025) return [0, 0, 0, 0]
+  if (normalised < 0.18) return [56, 189, 248, Math.round(34 + normalised * 210)]
+  if (normalised < 0.36) return [34, 197, 94, Math.round(46 + normalised * 205)]
+  if (normalised < 0.58) return [250, 204, 21, Math.round(58 + normalised * 190)]
+  if (normalised < 0.78) return [249, 115, 22, Math.round(70 + normalised * 175)]
+  return [239, 68, 68, Math.round(86 + Math.min(0.92, normalised) * 150)]
 }
 
 const renderSlotZoom = async ({ features, slot, z }) => {
   const tiles = new Map()
-  const radius = KERNEL_RADIUS_BY_ZOOM[z] ?? 10
-  const sigma = radius / 2
   const cap = NORMALIZATION_CAP_BY_ZOOM[z] ?? 1
   const range = tileRangeForBounds(z)
 
@@ -310,12 +330,22 @@ const renderSlotZoom = async ({ features, slot, z }) => {
 
   for (const feature of features) {
     const activity = activityForSlot(feature, slot)
-    const sourceWeight = WEIGHTS[feature.amenity] * activity
-    if (sourceWeight <= 0.02) continue
+    const sourceWeight = Math.min(
+      MAX_FEATURE_CONTRIBUTION[feature.amenity],
+      WEIGHTS[feature.amenity] * activity
+    )
+    if (sourceWeight <= 0.015) continue
 
     const point = lngLatToWorldPixel(feature.longitude, feature.latitude, z)
     const centerX = Math.round(point.x)
     const centerY = Math.round(point.y)
+    const radiusMeters =
+      REACH_METERS[feature.amenity] * (OVERVIEW_RADIUS_BOOST_BY_ZOOM[z] ?? 1)
+    const radius = Math.max(
+      1,
+      Math.round(radiusMeters / metersPerPixel(feature.latitude, z))
+    )
+    const sigma = Math.max(0.85, radius / 2.6)
 
     for (let dy = -radius; dy <= radius; dy += 1) {
       for (let dx = -radius; dx <= radius; dx += 1) {
@@ -332,7 +362,9 @@ const renderSlotZoom = async ({ features, slot, z }) => {
         const pixelX = ((worldX % TILE_SIZE) + TILE_SIZE) % TILE_SIZE
         const pixelY = ((worldY % TILE_SIZE) + TILE_SIZE) % TILE_SIZE
         const kernel = Math.exp(-distanceSquared / (2 * sigma * sigma))
-        tile[pixelY * TILE_SIZE + pixelX] += sourceWeight * kernel
+        const index = pixelY * TILE_SIZE + pixelX
+        const contribution = Math.min(sourceWeight * kernel, sourceWeight)
+        tile[index] = 1 - (1 - tile[index]) * (1 - contribution)
       }
     }
   }
@@ -342,7 +374,7 @@ const renderSlotZoom = async ({ features, slot, z }) => {
     const rgba = Buffer.alloc(TILE_SIZE * TILE_SIZE * 4)
     let max = 0
     for (let i = 0; i < density.length; i += 1) {
-      const normalised = Math.min(1, density[i] / cap)
+      const normalised = Math.min(1, Math.log1p(density[i] * 1.8) / cap)
       if (normalised > max) max = normalised
       const [r, g, b, a] = colourFor(normalised)
       const offset = i * 4
@@ -416,6 +448,9 @@ const main = async () => {
         featureHash,
         normalisedRange: [0, 1],
         weights: WEIGHTS,
+        reachMeters: REACH_METERS,
+        maxFeatureContribution: MAX_FEATURE_CONTRIBUTION,
+        overviewRadiusBoost: OVERVIEW_RADIUS_BOOST_BY_ZOOM,
         normalisationCaps: NORMALIZATION_CAP_BY_ZOOM,
         tileCounts,
       },
