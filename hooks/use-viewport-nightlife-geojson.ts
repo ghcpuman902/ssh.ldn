@@ -4,16 +4,15 @@ import { useCallback, useEffect, useRef, useState, type RefObject } from "react"
 import type { MapRef } from "react-map-gl/maplibre"
 
 import {
-  isWithinLondonBounds,
-  viewportFetchRadiusMeters,
-} from "@/lib/map/config"
+  osmGridCellKey,
+  osmGridCellsForViewport,
+  osmGridFetchLimitForZoom,
+} from "@/lib/map/osm-grid"
 import type { NightlifeFeatureCollection } from "@/lib/map/geojson-types"
 
-const CACHE_PRECISION = 2
 const DEBOUNCE_MS = 350
-
-const cacheKeyFor = (lat: number, lng: number, radiusMeters: number) =>
-  `${lat.toFixed(CACHE_PRECISION)},${lng.toFixed(CACHE_PRECISION)},${radiusMeters}`
+const MAX_INFLIGHT = 2
+const BATCH_GAP_MS = 150
 
 const mergeNightlifeCollections = (
   existing: NightlifeFeatureCollection | null,
@@ -42,29 +41,23 @@ export const useViewportNightlifeGeoJson = (
 ) => {
   const fetchedKeysRef = useRef(new Set<string>())
   const [geoJson, setGeoJson] = useState<NightlifeFeatureCollection | null>(null)
-  const inflightRef = useRef<AbortController | null>(null)
+  const inflightCountRef = useRef(0)
+  const abortControllersRef = useRef(new Set<AbortController>())
+  const processingRef = useRef(false)
 
-  const loadForViewport = useCallback(async () => {
-    const map = mapRef.current?.getMap()
-    if (!map) return
-
-    const { lat, lng } = map.getCenter()
-    if (!isWithinLondonBounds(lat, lng)) return
-
-    const radiusMeters = viewportFetchRadiusMeters(map.getZoom())
-    const key = cacheKeyFor(lat, lng, radiusMeters)
-
+  const fetchGridCell = useCallback(async (row: number, col: number) => {
+    const key = osmGridCellKey(row, col)
     if (fetchedKeysRef.current.has(key)) return
+    if (inflightCountRef.current >= MAX_INFLIGHT) return
 
-    inflightRef.current?.abort()
     const controller = new AbortController()
-    inflightRef.current = controller
+    abortControllersRef.current.add(controller)
+    inflightCountRef.current += 1
 
     try {
       const params = new URLSearchParams({
-        lat: String(lat),
-        lng: String(lng),
-        radiusMeters: String(radiusMeters),
+        row: String(row),
+        col: String(col),
       })
       const response = await fetch(
         `/api/discovery/osm/nightlife?${params.toString()}`,
@@ -77,11 +70,51 @@ export const useViewportNightlifeGeoJson = (
       fetchedKeysRef.current.add(key)
       setGeoJson((current) => mergeNightlifeCollections(current, data))
     } catch {
-      if (!controller.signal.aborted) {
-        // keep previously merged features visible
-      }
+      // keep previously merged features visible
+    } finally {
+      inflightCountRef.current -= 1
+      abortControllersRef.current.delete(controller)
     }
-  }, [mapRef])
+  }, [])
+
+  const loadForViewport = useCallback(async () => {
+    const map = mapRef.current?.getMap()
+    if (!map || processingRef.current) return
+
+    const bounds = map.getBounds()
+    const zoom = map.getZoom()
+    const cells = osmGridCellsForViewport({
+      west: bounds.getWest(),
+      south: bounds.getSouth(),
+      east: bounds.getEast(),
+      north: bounds.getNorth(),
+    })
+
+    const pending = cells.filter(
+      (cell) => !fetchedKeysRef.current.has(osmGridCellKey(cell.row, cell.col))
+    )
+
+    if (pending.length === 0) return
+
+    processingRef.current = true
+    const limit = osmGridFetchLimitForZoom(zoom)
+    const batch = pending.slice(0, limit)
+
+    try {
+      await Promise.all(
+        batch.map((cell) => fetchGridCell(cell.row, cell.col))
+      )
+    } finally {
+      processingRef.current = false
+    }
+
+    const remaining = pending.length - batch.length
+    if (remaining > 0) {
+      window.setTimeout(() => {
+        void loadForViewport()
+      }, BATCH_GAP_MS)
+    }
+  }, [fetchGridCell, mapRef])
 
   useEffect(() => {
     if (!enabled) return
@@ -104,7 +137,10 @@ export const useViewportNightlifeGeoJson = (
     return () => {
       if (timeout) clearTimeout(timeout)
       map.off("moveend", scheduleLoad)
-      inflightRef.current?.abort()
+      for (const controller of abortControllersRef.current) {
+        controller.abort()
+      }
+      abortControllersRef.current.clear()
     }
   }, [enabled, loadForViewport, mapRef])
 

@@ -22,7 +22,9 @@ type NominatimSearchResult = {
   };
 };
 
-const LONDON_VIEWBOX = "-0.52,51.72,0.24,51.28";
+import { LONDON_BBOX } from "@/lib/map/config";
+
+const LONDON_VIEWBOX = `${LONDON_BBOX.west},${LONDON_BBOX.north},${LONDON_BBOX.east},${LONDON_BBOX.south}`;
 
 const compactDisplayName = (result: NominatimSearchResult) => {
   const address = result.address;

@@ -14,21 +14,27 @@ export const LONDON_VIEWPORT = {
   pitch: 0,
 } as const
 
-/** Greater London — keeps the map focused without feeling cramped. */
+/**
+ * M25 orbital corridor / Greater London — Staines to Dartford, Surrey fringe to Herts fringe.
+ * Shared by map maxBounds, OSM grid, DEFRA tile cache, and search viewbox.
+ */
 export const LONDON_BOUNDS: LngLatBoundsLike = [
-  [-0.52, 51.28],
-  [0.24, 51.72],
+  [-0.57, 51.24],
+  [0.36, 51.73],
 ]
 
-export const isWithinLondonBounds = (latitude: number, longitude: number) =>
-  longitude >= -0.52 &&
-  longitude <= 0.24 &&
-  latitude >= 51.28 &&
-  latitude <= 51.72
+export const LONDON_BBOX = {
+  west: -0.57,
+  south: 51.24,
+  east: 0.36,
+  north: 51.73,
+} as const
 
-/** Overpass radius scaled to zoom — smaller when zoomed in, capped for London panning. */
-export const viewportFetchRadiusMeters = (zoom: number) =>
-  Math.round(Math.min(8000, Math.max(1500, 8000 / 1.6 ** Math.max(0, zoom - 10))))
+export const isWithinLondonBounds = (latitude: number, longitude: number) =>
+  longitude >= LONDON_BBOX.west &&
+  longitude <= LONDON_BBOX.east &&
+  latitude >= LONDON_BBOX.south &&
+  latitude <= LONDON_BBOX.north
 
 const OSM_ATTRIBUTION =
   "© OpenStreetMap contributors · © CARTO"

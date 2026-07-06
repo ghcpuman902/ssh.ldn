@@ -1,6 +1,8 @@
 import { execFile } from "node:child_process"
 import { promisify } from "node:util"
 
+import type { OsmGridCell } from "@/lib/map/osm-grid"
+import { osmGridCellKey } from "@/lib/map/osm-grid"
 import { withOsmDiskCache } from "@/lib/server/osm-cache"
 
 const execFileAsync = promisify(execFile)
@@ -14,13 +16,33 @@ type OverpassElement = {
   tags?: Record<string, string>
 }
 
-const buildNightlifeQuery = (
+const AMENITY_FILTER =
+  "^(pub|bar|nightclub|music_venue|hospital)$"
+
+const buildNightlifeBboxQuery = ({
+  south,
+  west,
+  north,
+  east,
+}: {
+  south: number
+  west: number
+  north: number
+  east: number
+}) => `[out:json][timeout:60];
+(
+  nwr(${south},${west},${north},${east})["amenity"~"${AMENITY_FILTER}"];
+  nwr(${south},${west},${north},${east})["amenity"~"^(pub|bar)$"]["live_music"="yes"];
+);
+out center tags;`
+
+const buildNightlifeRadiusQuery = (
   lat: number,
   lng: number,
   radiusMeters: number
 ) => `[out:json][timeout:60];
 (
-  nwr(around:${radiusMeters},${lat},${lng})["amenity"~"^(pub|bar|nightclub|music_venue|hospital)$"];
+  nwr(around:${radiusMeters},${lat},${lng})["amenity"~"${AMENITY_FILTER}"];
   nwr(around:${radiusMeters},${lat},${lng})["amenity"~"^(pub|bar)$"]["live_music"="yes"];
 );
 out center tags;`
@@ -79,33 +101,12 @@ const getElementLatLng = (element: OverpassElement) => {
   return null
 }
 
-export type OsmNightlifeInput = {
-  lat: number
-  lng: number
-  radiusMeters?: number
-}
-
-export const getNightlifeGeoJson = async ({
-  lat,
-  lng,
-  radiusMeters = 8_000,
-}: OsmNightlifeInput) =>
-  withOsmDiskCache(
-    "nightlife",
-    ["v2-local-noise-sources", lat.toFixed(3), lng.toFixed(3), radiusMeters],
-    () => fetchNightlifeGeoJson({ lat, lng, radiusMeters })
-  )
-
-const fetchNightlifeGeoJson = async ({
-  lat,
-  lng,
-  radiusMeters = 8_000,
-}: OsmNightlifeInput) => {
-  const query = buildNightlifeQuery(lat, lng, radiusMeters)
-  const payload = await fetchOverpass(query)
-
+const elementsToFeatureCollection = (
+  elements: OverpassElement[] | undefined,
+  meta: Record<string, unknown>
+) => {
   const seen = new Set<string>()
-  const features = (payload.elements ?? [])
+  const features = (elements ?? [])
     .map((element) => {
       const coordinates = getElementLatLng(element)
       if (!coordinates) {
@@ -150,10 +151,88 @@ const fetchNightlifeGeoJson = async ({
     meta: {
       source: "osm-overpass",
       filter: "pub|bar|nightclub|music_venue|hospital|live_music=yes",
-      radiusMeters,
-      center: { lat, lng },
       featureCount: features.length,
       retrievedAt: new Date().toISOString(),
+      ...meta,
     },
   }
+}
+
+export type OsmNightlifeInput = {
+  lat: number
+  lng: number
+  radiusMeters?: number
+}
+
+export type OsmNightlifeBboxInput = {
+  west: number
+  south: number
+  east: number
+  north: number
+}
+
+export const getNightlifeGeoJsonForCell = async (cell: OsmGridCell) =>
+  withOsmDiskCache(
+    "nightlife",
+    [
+      "v3-grid-bbox",
+      osmGridCellKey(cell.row, cell.col),
+      cell.west.toFixed(4),
+      cell.south.toFixed(4),
+    ],
+    () => fetchNightlifeGeoJsonForBbox(cell)
+  )
+
+export const getNightlifeGeoJsonForBbox = async (bbox: OsmNightlifeBboxInput) =>
+  withOsmDiskCache(
+    "nightlife",
+    [
+      "v3-adhoc-bbox",
+      bbox.west.toFixed(4),
+      bbox.south.toFixed(4),
+      bbox.east.toFixed(4),
+      bbox.north.toFixed(4),
+    ],
+    () => fetchNightlifeGeoJsonForBbox(bbox)
+  )
+
+export const getNightlifeGeoJson = async ({
+  lat,
+  lng,
+  radiusMeters = 8_000,
+}: OsmNightlifeInput) =>
+  withOsmDiskCache(
+    "nightlife",
+    ["v2-local-noise-sources", lat.toFixed(3), lng.toFixed(3), radiusMeters],
+    () => fetchNightlifeGeoJson({ lat, lng, radiusMeters })
+  )
+
+const fetchNightlifeGeoJsonForBbox = async ({
+  west,
+  south,
+  east,
+  north,
+}: OsmNightlifeBboxInput) => {
+  const query = buildNightlifeBboxQuery({ south, west, north, east })
+  const payload = await fetchOverpass(query)
+
+  return elementsToFeatureCollection(payload.elements, {
+    query: "bbox",
+    bbox: { west, south, east, north },
+  })
+}
+
+const fetchNightlifeGeoJson = async ({
+  lat,
+  lng,
+  radiusMeters = 8_000,
+}: OsmNightlifeInput) => {
+  const query = buildNightlifeRadiusQuery(lat, lng, radiusMeters)
+  const payload = await fetchOverpass(query)
+
+  return elementsToFeatureCollection(payload.elements, {
+    query: "radius",
+    radiusMeters,
+    center: { lat, lng },
+  })
 }

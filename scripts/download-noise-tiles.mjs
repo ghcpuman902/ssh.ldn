@@ -15,7 +15,8 @@ const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const TILE_ROOT = path.join(ROOT, "data/noise/tiles");
 const MANIFEST_PATH = path.join(ROOT, "data/noise/manifest.json");
 
-const LONDON_BOUNDS = { west: -0.52, south: 51.28, east: 0.24, north: 51.72 };
+/** M25 / Greater London — keep in sync with lib/map/config.ts LONDON_BBOX */
+const LONDON_BOUNDS = { west: -0.57, south: 51.24, east: 0.36, north: 51.73 };
 
 const DEFRA_DATASETS = {
   road: {
