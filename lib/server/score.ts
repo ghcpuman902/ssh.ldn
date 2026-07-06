@@ -15,11 +15,12 @@ import {
   type NoiseTimeSlot,
 } from "@/lib/map/noise-time"
 import {
-  airportDbToScore,
-  airportZoneStrengthFromDb,
-  blendTransportNoiseScore,
-  buildTransportContributors,
-} from "@/lib/map/transport-noise-scoring"
+  buildContributors,
+  combineLoudness,
+  dbToPresence,
+  planningScoreNudge,
+  presenceToScore,
+} from "@/lib/map/noise-score-model"
 import { parsePlanningDate } from "@/lib/server/planning"
 import {
   presentPlanningApplications,
@@ -27,13 +28,6 @@ import {
 
 const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value))
-
-const normalizeDb = (value: number | null, min = 45, max = 80) => {
-  if (value === null) {
-    return 0
-  }
-  return clamp(((value - min) / (max - min)) * 100, 0, 100)
-}
 
 const bandFromScore = (score: number) => {
   if (score >= 75) {
@@ -183,10 +177,9 @@ export const scoreFromBundle = async ({
   const localNoiseScore =
     timeSlot.part === "day" ? localNoiseDayScore : localNoiseNightScore
 
-  const roadScore = normalizeDb(road)
-  const railScore = normalizeDb(rail)
-  const airportScore = airportDbToScore(airport)
-  const airportZoneStrength = airportZoneStrengthFromDb(airport)
+  const roadScore = presenceToScore("road", dbToPresence(road, "road"))
+  const railScore = presenceToScore("rail", dbToPresence(rail, "rail"))
+  const airportScore = presenceToScore("airport", dbToPresence(airport, "airport"))
   const trafficScore = bundle.sources.dft.aadfTotal
     ? Math.min(100, bundle.sources.dft.aadfTotal / 500)
     : 0
@@ -194,17 +187,17 @@ export const scoreFromBundle = async ({
   const planningScore = computePlanningScore(planningApplications)
   const floorAdj = clamp(1 - Math.max(floor - 1, 0) * 0.03, 0.7, 1)
 
-  const transportScore = blendTransportNoiseScore({
-    roadScore,
-    railScore,
-    airportScore,
-    localScore: localNoiseScore,
-    airportZoneStrength,
-  })
+  const scoreByKind = {
+    road: roadScore,
+    rail: railScore,
+    airport: airportScore,
+    nightlife: localNoiseScore,
+  }
 
+  const acousticScore = combineLoudness(scoreByKind)
   const noiseScore = Math.round(
     clamp(
-      (transportScore * 0.8 + trafficScore * 0.1 + planningScore * 0.1) * floorAdj,
+      (acousticScore + planningScoreNudge(planningScore)) * floorAdj,
       0,
       100
     )
@@ -215,6 +208,7 @@ export const scoreFromBundle = async ({
         (road !== null ? 10 : 0) +
         (rail !== null ? 10 : 0) +
         (airport !== null && airport >= 45 ? 10 : 0) +
+        (trafficScore > 0 ? 5 : 0) +
         (floor > 0 ? 10 : 0) +
         (facing !== "unknown" ? 5 : 0) +
         (localNoiseFeatures.length > 0 ? 5 : 0) +
@@ -225,15 +219,8 @@ export const scoreFromBundle = async ({
   )
 
   const contributors = [
-    ...buildTransportContributors({
-      roadScore,
-      railScore,
-      airportScore,
-      localScore: localNoiseScore,
-      airportZoneStrength,
-    }),
-    { source: "traffic", weight: 0.1, score: Math.round(trafficScore) },
-    { source: "planning", weight: 0.1, score: Math.round(planningScore) },
+    ...buildContributors(scoreByKind),
+    { source: "planning", weight: 0, score: Math.round(planningScore) },
   ].sort((a, b) => b.score - a.score)
 
   return {
@@ -252,17 +239,34 @@ export const scoreFromBundle = async ({
     timeProfile: {
       day: Math.round(
         Math.max(
-          normalizeDb(bundle.sources.road.roadLday as number | null),
+          presenceToScore("road", dbToPresence(bundle.sources.road.roadLday as number | null, "road")),
+          presenceToScore(
+            "airport",
+            dbToPresence(bundle.sources.airport.airportLday as number | null, "airport")
+          ),
           localNoiseDayScore
         )
       ),
       evening: Math.round(
-        normalizeDb(bundle.sources.road.roadEvening as number | null)
+        presenceToScore(
+          "road",
+          dbToPresence(bundle.sources.road.roadEvening as number | null, "road")
+        )
       ),
       night: Math.round(
         Math.max(
-          normalizeDb(bundle.sources.road.roadLnight as number | null),
-          normalizeDb(bundle.sources.rail.railLnight as number | null),
+          presenceToScore(
+            "road",
+            dbToPresence(bundle.sources.road.roadLnight as number | null, "road")
+          ),
+          presenceToScore(
+            "rail",
+            dbToPresence(bundle.sources.rail.railLnight as number | null, "rail")
+          ),
+          presenceToScore(
+            "airport",
+            dbToPresence(bundle.sources.airport.airportLnight as number | null, "airport")
+          ),
           localNoiseNightScore
         )
       ),

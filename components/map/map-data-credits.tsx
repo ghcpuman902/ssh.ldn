@@ -1,12 +1,42 @@
 "use client"
 
+import Link from "next/link"
 import { useEffect, useRef, useState, type CSSProperties } from "react"
 
 import { cn } from "@/lib/utils"
 import {
   MAP_DATA_CREDITS,
   MAP_STRATEGIC_DISCLAIMER,
+  type DataCredit,
 } from "@/lib/map/data-credits"
+
+const isInternalCreditUrl = (url: string) => url.startsWith("/")
+
+const CreditLink = ({ credit }: { credit: DataCredit }) => {
+  if (isInternalCreditUrl(credit.datasetUrl)) {
+    return (
+      <Link
+        href={credit.datasetUrl}
+        className="underline-offset-2 hover:text-foreground hover:underline"
+        title={`${credit.title} — ${credit.licence}`}
+      >
+        {credit.attribution}
+      </Link>
+    )
+  }
+
+  return (
+    <a
+      href={credit.datasetUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="underline-offset-2 hover:text-foreground hover:underline"
+      title={`${credit.title} — ${credit.licence}`}
+    >
+      {credit.attribution}
+    </a>
+  )
+}
 
 const CreditItems = () => (
   <>
@@ -21,15 +51,7 @@ const CreditItems = () => (
         key={credit.id}
         className="whitespace-nowrap after:mx-1.5 after:content-['·'] last:after:content-none"
       >
-        <a
-          href={credit.datasetUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="underline-offset-2 hover:text-foreground hover:underline"
-          title={`${credit.title} — ${credit.licence}`}
-        >
-          {credit.attribution}
-        </a>
+        <CreditLink credit={credit} />
       </span>
     ))}
   </>

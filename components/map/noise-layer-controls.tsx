@@ -11,8 +11,8 @@ import {
   type GaugeSegment,
 } from "@/components/map/noise-layer-gauge-ring"
 import type { NoiseLayerVisibility } from "@/components/map/noise-map-layers"
+import { VISUAL_LAYER_ICON } from "@/components/map/transit-mode-icon"
 import { Tooltip, TooltipTrigger } from "@/components/ui/tooltip"
-import { getDefraCredit, OSM_NIGHTLIFE_CREDIT } from "@/lib/map/data-credits"
 import { DEFRA_MAP_LAYERS } from "@/lib/map/defra-layers"
 import type { NoiseAudioChannelLevels } from "@/lib/map/noise-audio-map"
 import {
@@ -50,8 +50,6 @@ type LayerKey = keyof NoiseLayerVisibility
 type LayerMeta = {
   emoji: string
   label: string
-  description: string
-  datasetUrl: string
   gaugePhase: number
   gaugeColor: string
 }
@@ -60,33 +58,24 @@ const LAYER_META: Record<LayerKey, LayerMeta> = {
   road: {
     emoji: NOISE_CONTRIBUTOR_META.road.emoji,
     label: DEFRA_MAP_LAYERS.road.label,
-    description: DEFRA_MAP_LAYERS.road.description,
-    datasetUrl: getDefraCredit("road").datasetUrl,
     gaugePhase: 0,
     gaugeColor: NOISE_CONTRIBUTOR_META.road.strokeColor,
   },
   rail: {
     emoji: NOISE_CONTRIBUTOR_META.rail.emoji,
     label: DEFRA_MAP_LAYERS.rail.label,
-    description: DEFRA_MAP_LAYERS.rail.description,
-    datasetUrl: getDefraCredit("rail").datasetUrl,
     gaugePhase: 1.2,
     gaugeColor: NOISE_CONTRIBUTOR_META.rail.strokeColor,
   },
   airport: {
     emoji: NOISE_CONTRIBUTOR_META.airport.emoji,
     label: DEFRA_MAP_LAYERS.airport.label,
-    description: DEFRA_MAP_LAYERS.airport.description,
-    datasetUrl: getDefraCredit("airport").datasetUrl,
     gaugePhase: 2.4,
     gaugeColor: NOISE_CONTRIBUTOR_META.airport.strokeColor,
   },
   nightlife: {
     emoji: NOISE_CONTRIBUTOR_META.nightlife.emoji,
     label: "Local noise sources",
-    description:
-      "OSM pubs, bars, clubs, music venues, and hospitals — activity from opening hours",
-    datasetUrl: OSM_NIGHTLIFE_CREDIT.datasetUrl,
     gaugePhase: 3.6,
     gaugeColor: NOISE_CONTRIBUTOR_META.nightlife.strokeColor,
   },
@@ -164,20 +153,8 @@ const LayerToggle = ({
           ) : null}
         </button>
       </TooltipTrigger>
-      <MapTooltipContent
-        side="left"
-        className="max-w-56 flex-col items-start gap-1 py-2 whitespace-normal"
-      >
-        <p className="font-medium">{meta.label}</p>
-        <p className="text-muted-foreground">{meta.description}</p>
-        <a
-          href={meta.datasetUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="text-foreground underline underline-offset-2 hover:text-primary"
-        >
-          Dataset details ↗
-        </a>
+      <MapTooltipContent side="bottom" className="whitespace-nowrap">
+        {meta.label}
       </MapTooltipContent>
     </Tooltip>
   )
@@ -207,8 +184,8 @@ const VisualLayerToggle = ({
             active ? "border-border bg-white" : "border-border/40 bg-white/50"
           )}
         >
-          <span className="text-sm leading-none" aria-hidden="true">
-            {meta.emoji}
+          <span className="relative z-10 flex items-center justify-center" aria-hidden="true">
+            {VISUAL_LAYER_ICON[layerKey]}
           </span>
           {!active ? (
             <span
@@ -220,20 +197,8 @@ const VisualLayerToggle = ({
           ) : null}
         </button>
       </TooltipTrigger>
-      <MapTooltipContent
-        side="left"
-        className="max-w-56 flex-col items-start gap-1 py-2 whitespace-normal"
-      >
-        <p className="font-medium">{meta.label}</p>
-        <p className="text-muted-foreground">{meta.description}</p>
-        <a
-          href={meta.datasetUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="text-foreground underline underline-offset-2 hover:text-primary"
-        >
-          Dataset details ↗
-        </a>
+      <MapTooltipContent side="bottom" className="whitespace-nowrap">
+        {meta.label}
       </MapTooltipContent>
     </Tooltip>
   )
@@ -303,7 +268,7 @@ export const NoiseLayerControls = ({
             </button>
           </TooltipTrigger>
           <MapTooltipContent
-            side="left"
+            side="bottom"
             className="max-w-56 flex-col items-start whitespace-normal"
           >
             Strategic DEFRA maps — annual averages, not live measurement.
@@ -334,7 +299,7 @@ export const NoiseLayerControls = ({
               )}
             </button>
           </TooltipTrigger>
-          <MapTooltipContent side="left" className="max-w-56 whitespace-normal">
+          <MapTooltipContent side="bottom" className="max-w-56 whitespace-normal">
             {getAudioTooltipText(audioEnabled, audioSampleMode)}
           </MapTooltipContent>
         </Tooltip>
@@ -391,7 +356,7 @@ export const NoiseLayerControls = ({
             </button>
           </TooltipTrigger>
           <MapTooltipContent
-            side="left"
+            side="bottom"
             className="max-w-56 flex-col items-start whitespace-normal"
           >
             Context overlays for transport and greenery — not noise measurements.

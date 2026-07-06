@@ -1,6 +1,11 @@
 "use client"
 
 import { useEffect, useRef } from "react"
+
+import { useRevealProgress } from "@/hooks/use-reveal-progress"
+import {
+  getNoiseScoreColor,
+} from "@/lib/map/noise-score-color"
 import {
   ExternalLink,
   Loader2,
@@ -141,6 +146,131 @@ const formatSourceLabel = (source: string) => getNoiseContributorMeta(source).la
  * thresholds as `bandFromScore` in `lib/server/score.ts` / `lib/map/client-noise-score.ts`,
  * but trades the clinical band label for language that maps intuitively onto quietness.
  */
+const revealValue = (target: number, progress: number) =>
+  Math.round(target * progress)
+
+const NoiseScoreCard = ({
+  score,
+  animationKey,
+}: {
+  score: ScoreSummary
+  animationKey: string
+}) => {
+  const progress = useRevealProgress(animationKey)
+  const animatedNoiseScore = revealValue(score.noiseScore, progress)
+  const animatedConfidence = revealValue(score.confidenceScore, progress)
+  const scoreColor = getNoiseScoreColor(animatedNoiseScore)
+
+  return (
+    <div className="relative overflow-hidden rounded-3xl bg-muted/60 p-4">
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute -bottom-10 right-0 h-20 opacity-50 w-100 rounded-[50%_/_50%] blur-2xl"
+        style={{ backgroundColor: scoreColor }}
+      />
+      <div className="relative z-10">
+        <p className="text-xs text-muted-foreground">Noise score</p>
+        <div className="flex items-end justify-between gap-3">
+          <p className="flex items-baseline gap-0.5 leading-none">
+            <span
+              className="text-5xl font-semibold tracking-tight tabular-nums"
+              style={{ color: scoreColor }}
+            >
+              {animatedNoiseScore}
+            </span>
+            <span className="text-sm font-medium text-muted-foreground">
+              /100
+            </span>
+          </p>
+          <div className="flex h-12 flex-col justify-between text-right">
+            <p className="text-base font-medium leading-none text-foreground">
+              {describeNoiseScore(score.noiseScore)}
+            </p>
+            <p className="text-sm leading-none text-muted-foreground">
+              Confidence {animatedConfidence} · {score.confidenceBand}
+            </p>
+          </div>
+        </div>
+
+      {score.dominantSources.length > 0 ? (
+        <p className="mt-3 text-xs text-muted-foreground">
+          Top drivers:{" "}
+          {score.dominantSources
+            .map((source) => formatSourceLabel(source))
+            .join(", ")}
+        </p>
+      ) : null}
+
+      {score.contributors.length > 0 ? (
+        <div className="mt-4 space-y-2.5">
+          {score.contributors.map((contributor) => {
+            const meta = getNoiseContributorMeta(contributor.source)
+            const animatedScore = revealValue(contributor.score, progress)
+            return (
+              <div
+                key={contributor.source}
+                className="flex items-center gap-2.5"
+              >
+                <span
+                  className="w-5 shrink-0 text-center text-sm"
+                  aria-hidden="true"
+                >
+                  {meta.emoji}
+                </span>
+                <p className="w-24 shrink-0 text-xs font-medium text-foreground">
+                  {meta.label}
+                </p>
+                <div className="h-3 flex-1 overflow-hidden rounded-full bg-white">
+                  <div
+                    className="h-full rounded-full"
+                    style={{
+                      width: `${clampPercent(contributor.score * progress)}%`,
+                      backgroundColor: meta.strokeColor,
+                    }}
+                  />
+                </div>
+                <p className="w-9 shrink-0 text-right text-xs font-medium tabular-nums text-foreground">
+                  {animatedScore}%
+                </p>
+              </div>
+            )
+          })}
+        </div>
+      ) : null}
+
+      <div className="mt-4 grid grid-cols-3 gap-2">
+        {TIME_PROFILE_META.map(
+          ({ key, label, Icon, className, iconClassName }) => (
+            <div
+              key={key}
+              className={cn(
+                "relative overflow-hidden rounded-xl p-2",
+                className
+              )}
+            >
+              <p className="relative z-10 text-xs text-muted-foreground">
+                {label}
+              </p>
+              <p className="relative z-10 text-sm font-medium tabular-nums text-foreground">
+                {revealValue(score.timeProfile[key], progress)}
+              </p>
+              <Icon
+                aria-hidden="true"
+                className={cn(
+                  "pointer-events-none absolute -right-2 -bottom-3 size-16",
+                  iconClassName
+                )}
+                strokeWidth={1.25}
+              />
+            </div>
+          )
+        )}
+      </div>
+      </div>
+    </div>
+  )
+}
+
 const describeNoiseScore = (score: number) => {
   if (score >= 75) {
     return "Rarely a quiet moment"
@@ -712,108 +842,10 @@ export const MapAnalysePanel = ({
 
                 return (
                   <>
-                    <div className="rounded-3xl bg-muted/60 p-4">
-                      <div className="flex items-end justify-between gap-3">
-                        <div>
-                          <p className="text-xs text-muted-foreground">
-                            Noise score
-                          </p>
-                          <p className="flex items-baseline gap-0.5 leading-none">
-                            <span className="text-5xl font-semibold tracking-tight text-foreground">
-                              {score.noiseScore}
-                            </span>
-                            <span className="text-sm font-medium text-muted-foreground">
-                              /100
-                            </span>
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-base font-medium text-foreground">
-                            {describeNoiseScore(score.noiseScore)}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            Confidence {score.confidenceScore} ·{" "}
-                            {score.confidenceBand}
-                          </p>
-                        </div>
-                      </div>
-
-                      {score.dominantSources.length > 0 ? (
-                        <p className="mt-3 text-xs text-muted-foreground">
-                          Top drivers:{" "}
-                          {score.dominantSources
-                            .map((source) => formatSourceLabel(source))
-                            .join(", ")}
-                        </p>
-                      ) : null}
-
-                      {score.contributors.length > 0 ? (
-                        <div className="mt-4 space-y-2.5">
-                          {score.contributors.map((contributor) => {
-                            const meta = getNoiseContributorMeta(
-                              contributor.source
-                            )
-                            return (
-                              <div
-                                key={contributor.source}
-                                className="flex items-center gap-2.5"
-                              >
-                                <span
-                                  className="w-5 shrink-0 text-center text-sm"
-                                  aria-hidden="true"
-                                >
-                                  {meta.emoji}
-                                </span>
-                                <p className="w-24 shrink-0 text-xs font-medium text-foreground">
-                                  {meta.label}
-                                </p>
-                                <div className="h-3 flex-1 overflow-hidden rounded-full bg-white">
-                                  <div
-                                    className="h-full rounded-full transition-[width] duration-300 ease-out"
-                                    style={{
-                                      width: `${clampPercent(contributor.score)}%`,
-                                      backgroundColor: meta.strokeColor,
-                                    }}
-                                  />
-                                </div>
-                                <p className="w-9 shrink-0 text-right text-xs font-medium tabular-nums text-foreground">
-                                  {contributor.score}%
-                                </p>
-                              </div>
-                            )
-                          })}
-                        </div>
-                      ) : null}
-
-                      <div className="mt-4 grid grid-cols-3 gap-2">
-                        {TIME_PROFILE_META.map(
-                          ({ key, label, Icon, className, iconClassName }) => (
-                            <div
-                              key={key}
-                              className={cn(
-                                "relative overflow-hidden rounded-xl p-2",
-                                className
-                              )}
-                            >
-                              <p className="relative z-10 text-xs text-muted-foreground">
-                                {label}
-                              </p>
-                              <p className="relative z-10 text-sm font-medium tabular-nums text-foreground">
-                                {score.timeProfile[key]}
-                              </p>
-                              <Icon
-                                aria-hidden="true"
-                                className={cn(
-                                  "pointer-events-none absolute -right-2 -bottom-3 size-16",
-                                  iconClassName
-                                )}
-                                strokeWidth={1.25}
-                              />
-                            </div>
-                          )
-                        )}
-                      </div>
-                    </div>
+                    <NoiseScoreCard
+                      score={score}
+                      animationKey={`${state.address}-${score.noiseScore}`}
+                    />
 
                     {score.recommendedChecks.length > 0 ? (
                       <div className="space-y-1">

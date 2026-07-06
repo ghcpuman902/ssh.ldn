@@ -142,7 +142,7 @@ const TimeSlotButton = ({
           </div>
         </button>
       </TooltipTrigger>
-      <MapTooltipContent side="top">
+      <MapTooltipContent side={slot.part === "day" ? "top" : "bottom"}>
         {WEEK_SEGMENT_LABELS[slot.week]} {partLabel.toLowerCase()} · {hours}
       </MapTooltipContent>
     </Tooltip>

@@ -92,7 +92,7 @@ export const TFL_GEOMETRY_CREDIT: DataCredit = {
   licenceUrl: "https://tfl.gov.uk/info-for/open-data-users/",
   datasetUrl: "https://api.tfl.gov.uk/",
   version: "Live API extract",
-  attribution: "© Transport for London · Tube stations",
+  attribution: "© Transport for London · Tube, Overground & Elizabeth stations",
   notes: "Station names, zones, and line colours. Line geometry from OpenStreetMap.",
 }
 
@@ -106,6 +106,30 @@ export const OSM_TUBE_GEOMETRY_CREDIT: DataCredit = {
   version: "Live Overpass extract",
   attribution: "© OpenStreetMap contributors · Tube track geometry · ODbL",
   notes: "London Underground route relations — dense track-following polylines.",
+}
+
+export const OSM_OVERGROUND_GEOMETRY_CREDIT: DataCredit = {
+  id: "osm-overground-geometry",
+  title: "OpenStreetMap Overground route geometry",
+  provider: "OpenStreetMap contributors",
+  licence: "ODbL 1.0",
+  licenceUrl: "https://opendatacommons.org/licenses/odbl/1-0/",
+  datasetUrl: "https://www.openstreetmap.org/copyright",
+  version: "Live Overpass extract",
+  attribution: "© OpenStreetMap contributors · Overground track geometry · ODbL",
+  notes: "Named Overground line route relations.",
+}
+
+export const OSM_ELIZABETH_GEOMETRY_CREDIT: DataCredit = {
+  id: "osm-elizabeth-geometry",
+  title: "OpenStreetMap Elizabeth line geometry",
+  provider: "OpenStreetMap contributors",
+  licence: "ODbL 1.0",
+  licenceUrl: "https://opendatacommons.org/licenses/odbl/1-0/",
+  datasetUrl: "https://www.openstreetmap.org/copyright",
+  version: "Live Overpass extract",
+  attribution: "© OpenStreetMap contributors · Elizabeth line geometry · ODbL",
+  notes: "Elizabeth line route relations.",
 }
 
 export const OSM_NIGHTLIFE_CREDIT: DataCredit = {
@@ -132,6 +156,56 @@ export const CARTO_BASEMAP_CREDIT: DataCredit = {
   attribution: "© CARTO · © OpenStreetMap contributors",
 }
 
+export const DATA_SOURCES_PAGE_CREDIT: DataCredit = {
+  id: "data-sources-page",
+  title: "Data sources & attributions",
+  provider: "ssh.ldn",
+  licence: "n/a",
+  licenceUrl: "/data-sources",
+  datasetUrl: "/data-sources",
+  version: "Full declaration",
+  attribution: "Data sources & full explanation",
+}
+
+export const TFL_ROUNDEL_TRADEMARK_CREDIT: DataCredit = {
+  id: "tfl-roundel-trademark",
+  title: "TfL roundel trademark",
+  provider: "Transport for London",
+  licence: "Registered trademark",
+  licenceUrl: "/data-sources#trademarks",
+  datasetUrl: "/data-sources#trademarks",
+  version: "Wikimedia Commons",
+  attribution: "TfL roundel · trademark of Transport for London",
+}
+
+export const NATIONAL_RAIL_TRADEMARK_CREDIT: DataCredit = {
+  id: "national-rail-trademark",
+  title: "National Rail double-arrow trademark",
+  provider: "Rail Delivery Group / Department for Transport",
+  licence: "Registered trademark",
+  licenceUrl: "/data-sources#trademarks",
+  datasetUrl: "/data-sources#trademarks",
+  version: "Wikimedia Commons",
+  attribution:
+    "National Rail double-arrow · trademark of its respective owners",
+}
+
+/** Noise-layer datasets documented on the data-sources page. */
+export const NOISE_DATA_CREDITS: DataCredit[] = [
+  ...Object.values(DEFRA_NOISE_CREDITS),
+  OSM_NIGHTLIFE_CREDIT,
+]
+
+/** Visual-layer datasets documented on the data-sources page. */
+export const VISUAL_DATA_CREDITS: DataCredit[] = [
+  OSM_RAIL_CREDIT,
+  OSM_TUBE_GEOMETRY_CREDIT,
+  OSM_OVERGROUND_GEOMETRY_CREDIT,
+  OSM_ELIZABETH_GEOMETRY_CREDIT,
+  TFL_GEOMETRY_CREDIT,
+  OSM_GREEN_SPACES_CREDIT,
+]
+
 /** All credits shown on the map page — deduped by id. */
 export const MAP_DATA_CREDITS: DataCredit[] = [
   CARTO_BASEMAP_CREDIT,
@@ -140,7 +214,12 @@ export const MAP_DATA_CREDITS: DataCredit[] = [
   OSM_RAIL_CREDIT,
   OSM_GREEN_SPACES_CREDIT,
   OSM_TUBE_GEOMETRY_CREDIT,
+  OSM_OVERGROUND_GEOMETRY_CREDIT,
+  OSM_ELIZABETH_GEOMETRY_CREDIT,
   TFL_GEOMETRY_CREDIT,
+  DATA_SOURCES_PAGE_CREDIT,
+  TFL_ROUNDEL_TRADEMARK_CREDIT,
+  NATIONAL_RAIL_TRADEMARK_CREDIT,
 ]
 
 export const getDefraCredit = (kind: DefraNoiseKind) =>

@@ -16,7 +16,7 @@ import {
   useViewportOsmGeoJson,
 } from "@/hooks/use-viewport-osm-geojson"
 
-type TubeGeometryBundle = {
+type TransitGeometryBundle = {
   lines: TubeLineFeatureCollection
   stations: TubeStationFeatureCollection
 }
@@ -26,6 +26,10 @@ export type VisualLayerData = {
   railStations: RailStationFeatureCollection | null
   tubeLines: TubeLineFeatureCollection | null
   tubeStations: TubeStationFeatureCollection | null
+  overgroundLines: TubeLineFeatureCollection | null
+  overgroundStations: TubeStationFeatureCollection | null
+  elizabethLines: TubeLineFeatureCollection | null
+  elizabethStations: TubeStationFeatureCollection | null
   greenSpaces: GreenSpaceFeatureCollection | null
 }
 
@@ -58,8 +62,18 @@ export const useVisualLayerData = (
     getFeatureId: (feature) => feature.properties.featureId,
   })
 
-  const tubeGeometry = useStaticGeoJson<TubeGeometryBundle>(
+  const tubeGeometry = useStaticGeoJson<TransitGeometryBundle>(
     "/api/map/tube-geometry",
+    enabled,
+  )
+
+  const overgroundGeometry = useStaticGeoJson<TransitGeometryBundle>(
+    "/api/map/overground-geometry",
+    enabled,
+  )
+
+  const elizabethGeometry = useStaticGeoJson<TransitGeometryBundle>(
+    "/api/map/elizabeth-geometry",
     enabled,
   )
 
@@ -69,8 +83,30 @@ export const useVisualLayerData = (
       railStations,
       tubeLines: visibility.tube ? (tubeGeometry?.lines ?? null) : null,
       tubeStations: visibility.tube ? (tubeGeometry?.stations ?? null) : null,
+      overgroundLines: visibility.overground
+        ? (overgroundGeometry?.lines ?? null)
+        : null,
+      overgroundStations: visibility.overground
+        ? (overgroundGeometry?.stations ?? null)
+        : null,
+      elizabethLines: visibility.elizabeth
+        ? (elizabethGeometry?.lines ?? null)
+        : null,
+      elizabethStations: visibility.elizabeth
+        ? (elizabethGeometry?.stations ?? null)
+        : null,
       greenSpaces,
     }),
-    [greenSpaces, railLines, railStations, tubeGeometry, visibility.tube],
+    [
+      elizabethGeometry,
+      greenSpaces,
+      overgroundGeometry,
+      railLines,
+      railStations,
+      tubeGeometry,
+      visibility.elizabeth,
+      visibility.overground,
+      visibility.tube,
+    ],
   )
 }

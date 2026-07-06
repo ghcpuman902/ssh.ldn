@@ -2,18 +2,18 @@ import { fetchNightlifeCell } from "@/lib/client/nightlife-cell-cache";
 import { defraPeriodFromDayPart, type DefraMapKind } from "@/lib/map/defra-layers";
 import type { NightlifeFeatureCollection } from "@/lib/map/geojson-types";
 import type { NoiseTimeSlot } from "@/lib/map/noise-time";
+import {
+  buildContributors,
+  combineLoudness,
+  rasterToPresence,
+  transportPresenceToScore,
+} from "@/lib/map/noise-score-model";
 import { osmGridCellForLatLng } from "@/lib/map/osm-grid";
 import { sampleDefraRasterIntensity } from "@/lib/map/raster-pixel-sampler";
 import {
   computeLocalNoiseSourceScore,
   isLocalNoiseAmenity,
 } from "@/lib/map/venue-time";
-import {
-  airportZoneStrengthFromRaster,
-  blendTransportNoiseScore,
-  buildTransportContributors,
-  transportIntensityToScore,
-} from "@/lib/map/transport-noise-scoring";
 import { haversineMeters } from "@/lib/server/geo";
 
 const LOCAL_RADIUS_METERS = 300;
@@ -54,6 +54,9 @@ const sampleTransportIntensity = async ({
     longitude,
     zoom,
   }).catch(() => 0);
+
+const scoreFromRasterIntensity = (intensity: number, kind: DefraMapKind) =>
+  transportPresenceToScore(kind, rasterToPresence(intensity, kind));
 
 const collectLocalFeatures = async (
   latitude: number,
@@ -143,11 +146,6 @@ export const estimateClientNoiseScore = async ({
       collectLocalFeatures(latitude, longitude, nightlifeGeoJson),
     ]);
 
-  const roadScore = transportIntensityToScore(roadIntensity, "road");
-  const railScore = transportIntensityToScore(railIntensity, "rail");
-  const airportScore = transportIntensityToScore(airportIntensity, "airport");
-  const airportZoneStrength = airportZoneStrengthFromRaster(airportIntensity);
-
   const localScoreInputs = localFeatures.map((feature) => ({
     amenity: feature.amenity,
     openingHours: feature.openingHours,
@@ -164,6 +162,13 @@ export const estimateClientNoiseScore = async ({
   });
   const localNoiseScore =
     timeSlot.part === "day" ? localNoiseDayScore : localNoiseNightScore;
+
+  const scoreByKind = {
+    road: scoreFromRasterIntensity(roadIntensity, "road"),
+    rail: scoreFromRasterIntensity(railIntensity, "rail"),
+    airport: scoreFromRasterIntensity(airportIntensity, "airport"),
+    nightlife: localNoiseScore,
+  };
 
   const roadDayIntensity = await sampleTransportIntensity({
     kind: "road",
@@ -193,7 +198,6 @@ export const estimateClientNoiseScore = async ({
     longitude,
     zoom,
   });
-
   const airportDayIntensity = await sampleTransportIntensity({
     kind: "airport",
     period: "day",
@@ -209,15 +213,7 @@ export const estimateClientNoiseScore = async ({
     zoom,
   });
 
-  const noiseScore = Math.round(
-    blendTransportNoiseScore({
-      roadScore,
-      railScore,
-      airportScore,
-      localScore: localNoiseScore,
-      airportZoneStrength,
-    })
-  );
+  const noiseScore = Math.round(combineLoudness(scoreByKind));
   const confidenceScore = Math.round(
     clamp(
       50 +
@@ -230,13 +226,7 @@ export const estimateClientNoiseScore = async ({
     )
   );
 
-  const contributors = buildTransportContributors({
-    roadScore,
-    railScore,
-    airportScore,
-    localScore: localNoiseScore,
-    airportZoneStrength,
-  });
+  const contributors = buildContributors(scoreByKind);
 
   return {
     noiseScore,
@@ -249,19 +239,17 @@ export const estimateClientNoiseScore = async ({
     timeProfile: {
       day: Math.round(
         Math.max(
-          transportIntensityToScore(roadDayIntensity, "road"),
-          transportIntensityToScore(airportDayIntensity, "airport"),
+          scoreFromRasterIntensity(roadDayIntensity, "road"),
+          scoreFromRasterIntensity(airportDayIntensity, "airport"),
           localNoiseDayScore
         )
       ),
-      evening: Math.round(
-        transportIntensityToScore(roadEveningIntensity, "road")
-      ),
+      evening: Math.round(scoreFromRasterIntensity(roadEveningIntensity, "road")),
       night: Math.round(
         Math.max(
-          transportIntensityToScore(roadNightIntensity, "road"),
-          transportIntensityToScore(railNightIntensity, "rail"),
-          transportIntensityToScore(airportNightIntensity, "airport"),
+          scoreFromRasterIntensity(roadNightIntensity, "road"),
+          scoreFromRasterIntensity(railNightIntensity, "rail"),
+          scoreFromRasterIntensity(airportNightIntensity, "airport"),
           localNoiseNightScore
         )
       ),

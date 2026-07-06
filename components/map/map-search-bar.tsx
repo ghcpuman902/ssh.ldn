@@ -399,7 +399,7 @@ export const MapSearchBar = ({
     >
       <div
         className={cn(
-          "group flex flex-row-reverse items-center overflow-hidden rounded-full border border-border/60 bg-white transition-[width] duration-300 ease-out",
+          "group relative transition-[width] duration-300 ease-out",
           isDocked
             ? "w-full"
             : expanded
@@ -407,27 +407,67 @@ export const MapSearchBar = ({
               : "w-11"
         )}
       >
-        <button
-          type="button"
-          aria-label={expanded ? "Search address" : "Open address search"}
-          aria-expanded={expanded}
-          disabled={isSearching}
-          onClick={() => {
-            if (!expanded) {
-              handleExpand()
-              return
-            }
+        <div className="flex h-11 w-full flex-row-reverse items-center overflow-hidden rounded-full border border-border/60 bg-white">
+          <button
+            type="button"
+            aria-label={expanded ? "Search address" : "Open address search"}
+            aria-expanded={expanded}
+            disabled={isSearching}
+            onClick={() => {
+              if (!expanded) {
+                handleExpand()
+                return
+              }
 
-            handleSubmit()
-          }}
-          className="flex size-11 shrink-0 items-center justify-center text-foreground transition-colors hover:bg-muted/60 disabled:opacity-60"
-        >
-          {isSearching ? (
-            <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-          ) : (
-            <Search className="size-4" aria-hidden="true" />
-          )}
-        </button>
+              handleSubmit()
+            }}
+            className="flex size-11 shrink-0 items-center justify-center text-foreground transition-colors hover:bg-muted/60 disabled:opacity-60"
+          >
+            {isSearching ? (
+              <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+            ) : (
+              <Search className="size-4" aria-hidden="true" />
+            )}
+          </button>
+
+          <div
+            className={cn(
+              "min-w-0 flex-1 overflow-hidden transition-[opacity,width] duration-300 ease-out",
+              expanded ? "w-auto opacity-100" : "w-0 opacity-0"
+            )}
+          >
+            <label htmlFor={`${listboxId}-input`} className="sr-only">
+              Search London location, address, or postcode
+            </label>
+            <input
+              ref={inputRef}
+              id={`${listboxId}-input`}
+              type="text"
+              autoComplete="off"
+              role="combobox"
+              aria-autocomplete="list"
+              aria-expanded={listVisible}
+              aria-controls={`${listboxId}-listbox`}
+              aria-activedescendant={
+                activeIndex >= 0
+                  ? `${listboxId}-option-${activeIndex}`
+                  : undefined
+              }
+              placeholder="Location, address or postcode"
+              value={query}
+              onChange={(event) => {
+                setQuery(event.target.value)
+                setShowSuggestions(true)
+              }}
+              onFocus={() => {
+                setExpanded(true)
+                setShowSuggestions(true)
+              }}
+              onKeyDown={handleKeyDown}
+              className="h-11 w-full bg-transparent px-4 text-sm text-foreground outline-none placeholder:text-muted-foreground"
+            />
+          </div>
+        </div>
 
         {expanded && query.trim() ? (
           <button
@@ -435,49 +475,13 @@ export const MapSearchBar = ({
             aria-label="Clear search"
             disabled={isSearching}
             onClick={handleClear}
-            className="flex size-11 shrink-0 items-center justify-center text-muted-foreground opacity-0 pointer-events-none transition-[opacity,color,background-color] duration-200 ease-out group-focus-within:pointer-events-auto group-focus-within:opacity-100 hover:bg-muted/60 hover:text-foreground disabled:opacity-60"
+            className="absolute top-1/2 right-12 z-20 flex size-8 -translate-y-1/2 items-center justify-center opacity-0 pointer-events-none transition-opacity duration-200 ease-out group-focus-within:pointer-events-auto group-focus-within:opacity-100 disabled:opacity-60"
           >
-            <X className="size-4" aria-hidden="true" />
+            <span className="flex size-7 items-center justify-center rounded-full bg-white text-muted-foreground shadow-[0_0_0_3px_white,0_1px_3px_rgba(0,0,0,0.1)] transition-[color,background-color] hover:bg-muted/60 hover:text-foreground">
+              <X className="size-3.5" aria-hidden="true" />
+            </span>
           </button>
         ) : null}
-
-        <div
-          className={cn(
-            "min-w-0 flex-1 overflow-hidden transition-[opacity,width] duration-300 ease-out",
-            expanded ? "w-auto opacity-100" : "w-0 opacity-0"
-          )}
-        >
-          <label htmlFor={`${listboxId}-input`} className="sr-only">
-            Search London location, address, or postcode
-          </label>
-          <input
-            ref={inputRef}
-            id={`${listboxId}-input`}
-            type="text"
-            autoComplete="off"
-            role="combobox"
-            aria-autocomplete="list"
-            aria-expanded={listVisible}
-            aria-controls={`${listboxId}-listbox`}
-            aria-activedescendant={
-              activeIndex >= 0
-                ? `${listboxId}-option-${activeIndex}`
-                : undefined
-            }
-            placeholder="Location, address or postcode"
-            value={query}
-            onChange={(event) => {
-              setQuery(event.target.value)
-              setShowSuggestions(true)
-            }}
-            onFocus={() => {
-              setExpanded(true)
-              setShowSuggestions(true)
-            }}
-            onKeyDown={handleKeyDown}
-            className="h-11 w-full bg-transparent px-4 text-sm text-foreground outline-none placeholder:text-muted-foreground"
-          />
-        </div>
       </div>
 
       {listVisible ? (

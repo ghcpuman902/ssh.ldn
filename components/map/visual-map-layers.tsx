@@ -5,18 +5,22 @@ import { Layer, Source } from "react-map-gl/maplibre"
 
 import type { VisualLayerData } from "@/hooks/use-visual-layer-data"
 import { BASEMAP_LABELS_LAYER_ID } from "@/lib/map/config"
+import type {
+  TubeLineFeatureCollection,
+  TubeStationFeatureCollection,
+} from "@/lib/map/geojson-types"
 import type { VisualLayerVisibility } from "@/lib/map/visual-layers"
 
 const layerVisibility = (visible: boolean): "visible" | "none" =>
   visible ? "visible" : "none"
 
-const TUBE_LINE_OFFSET: ExpressionSpecification = [
+const TRANSIT_LINE_OFFSET: ExpressionSpecification = [
   "coalesce",
   ["get", "lineOffset"],
   0,
 ]
 
-const TUBE_LINE_WIDTH: ExpressionSpecification = [
+const TRANSIT_LINE_WIDTH: ExpressionSpecification = [
   "interpolate",
   ["linear"],
   ["zoom"],
@@ -28,7 +32,19 @@ const TUBE_LINE_WIDTH: ExpressionSpecification = [
   5,
 ]
 
-const TUBE_LABEL_SIZE: ExpressionSpecification = [
+const TRANSIT_INNER_WIDTH: ExpressionSpecification = [
+  "interpolate",
+  ["linear"],
+  ["zoom"],
+  10,
+  1.4,
+  14,
+  2.6,
+  16,
+  3.4,
+]
+
+const TRANSIT_LABEL_SIZE: ExpressionSpecification = [
   "interpolate",
   ["linear"],
   ["zoom"],
@@ -45,15 +61,127 @@ type VisualMapLayersProps = {
   data: VisualLayerData
 }
 
+type TransitLineOverlayProps = {
+  idPrefix: string
+  visible: boolean
+  lines: TubeLineFeatureCollection | null
+  stations: TubeStationFeatureCollection | null
+}
+
+const TransitLineOverlay = ({
+  idPrefix,
+  visible,
+  lines,
+  stations,
+}: TransitLineOverlayProps) => {
+  const showLines = visible && (lines?.features.length ?? 0) > 0
+  const showStations = visible && (stations?.features.length ?? 0) > 0
+
+  if (!showLines && !showStations) return null
+
+  return (
+    <>
+      {showLines && lines ? (
+        <Source id={`${idPrefix}-lines`} type="geojson" data={lines}>
+          <Layer
+            id={`${idPrefix}-lines-casing`}
+            type="line"
+            beforeId={BASEMAP_LABELS_LAYER_ID}
+            layout={{
+              visibility: layerVisibility(visible),
+              "line-join": "round",
+              "line-cap": "round",
+            }}
+            paint={{
+              "line-color": "#ffffff",
+              "line-width": TRANSIT_LINE_WIDTH,
+              "line-offset": TRANSIT_LINE_OFFSET,
+              "line-opacity": 0.92,
+            }}
+          />
+          <Layer
+            id={`${idPrefix}-lines-stroke`}
+            type="line"
+            beforeId={BASEMAP_LABELS_LAYER_ID}
+            layout={{
+              visibility: layerVisibility(visible),
+              "line-join": "round",
+              "line-cap": "round",
+            }}
+            paint={{
+              "line-color": ["coalesce", ["get", "color"], "#6366f1"],
+              "line-width": TRANSIT_INNER_WIDTH,
+              "line-offset": TRANSIT_LINE_OFFSET,
+              "line-opacity": 0.95,
+            }}
+          />
+        </Source>
+      ) : null}
+
+      {showStations && stations ? (
+        <Source id={`${idPrefix}-stations`} type="geojson" data={stations}>
+          <Layer
+            id={`${idPrefix}-stations-circle`}
+            type="circle"
+            beforeId={BASEMAP_LABELS_LAYER_ID}
+            minzoom={10}
+            layout={{ visibility: layerVisibility(visible) }}
+            paint={{
+              "circle-radius": [
+                "interpolate",
+                ["linear"],
+                ["zoom"],
+                10,
+                2.5,
+                14,
+                4,
+                16,
+                5,
+              ],
+              "circle-color": "#ffffff",
+              "circle-stroke-color": "#111827",
+              "circle-stroke-width": 1.4,
+              "circle-opacity": 0.98,
+            }}
+          />
+          <Layer
+            id={`${idPrefix}-stations-label`}
+            type="symbol"
+            beforeId={BASEMAP_LABELS_LAYER_ID}
+            minzoom={12}
+            layout={{
+              visibility: layerVisibility(visible),
+              "text-field": [
+                "coalesce",
+                ["get", "label"],
+                ["get", "name"],
+                "",
+              ],
+              "text-size": TRANSIT_LABEL_SIZE,
+              "text-offset": [0, 1.15],
+              "text-anchor": "top",
+              "text-max-width": 8,
+              "text-allow-overlap": false,
+              "text-optional": true,
+              "text-padding": 2,
+            }}
+            paint={{
+              "text-color": "#111827",
+              "text-halo-color": "#ffffff",
+              "text-halo-width": 1.6,
+            }}
+          />
+        </Source>
+      ) : null}
+    </>
+  )
+}
+
 export const VisualMapLayers = ({ visibility, data }: VisualMapLayersProps) => {
   const showRail =
     visibility.rail &&
     ((data.railLines?.features.length ?? 0) > 0 ||
       (data.railStations?.features.length ?? 0) > 0)
-  const showTube =
-    visibility.tube &&
-    ((data.tubeLines?.features.length ?? 0) > 0 ||
-      (data.tubeStations?.features.length ?? 0) > 0)
   const showGreen =
     visibility.greenSpaces && (data.greenSpaces?.features.length ?? 0) > 0
 
@@ -133,108 +261,26 @@ export const VisualMapLayers = ({ visibility, data }: VisualMapLayersProps) => {
         </Source>
       ) : null}
 
-      {showTube && data.tubeLines ? (
-        <Source id="tube-lines" type="geojson" data={data.tubeLines}>
-          <Layer
-            id="tube-lines-casing"
-            type="line"
-            beforeId={BASEMAP_LABELS_LAYER_ID}
-            layout={{
-              visibility: layerVisibility(visibility.tube),
-              "line-join": "round",
-              "line-cap": "round",
-            }}
-            paint={{
-              "line-color": "#ffffff",
-              "line-width": TUBE_LINE_WIDTH,
-              "line-offset": TUBE_LINE_OFFSET,
-              "line-opacity": 0.92,
-            }}
-          />
-          <Layer
-            id="tube-lines-stroke"
-            type="line"
-            beforeId={BASEMAP_LABELS_LAYER_ID}
-            layout={{
-              visibility: layerVisibility(visibility.tube),
-              "line-join": "round",
-              "line-cap": "round",
-            }}
-            paint={{
-              "line-color": ["coalesce", ["get", "color"], "#6366f1"],
-              "line-width": [
-                "interpolate",
-                ["linear"],
-                ["zoom"],
-                10,
-                1.4,
-                14,
-                2.6,
-                16,
-                3.4,
-              ],
-              "line-offset": TUBE_LINE_OFFSET,
-              "line-opacity": 0.95,
-            }}
-          />
-        </Source>
-      ) : null}
+      <TransitLineOverlay
+        idPrefix="tube"
+        visible={visibility.tube}
+        lines={data.tubeLines}
+        stations={data.tubeStations}
+      />
 
-      {showTube && data.tubeStations ? (
-        <Source id="tube-stations" type="geojson" data={data.tubeStations}>
-          <Layer
-            id="tube-stations-circle"
-            type="circle"
-            beforeId={BASEMAP_LABELS_LAYER_ID}
-            minzoom={10}
-            layout={{ visibility: layerVisibility(visibility.tube) }}
-            paint={{
-              "circle-radius": [
-                "interpolate",
-                ["linear"],
-                ["zoom"],
-                10,
-                2.5,
-                14,
-                4,
-                16,
-                5,
-              ],
-              "circle-color": "#ffffff",
-              "circle-stroke-color": "#111827",
-              "circle-stroke-width": 1.4,
-              "circle-opacity": 0.98,
-            }}
-          />
-          <Layer
-            id="tube-stations-label"
-            type="symbol"
-            beforeId={BASEMAP_LABELS_LAYER_ID}
-            minzoom={12}
-            layout={{
-              visibility: layerVisibility(visibility.tube),
-              "text-field": [
-                "coalesce",
-                ["get", "label"],
-                ["get", "name"],
-                "",
-              ],
-              "text-size": TUBE_LABEL_SIZE,
-              "text-offset": [0, 1.15],
-              "text-anchor": "top",
-              "text-max-width": 8,
-              "text-allow-overlap": false,
-              "text-optional": true,
-              "text-padding": 2,
-            }}
-            paint={{
-              "text-color": "#111827",
-              "text-halo-color": "#ffffff",
-              "text-halo-width": 1.6,
-            }}
-          />
-        </Source>
-      ) : null}
+      <TransitLineOverlay
+        idPrefix="overground"
+        visible={visibility.overground}
+        lines={data.overgroundLines}
+        stations={data.overgroundStations}
+      />
+
+      <TransitLineOverlay
+        idPrefix="elizabeth"
+        visible={visibility.elizabeth}
+        lines={data.elizabethLines}
+        stations={data.elizabethStations}
+      />
     </>
   )
 }
