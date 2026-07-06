@@ -53,18 +53,21 @@ Next.js 16 · React 19 · MapLibre GL · Tailwind 4 · shadcn/ui · ElevenLabs S
 
 ```bash
 pnpm install
+cp .env.example .env.local   # add TfL / ElevenLabs keys as needed
 pnpm dev
 ```
 
 Runs on [http://localhost:3999](http://localhost:3999).
 
-Copy `.env.local` with keys for TfL (`TFL_APP_ID`, `TFL_APP_KEY`), ElevenLabs voice (`ELEVENLABS_API_KEY`, `ELEVENLABS_SPEECH_ENGINE_ID`), and optional Google geocoding. Voice routes in development proxy to the deployed server.
+Copy `.env.local` with keys for TfL (`TFL_APP_ID`, `TFL_APP_KEY`), ElevenLabs voice (`ELEVENLABS_API_KEY`, `ELEVENLABS_SPEECH_ENGINE_ID`), and optional Google geocoding. Voice routes in development proxy to the deployed server. See `.env.example` for the full list.
 
 ```bash
 pnpm typecheck
 pnpm lint
 pnpm build
 ```
+
+Vercel Web Analytics is enabled via `@vercel/analytics` in `app/layout.tsx` (no env var required on Vercel).
 
 ## Accessibility
 

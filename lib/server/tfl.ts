@@ -3,12 +3,31 @@ import TflClient from "tfl-ts";
 import { haversineMeters } from "@/lib/server/geo";
 import { getTestPoint } from "@/lib/server/test-points";
 
-const tfl = new TflClient({
-  appId: process.env.TFL_APP_ID,
-  appKey: process.env.TFL_APP_KEY,
-  timeout: 8000,
-  maxRetries: 1,
-});
+let tflClient: TflClient | null = null;
+
+const getTflClient = () => {
+  if (tflClient) {
+    return tflClient;
+  }
+
+  const appId = process.env.TFL_APP_ID;
+  const appKey = process.env.TFL_APP_KEY;
+
+  if (!appId || !appKey) {
+    throw new Error(
+      "Missing TfL credentials. Set TFL_APP_ID and TFL_APP_KEY in .env.local (see .env.example).",
+    );
+  }
+
+  tflClient = new TflClient({
+    appId,
+    appKey,
+    timeout: 8000,
+    maxRetries: 1,
+  });
+
+  return tflClient;
+};
 
 export type NearbyTflStopsInput = {
   lat: number;
@@ -83,7 +102,7 @@ const getNearbyTflStopsBySearch = async ({
   radiusMeters: number;
   query: string;
 }) => {
-  const response = await tfl.stopPoint.search({
+  const response = await getTflClient().stopPoint.search({
     query,
     maxResults: 20,
   });
@@ -124,7 +143,7 @@ export const getNearbyTflStops = async ({
   testPointId,
 }: NearbyTflStopsInput) => {
   try {
-    const response = await tfl.stopPoint.getByGeoPoint({
+    const response = await getTflClient().stopPoint.getByGeoPoint({
       lat,
       lon: lng,
       radius: radiusMeters,
@@ -165,7 +184,7 @@ export const getTflLineStatus = async ({
   lineIds,
   detail = true,
 }: TflLineStatusInput) => {
-  const lines = await tfl.line.getStatus({ lineIds, detail });
+  const lines = await getTflClient().line.getStatus({ lineIds, detail });
 
   return {
     source: "tfl",
