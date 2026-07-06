@@ -76,6 +76,49 @@ export const osmGridCellsForViewport = (viewport: LngLatBox): OsmGridCell[] => {
   return cells
 }
 
+const cellCenter = (cell: OsmGridCell) => ({
+  lng: (cell.west + cell.east) / 2,
+  lat: (cell.south + cell.north) / 2,
+})
+
+const squaredDistance = (
+  left: { lat: number; lng: number },
+  right: { lat: number; lng: number }
+) => {
+  const lngScale = Math.cos(((left.lat + right.lat) / 2 / 180) * Math.PI)
+  const dLng = (left.lng - right.lng) * lngScale
+  const dLat = left.lat - right.lat
+  return dLng * dLng + dLat * dLat
+}
+
+/**
+ * Blender-style tile prioritisation: start at the viewport center, then spiral
+ * outward. A smaller Central London bias keeps the densest POI cells early when
+ * the user is zoomed out across the whole M25 box.
+ */
+export const prioritizeOsmGridCells = (
+  cells: OsmGridCell[],
+  viewportCenter: { latitude: number; longitude: number },
+  londonCenter: { latitude: number; longitude: number }
+) =>
+  [...cells].sort((left, right) => {
+    const leftCenter = cellCenter(left)
+    const rightCenter = cellCenter(right)
+    const viewport = {
+      lat: viewportCenter.latitude,
+      lng: viewportCenter.longitude,
+    }
+    const london = { lat: londonCenter.latitude, lng: londonCenter.longitude }
+    const leftScore =
+      squaredDistance(leftCenter, viewport) +
+      squaredDistance(leftCenter, london) * 0.28
+    const rightScore =
+      squaredDistance(rightCenter, viewport) +
+      squaredDistance(rightCenter, london) * 0.28
+
+    return leftScore - rightScore
+  })
+
 /** Cap concurrent Overpass fetches when zoomed out over wide areas. */
 export const osmGridFetchLimitForZoom = (zoom: number) => {
   if (zoom >= 14) return 6

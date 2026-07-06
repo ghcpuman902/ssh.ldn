@@ -1,0 +1,54 @@
+{
+  "generatedAt": "2026-07-06T10:23:32.980Z",
+  "source": "OpenStreetMap Overpass",
+  "bounds": {
+    "west": -0.57,
+    "south": 51.24,
+    "east": 0.36,
+    "north": 51.73
+  },
+  "minZoom": 10,
+  "maxZoom": 12,
+  "tileSize": 256,
+  "featureCount": 5590,
+  "featureHash": "4e92f9c956fbb0859402cb55418dac0d31bd66b22c25808fa959b391272a919b",
+  "normalisedRange": [
+    0,
+    1
+  ],
+  "weights": {
+    "pub": 0.36,
+    "bar": 0.44,
+    "nightclub": 1,
+    "music_venue": 0.92,
+    "hospital": 0.82
+  },
+  "normalisationCaps": {
+    "10": 1.4,
+    "11": 1.15,
+    "12": 0.95,
+    "13": 0.75
+  },
+  "tileCounts": {
+    "weekday-day": {
+      "10": 12,
+      "11": 39,
+      "12": 111
+    },
+    "weekday-night": {
+      "10": 12,
+      "11": 39,
+      "12": 111
+    },
+    "weekend-day": {
+      "10": 12,
+      "11": 39,
+      "12": 111
+    },
+    "weekend-night": {
+      "10": 12,
+      "11": 39,
+      "12": 111
+    }
+  }
+}

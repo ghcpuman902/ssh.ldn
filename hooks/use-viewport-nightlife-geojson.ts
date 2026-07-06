@@ -4,9 +4,13 @@ import { useCallback, useEffect, useRef, useState, type RefObject } from "react"
 import type { MapRef } from "react-map-gl/maplibre"
 
 import {
+  LONDON_CENTER,
+} from "@/lib/map/config"
+import {
   osmGridCellKey,
   osmGridCellsForViewport,
   osmGridFetchLimitForZoom,
+  prioritizeOsmGridCells,
 } from "@/lib/map/osm-grid"
 import type { NightlifeFeatureCollection } from "@/lib/map/geojson-types"
 
@@ -85,8 +89,13 @@ export const useViewportNightlifeGeoJson = (
       north: bounds.getNorth(),
     })
 
-    const pending = cells.filter(
-      (cell) => !fetchedKeysRef.current.has(osmGridCellKey(cell.row, cell.col))
+    const center = map.getCenter()
+    const pending = prioritizeOsmGridCells(
+      cells.filter(
+        (cell) => !fetchedKeysRef.current.has(osmGridCellKey(cell.row, cell.col))
+      ),
+      { latitude: center.lat, longitude: center.lng },
+      LONDON_CENTER
     )
 
     if (pending.length === 0) return

@@ -10,8 +10,17 @@ import {
   defraPeriodFromDayPart,
   type DefraMapKind,
 } from "@/lib/map/defra-layers"
-import { NOISE_TILE_MAX_ZOOM, NOISE_TILE_MIN_ZOOM } from "@/lib/map/config"
+import {
+  NOISE_TILE_MAX_ZOOM,
+  NOISE_TILE_MIN_ZOOM,
+  POI_DENSITY_TILE_MAX_ZOOM,
+  POI_DENSITY_TILE_MIN_ZOOM,
+} from "@/lib/map/config"
 import { nightlifeEmojiImageId } from "@/lib/map/nightlife-emoji-images"
+import {
+  POI_EMOJI_PRIORITY_MIN_ZOOM,
+  poiDensitySlotFromParts,
+} from "@/lib/map/poi-density"
 import type { NightlifeFeatureCollection } from "@/lib/map/geojson-types"
 import { isWeekendNight, type NoiseTimeSlot } from "@/lib/map/noise-time"
 import {
@@ -94,6 +103,9 @@ const layerVisibility = (visible: boolean): "visible" | "none" =>
 
 const defraTileUrl = (kind: DefraMapKind, period: string) =>
   `/api/map/defra/${kind}/{z}/{x}/{y}.png?period=${period}`
+
+const poiDensityTileUrl = (slot: string) =>
+  `/poi-density/tiles/${slot}/{z}/{x}/{y}.png`
 
 const enrichNightlifeGeoJson = (
   data: NightlifeFeatureCollection | null,
@@ -182,6 +194,41 @@ type NightlifeVenueLayersProps = {
   opacity: number
 }
 
+const PoiDensityRasterLayer = ({
+  visible,
+  timeSlot,
+  opacity,
+}: {
+  visible: boolean
+  timeSlot: NoiseTimeSlot
+  opacity: number
+}) => {
+  const slot = poiDensitySlotFromParts(timeSlot)
+
+  return (
+    <Source
+      key={`poi-density-${slot}`}
+      id={`poi-density-${slot}`}
+      type="raster"
+      tiles={[poiDensityTileUrl(slot)]}
+      tileSize={256}
+      minzoom={POI_DENSITY_TILE_MIN_ZOOM}
+      maxzoom={POI_DENSITY_TILE_MAX_ZOOM}
+    >
+      <Layer
+        id={`poi-density-${slot}-layer`}
+        type="raster"
+        layout={{ visibility: layerVisibility(visible) }}
+        paint={{
+          "raster-opacity": opacity * 0.82,
+          "raster-fade-duration": 180,
+          "raster-resampling": "nearest",
+        }}
+      />
+    </Source>
+  )
+}
+
 /** Local source markers — always on top of noise heatmaps. */
 const NightlifeVenueLayers = ({
   visible,
@@ -195,6 +242,7 @@ const NightlifeVenueLayers = ({
       <Layer
         id="nightlife-venues-noise-aura"
         type="circle"
+        minzoom={13}
         layout={{
           visibility: layerVisibility(visible),
         }}
@@ -331,6 +379,7 @@ const NightlifeVenueLayers = ({
       <Layer
         id="nightlife-venues-noise-core"
         type="circle"
+        minzoom={13}
         layout={{
           visibility: layerVisibility(visible),
         }}
@@ -425,8 +474,39 @@ const NightlifeVenueLayers = ({
         }}
       />
       <Layer
+        id="nightlife-venues-priority-symbol"
+        type="symbol"
+        minzoom={11}
+        maxzoom={14}
+        filter={[
+          "any",
+          ["==", ["get", "amenity"], "hospital"],
+          ["==", ["get", "amenity"], "nightclub"],
+          ["==", ["get", "amenity"], "music_venue"],
+        ]}
+        layout={{
+          visibility: layerVisibility(visible),
+          "icon-image": NIGHTLIFE_ICON_IMAGE,
+          "icon-size": [
+            "interpolate",
+            ["linear"],
+            ["zoom"],
+            POI_EMOJI_PRIORITY_MIN_ZOOM.hospital,
+            ["*", 0.58, ["coalesce", ["get", "radiusScale"], 0.85]],
+            14,
+            ["*", 0.9, ["coalesce", ["get", "radiusScale"], 0.85]],
+          ],
+          "icon-allow-overlap": true,
+          "icon-ignore-placement": true,
+        }}
+        paint={{
+          "icon-opacity": opacity,
+        }}
+      />
+      <Layer
         id="nightlife-venues-symbol"
         type="symbol"
+        minzoom={14}
         layout={{
           visibility: layerVisibility(visible),
           "icon-image": NIGHTLIFE_ICON_IMAGE,
@@ -528,6 +608,12 @@ export const NoiseMapLayers = ({
         timeSlot={timeSlot}
         opacity={opacity}
         weekendNightBoost={weekendNightBoost}
+      />
+
+      <PoiDensityRasterLayer
+        visible={visibility.nightlife}
+        timeSlot={timeSlot}
+        opacity={nightlifeOpacity}
       />
 
       <NightlifeVenueLayers

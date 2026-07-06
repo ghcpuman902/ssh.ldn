@@ -99,3 +99,10 @@ export const MAP_CONFIG = {
 export const NOISE_TILE_MIN_ZOOM = 10
 export const NOISE_TILE_PRECACHE_MAX_ZOOM = 12
 export const NOISE_TILE_MAX_ZOOM = 13
+
+/**
+ * Prebuilt OSM POI density tiles mirror the DEFRA overview strategy:
+ * zoomed-out rendering is raster/pixel-based, then live symbols take over.
+ */
+export const POI_DENSITY_TILE_MIN_ZOOM = 10
+export const POI_DENSITY_TILE_MAX_ZOOM = 12

@@ -69,6 +69,17 @@ pnpm build
 
 Vercel Web Analytics is enabled via `@vercel/analytics` in `app/layout.tsx` (no env var required on Vercel).
 
+## POI density tiles
+
+Zoomed-out local-source rendering uses prebuilt raster PNG tiles in `public/poi-density/tiles/`, generated from OSM pubs, bars, nightclubs, music venues, and hospitals:
+
+```bash
+pnpm generate-poi-density
+pnpm generate-poi-density -- --from-cache
+```
+
+The generator writes `public/poi-density/manifest.json` with the 0–1 normalisation range, per-amenity weights, and tile counts. Live OSM emoji markers still load progressively for higher-zoom detail.
+
 ## Accessibility
 
 The map is visual-first, but the product is designed so **sound environments can be described, not just shown**. Voice mode lets users ask natural questions about a specific address — useful for anyone who navigates the world primarily by hearing, or who wants faster answers than clicking through layers.

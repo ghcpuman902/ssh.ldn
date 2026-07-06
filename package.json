@@ -11,6 +11,7 @@
     "format": "prettier --write \"**/*.{ts,tsx}\"",
     "typecheck": "tsc --noEmit",
     "download-noise-tiles": "node scripts/download-noise-tiles.mjs",
+    "generate-poi-density": "node scripts/generate-poi-density-tiles.mjs",
     "create-speech-engine": "node scripts/create-speech-engine.mjs",
     "update-speech-engine": "node scripts/update-speech-engine.mjs"
   },
