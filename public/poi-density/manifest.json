@@ -1,0 +1,84 @@
+{
+  "generatedAt": "2026-07-06T14:23:35.893Z",
+  "source": "OpenStreetMap Overpass",
+  "bounds": {
+    "west": -0.57,
+    "south": 51.24,
+    "east": 0.36,
+    "north": 51.73
+  },
+  "minZoom": 10,
+  "maxZoom": 14,
+  "tileSize": 256,
+  "featureCount": 5602,
+  "featureHash": "ea9f6c389b3189f746c4b667ac21e04a354d0e0e1e36f20be11a1a94e3d8fbba",
+  "normalisedRange": [
+    0,
+    1
+  ],
+  "weights": {
+    "pub": 0.28,
+    "bar": 0.34,
+    "nightclub": 1,
+    "music_venue": 0.82,
+    "hospital": 0.32
+  },
+  "reachMeters": {
+    "pub": 34,
+    "bar": 38,
+    "nightclub": 90,
+    "music_venue": 72,
+    "hospital": 120
+  },
+  "maxFeatureContribution": {
+    "pub": 0.22,
+    "bar": 0.26,
+    "nightclub": 0.55,
+    "music_venue": 0.48,
+    "hospital": 0.18
+  },
+  "overviewRadiusBoost": {
+    "10": 1.9,
+    "11": 1.35,
+    "12": 1,
+    "13": 0.82,
+    "14": 0.68
+  },
+  "normalisationCaps": {
+    "10": 0.9,
+    "11": 0.72,
+    "12": 0.58,
+    "13": 0.5,
+    "14": 0.44
+  },
+  "tileCounts": {
+    "weekday-day": {
+      "10": 12,
+      "11": 38,
+      "12": 110,
+      "13": 373,
+      "14": 970
+    },
+    "weekday-night": {
+      "10": 12,
+      "11": 38,
+      "12": 110,
+      "13": 368,
+      "14": 913
+    },
+    "weekend-day": {
+      "10": 12,
+      "11": 38,
+      "12": 110,
+      "13": 373,
+      "14": 970
+    },
+    "weekend-night": {
+      "10": 12,
+      "11": 38,
+      "12": 110,
+      "13": 368,
+      "14": 917
+    }
+  }
+}

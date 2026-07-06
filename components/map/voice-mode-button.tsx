@@ -5,8 +5,8 @@ import { ConversationProvider, useConversation } from "@elevenlabs/react"
 import { Loader2, Mic, MicOff, VolumeX } from "lucide-react"
 
 import { ElevenLabsMark } from "@/components/map/elevenlabs-mark"
+import { SpectrometerMeterFill } from "@/components/map/spectrometer-meter-fill"
 import { Button } from "@/components/ui/button"
-import { Progress } from "@/components/ui/progress"
 import {
   buildVoiceFirstMessage,
   toDynamicVariables,
@@ -71,6 +71,7 @@ const VoiceModeButtonInner = ({ context, className }: VoiceModeButtonProps) => {
   const [sessionState, setSessionState] = useState<VoiceSessionState>("idle")
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [microphoneLevel, setMicrophoneLevel] = useState(0)
+  const [micInputMuted, setMicInputMuted] = useState(false)
   const [userTranscriptLine, setUserTranscriptLine] = useState<string | null>(
     null
   )
@@ -80,21 +81,14 @@ const VoiceModeButtonInner = ({ context, className }: VoiceModeButtonProps) => {
     null
   )
   const buttonRef = useRef<HTMLButtonElement | null>(null)
+  const micButtonRef = useRef<HTMLButtonElement | null>(null)
   const microphoneStreamRef = useRef<MediaStream | null>(null)
   const microphoneAudioContextRef = useRef<AudioContext | null>(null)
   const microphoneAnimationFrameRef = useRef<number | null>(null)
   const microphoneLevelUpdatedAtRef = useRef(0)
-  const microphoneTrackRef = useRef<MediaStreamTrack | null>(null)
+  const micInputMutedRef = useRef(false)
 
-  const setLocalMicrophoneMuted = useCallback((muted: boolean) => {
-    if (microphoneTrackRef.current) {
-      microphoneTrackRef.current.enabled = !muted
-    }
-
-    if (muted) {
-      setMicrophoneLevel(0)
-    }
-  }, [])
+  micInputMutedRef.current = micInputMuted
 
   const stopMicrophoneMonitor = useCallback(() => {
     if (microphoneAnimationFrameRef.current !== null) {
@@ -106,7 +100,6 @@ const VoiceModeButtonInner = ({ context, className }: VoiceModeButtonProps) => {
       track.stop()
     })
     microphoneStreamRef.current = null
-    microphoneTrackRef.current = null
 
     void microphoneAudioContextRef.current?.close()
     microphoneAudioContextRef.current = null
@@ -117,9 +110,6 @@ const VoiceModeButtonInner = ({ context, className }: VoiceModeButtonProps) => {
   const startMicrophoneMonitor = useCallback(
     (stream: MediaStream) => {
       stopMicrophoneMonitor()
-
-      const audioTrack = stream.getAudioTracks()[0] ?? null
-      microphoneTrackRef.current = audioTrack
 
       const AudioContextConstructor =
         window.AudioContext ??
@@ -146,8 +136,7 @@ const VoiceModeButtonInner = ({ context, className }: VoiceModeButtonProps) => {
       microphoneAudioContextRef.current = audioContext
 
       const updateLevel = (timestamp: number) => {
-        if (audioTrack && !audioTrack.enabled) {
-          setMicrophoneLevel(0)
+        if (micInputMutedRef.current) {
           microphoneAnimationFrameRef.current = requestAnimationFrame(updateLevel)
           return
         }
@@ -199,6 +188,7 @@ const VoiceModeButtonInner = ({ context, className }: VoiceModeButtonProps) => {
     onDisconnect: () => {
       setSessionState("idle")
       setUserTranscriptLine(null)
+      setMicInputMuted(false)
       contextSessionIdRef.current = null
       contextRef.current = null
       stopMicrophoneMonitor()
@@ -207,6 +197,7 @@ const VoiceModeButtonInner = ({ context, className }: VoiceModeButtonProps) => {
       setSessionState("error")
       setErrorMessage(message || "Voice mode failed")
       setUserTranscriptLine(null)
+      setMicInputMuted(false)
       stopMicrophoneMonitor()
     },
     onMessage: ({ message, role }) => {
@@ -229,33 +220,25 @@ const VoiceModeButtonInner = ({ context, className }: VoiceModeButtonProps) => {
   const isDisabled = !context || sessionState === "connecting"
   const isActive = sessionState === "active"
 
-  const transcriptPreview = useMemo(() => {
-    if (!isActive) {
+  const activityHint = useMemo(() => {
+    if (!isActive || userTranscriptLine) {
       return null
-    }
-
-    if (conversation.isMuted) {
-      return "Microphone muted"
-    }
-
-    if (userTranscriptLine) {
-      return userTranscriptLine
-    }
-
-    if (conversation.isListening) {
-      return "Listening…"
     }
 
     if (conversation.isSpeaking) {
       return "Speaking…"
     }
 
+    if (conversation.isListening) {
+      return micInputMuted ? null : "Listening…"
+    }
+
     return "Ready to listen"
   }, [
     conversation.isListening,
-    conversation.isMuted,
     conversation.isSpeaking,
     isActive,
+    micInputMuted,
     userTranscriptLine,
   ])
 
@@ -274,27 +257,23 @@ const VoiceModeButtonInner = ({ context, className }: VoiceModeButtonProps) => {
 
     if (isActive) {
       if (conversation.isSpeaking) {
-        return "Voice mode speaking. Press Escape to stop and return to your screen reader."
+        return "Voice mode speaking. Press Escape to stop."
       }
 
-      if (conversation.isListening) {
-        return "Voice mode listening. Press Escape to stop and return to your screen reader."
+      if (micInputMuted) {
+        return "Mic input muted — silence is sent to the agent. Press Escape to stop."
       }
 
-      return "Voice mode active. Press Escape to stop and return to your screen reader."
+      return "Voice mode listening. Press Escape to stop."
     }
 
-    if (process.env.NODE_ENV === "development") {
-      return "Start voice mode. In development, voice routes use the deployed server."
-    }
-
-    return "Start voice mode to ask about this location"
+    return null
   }, [
     context,
-    conversation.isListening,
     conversation.isSpeaking,
     errorMessage,
     isActive,
+    micInputMuted,
     sessionState,
   ])
 
@@ -306,6 +285,7 @@ const VoiceModeButtonInner = ({ context, className }: VoiceModeButtonProps) => {
     setSessionState("connecting")
     setErrorMessage(null)
     setUserTranscriptLine(null)
+    setMicInputMuted(false)
 
     try {
       const microphoneStream = await navigator.mediaDevices.getUserMedia({
@@ -361,7 +341,7 @@ const VoiceModeButtonInner = ({ context, className }: VoiceModeButtonProps) => {
   }, [context, conversation, startMicrophoneMonitor, stopMicrophoneMonitor])
 
   const handleStopSession = useCallback(() => {
-    if (conversation.isMuted) {
+    if (micInputMuted) {
       conversation.setMuted(false)
     }
 
@@ -370,16 +350,17 @@ const VoiceModeButtonInner = ({ context, className }: VoiceModeButtonProps) => {
     contextRef.current = null
     stopMicrophoneMonitor()
     setUserTranscriptLine(null)
+    setMicInputMuted(false)
     setSessionState("idle")
     setErrorMessage(null)
     buttonRef.current?.focus()
-  }, [conversation, stopMicrophoneMonitor])
+  }, [conversation, micInputMuted, stopMicrophoneMonitor])
 
   const handleToggleMicMute = useCallback(() => {
-    const nextMuted = !conversation.isMuted
+    const nextMuted = !micInputMuted
+    setMicInputMuted(nextMuted)
     conversation.setMuted(nextMuted)
-    setLocalMicrophoneMuted(nextMuted)
-  }, [conversation, setLocalMicrophoneMuted])
+  }, [conversation, micInputMuted])
 
   const handleToggle = useCallback(() => {
     if (isActive) {
@@ -442,101 +423,116 @@ const VoiceModeButtonInner = ({ context, className }: VoiceModeButtonProps) => {
         className
       )}
     >
-      <Button
-        ref={buttonRef}
-        type="button"
-        variant={isActive ? "default" : "outline"}
-        size="sm"
-        aria-label={
-          isActive
-            ? "Stop voice mode for this location"
-            : "Start voice mode for this location"
-        }
-        aria-pressed={isActive}
-        aria-describedby="voice-mode-status"
-        aria-busy={sessionState === "connecting"}
-        aria-keyshortcuts="Enter Space Escape"
-        disabled={isDisabled}
-        onClick={handleToggle}
-        onKeyDown={handleKeyDown}
-        className="h-11 w-full justify-start gap-2 rounded-2xl border-border/60 text-sm"
-      >
-        {sessionState === "connecting" ? (
-          <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-        ) : isActive ? (
-          <MicOff className="size-4" aria-hidden="true" />
-        ) : (
-          <Mic className="size-4" aria-hidden="true" />
-        )}
-        <span>{isActive ? "Stop voice mode" : "Ask with voice"}</span>
-      </Button>
+      <div className="flex items-center gap-2">
+        <Button
+          ref={buttonRef}
+          type="button"
+          variant={isActive ? "default" : "outline"}
+          size="sm"
+          aria-label={
+            isActive
+              ? "Stop voice mode for this location"
+              : "Start voice mode for this location"
+          }
+          aria-pressed={isActive}
+          aria-describedby={statusLabel ? "voice-mode-status" : undefined}
+          aria-busy={sessionState === "connecting"}
+          aria-keyshortcuts="Enter Space Escape"
+          disabled={isDisabled}
+          onClick={handleToggle}
+          onKeyDown={handleKeyDown}
+          className="h-11 min-w-0 flex-1 justify-start gap-2 rounded-2xl border-border/60 text-sm"
+        >
+          {sessionState === "connecting" ? (
+            <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+          ) : isActive ? (
+            <MicOff className="size-4" aria-hidden="true" />
+          ) : (
+            <Mic className="size-4" aria-hidden="true" />
+          )}
+          <span>{isActive ? "Stop voice mode" : "Ask with voice"}</span>
+        </Button>
 
-      <div className="space-y-1 px-1" aria-label="Microphone input level">
-        <div className="flex items-center justify-between gap-2 text-[0.7rem] text-muted-foreground">
-          <span>Mic input</span>
-          <div className="flex items-center gap-2">
-            <span>{conversation.isMuted ? "Muted" : `${microphoneLevel}%`}</span>
-            <Button
-              type="button"
-              variant={conversation.isMuted ? "secondary" : "outline"}
-              size="icon-xs"
-              aria-label={
-                conversation.isMuted
-                  ? "Unmute microphone input"
-                  : "Mute microphone input for noisy environments"
-              }
-              aria-pressed={conversation.isMuted}
-              disabled={!isActive}
-              onClick={handleToggleMicMute}
-              className="size-7 rounded-full"
-            >
-              {conversation.isMuted ? (
-                <VolumeX className="size-3.5" aria-hidden="true" />
-              ) : (
-                <Mic className="size-3.5" aria-hidden="true" />
-              )}
-            </Button>
-          </div>
-        </div>
-        <Progress
-          value={conversation.isMuted ? 0 : microphoneLevel}
-          aria-label="Microphone input level"
-          className="h-1.5"
-        />
+        <button
+          ref={micButtonRef}
+          type="button"
+          aria-label={
+            micInputMuted
+              ? "Unmute microphone input"
+              : "Mute microphone input for noisy environments"
+          }
+          aria-pressed={micInputMuted}
+          aria-describedby="voice-mode-mic-level"
+          disabled={!isActive}
+          onClick={handleToggleMicMute}
+          className={cn(
+            "relative flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-full border transition-colors",
+            isActive
+              ? micInputMuted
+                ? "border-border/60 bg-muted/40 text-muted-foreground"
+                : "border-border/60 bg-white text-foreground hover:bg-muted/40"
+              : "border-border/40 bg-white/50 text-muted-foreground"
+          )}
+        >
+          <SpectrometerMeterFill
+            active={isActive}
+            level={micInputMuted ? 0 : microphoneLevel}
+            color="var(--primary)"
+            size={44}
+            phase={0.8}
+          />
+          <span className="relative z-10" aria-hidden="true">
+            {micInputMuted ? (
+              <VolumeX className="size-4" />
+            ) : (
+              <Mic className="size-4" />
+            )}
+          </span>
+          <span id="voice-mode-mic-level" className="sr-only">
+            {micInputMuted
+              ? "Microphone input muted"
+              : `Microphone input level ${microphoneLevel} percent`}
+          </span>
+        </button>
       </div>
 
-      {transcriptPreview ? (
+      {userTranscriptLine ? (
         <p
           id="voice-mode-transcript"
           role="status"
           aria-live="polite"
           aria-atomic="true"
-          title={userTranscriptLine ?? undefined}
-          className={cn(
-            "truncate px-1 text-xs",
-            userTranscriptLine
-              ? "text-foreground"
-              : "text-muted-foreground italic"
-          )}
+          title={userTranscriptLine}
+          className="truncate px-1 text-xs text-foreground"
         >
-          {userTranscriptLine ? `"${transcriptPreview}"` : transcriptPreview}
+          &ldquo;{userTranscriptLine}&rdquo;
+        </p>
+      ) : activityHint ? (
+        <p
+          role="status"
+          aria-live="polite"
+          className="px-1 text-xs text-muted-foreground italic"
+        >
+          {activityHint}
         </p>
       ) : null}
 
-      <p
-        id="voice-mode-status"
-        role="status"
-        aria-live="polite"
-        aria-atomic="true"
-        className={cn(
-          "px-1 text-xs",
-          sessionState === "error"
-            ? "text-destructive"
-            : "text-muted-foreground"
-        )}
-      >
-        {statusLabel}
-      </p>
+      {statusLabel ? (
+        <p
+          id="voice-mode-status"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          className={cn(
+            "px-1 text-xs",
+            sessionState === "error"
+              ? "text-destructive"
+              : "text-muted-foreground"
+          )}
+        >
+          {statusLabel}
+        </p>
+      ) : null}
 
       <ElevenLabsMark className="px-1 pt-0.5" />
     </div>

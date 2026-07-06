@@ -133,11 +133,19 @@ export const enrichLocationContext = (
 }
 
 export const locationContextFromAnalyse = (
-  state: Extract<AnalyseState, { status: "ready" }>,
+  state: Extract<AnalyseState, { status: "analysing" }>,
   timeSlot: NoiseTimeSlot
-): LocationContext => {
-  const inputAddress = state.geocode.inputAddress
-  const normalizedAddress = state.geocode.normalizedAddress
+): LocationContext | null => {
+  if (state.geocode.status !== "done") {
+    return null
+  }
+
+  const geocode = state.geocode.data
+  const score = state.score.status === "done" ? state.score.data : null
+  const planningApplications =
+    state.planning.status === "done" ? state.planning.data : []
+  const inputAddress = geocode.inputAddress
+  const normalizedAddress = geocode.normalizedAddress
 
   return enrichLocationContext({
     address: state.address,
@@ -148,35 +156,34 @@ export const locationContextFromAnalyse = (
       normalizedAddress
     ),
     normalizedAddress,
-    postcode: state.geocode.postcode,
-    latitude: state.geocode.latitude,
-    longitude: state.geocode.longitude,
-    coordinatePrecision: state.geocode.coordinatePrecision,
-    noiseScore: state.score?.noiseScore ?? null,
-    noiseBand: state.score?.noiseBand ?? null,
-    confidenceScore: state.score?.confidenceScore ?? null,
-    confidenceBand: state.score?.confidenceBand ?? null,
-    dominantSources: state.score?.dominantSources ?? [],
+    postcode: geocode.postcode,
+    latitude: geocode.latitude,
+    longitude: geocode.longitude,
+    coordinatePrecision: geocode.coordinatePrecision,
+    noiseScore: score?.noiseScore ?? null,
+    noiseBand: score?.noiseBand ?? null,
+    confidenceScore: score?.confidenceScore ?? null,
+    confidenceBand: score?.confidenceBand ?? null,
+    dominantSources: score?.dominantSources ?? [],
     contributors:
-      state.score?.contributors.map((contributor) => ({
+      score?.contributors.map((contributor) => ({
         source: contributor.source,
         weight: contributor.weight,
         score: contributor.score,
       })) ?? [],
-    timeProfile: state.score?.timeProfile ?? null,
-    planningApplications:
-      state.score?.planningApplications.map((application) => ({
-        reference: application.reference,
-        description: application.description,
-        status: application.status,
-        decisionDate: application.decisionDate,
-        distanceMeters: application.distanceMeters,
-        planningAuthority: application.planningAuthority,
-      })) ?? [],
-    caveats: state.score?.caveats ?? [],
-    recommendedChecks: state.score?.recommendedChecks ?? [],
+    timeProfile: score?.timeProfile ?? null,
+    planningApplications: planningApplications.map((application) => ({
+      reference: application.reference,
+      description: application.description,
+      status: application.status,
+      decisionDate: application.decisionDate,
+      distanceMeters: application.distanceMeters,
+      planningAuthority: application.planningAuthority,
+    })),
+    caveats: score?.caveats ?? [],
+    recommendedChecks: score?.recommendedChecks ?? [],
     timeSlot,
-    warnings: state.geocode.warnings,
+    warnings: geocode.warnings,
   })
 }
 

@@ -1,6 +1,12 @@
-import type { SearchSuggestion } from "@/lib/map/search-suggestions";
+type NominatimAutocompleteSuggestion = {
+  id: string;
+  label: string;
+  address: string;
+  postcode?: string;
+  source: "nominatim";
+};
 
-const NOMINATIM_BASE = "https://nominatim.openstreetmap.org";
+import { nominatimSearch } from "@/lib/server/nominatim-client";
 
 type NominatimSearchResult = {
   place_id: number;
@@ -14,6 +20,7 @@ type NominatimSearchResult = {
     name?: string;
     amenity?: string;
     building?: string;
+    house_number?: string;
     road?: string;
     suburb?: string;
     city?: string;
@@ -28,11 +35,15 @@ const LONDON_VIEWBOX = `${LONDON_BBOX.west},${LONDON_BBOX.north},${LONDON_BBOX.e
 
 const compactDisplayName = (result: NominatimSearchResult) => {
   const address = result.address;
+  const streetLine = [
+    address?.house_number,
+    address?.road ?? address?.name ?? address?.amenity ?? address?.building,
+  ]
+    .filter(Boolean)
+    .join(" ");
   const primary =
-    address?.name ??
-    address?.amenity ??
-    address?.building ??
-    result.display_name.split(",")[0]?.trim() ??
+    streetLine ||
+    result.display_name.split(",")[0]?.trim() ||
     result.display_name;
   const area = address?.suburb ?? address?.city ?? address?.town;
   const postcode = address?.postcode;
@@ -43,7 +54,7 @@ const compactDisplayName = (result: NominatimSearchResult) => {
 
 const toLocationSuggestion = (
   result: NominatimSearchResult
-): SearchSuggestion => ({
+): NominatimAutocompleteSuggestion => ({
   id: `nominatim:${result.place_id}`,
   label: compactDisplayName(result),
   address: result.display_name,
@@ -53,36 +64,31 @@ const toLocationSuggestion = (
 
 export const autocompleteWithNominatim = async (
   query: string
-): Promise<SearchSuggestion[]> => {
+): Promise<NominatimAutocompleteSuggestion[]> => {
   const trimmed = query.trim();
 
-  if (trimmed.length < 3) {
+  if (trimmed.length < 2) {
     return [];
   }
 
   const params = new URLSearchParams({
-    q: trimmed,
-    format: "json",
-    limit: "6",
+    q: trimmed.includes("London") ? trimmed : `${trimmed}, London`,
+    limit: "8",
     countrycodes: "gb",
     addressdetails: "1",
     viewbox: LONDON_VIEWBOX,
-    bounded: "1",
+    dedupe: "1",
   });
 
-  const response = await fetch(`${NOMINATIM_BASE}/search?${params.toString()}`, {
-    headers: {
-      Accept: "application/json",
-      "User-Agent": "ssh.ldn-hackathon-discovery/0.1 (local dev)",
-    },
-    next: { revalidate: 0 },
-  });
+  try {
+    const data = (await nominatimSearch(params)) as NominatimSearchResult[];
 
-  const data = (await response.json()) as NominatimSearchResult[];
+    if (!Array.isArray(data)) {
+      return [];
+    }
 
-  if (!response.ok || !Array.isArray(data)) {
+    return data.map(toLocationSuggestion);
+  } catch {
     return [];
   }
-
-  return data.map(toLocationSuggestion);
 };

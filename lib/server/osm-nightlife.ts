@@ -3,6 +3,14 @@ import { promisify } from "node:util"
 
 import type { OsmGridCell } from "@/lib/map/osm-grid"
 import { osmGridCellKey } from "@/lib/map/osm-grid"
+import {
+  buildNightlifeBboxQuery,
+  buildNightlifeRadiusQuery,
+  NIGHTLIFE_CACHE_VERSION,
+  normalizeNightlifeAmenity,
+  nightlifeFilterDescription,
+} from "@/lib/map/nightlife-venue-tags"
+import { isLocalNoiseAmenity } from "@/lib/map/venue-time"
 import { withOsmDiskCache } from "@/lib/server/osm-cache"
 
 const execFileAsync = promisify(execFile)
@@ -15,37 +23,6 @@ type OverpassElement = {
   center?: { lat: number; lon: number }
   tags?: Record<string, string>
 }
-
-const AMENITY_FILTER =
-  "^(pub|bar|nightclub|music_venue|hospital)$"
-
-const buildNightlifeBboxQuery = ({
-  south,
-  west,
-  north,
-  east,
-}: {
-  south: number
-  west: number
-  north: number
-  east: number
-}) => `[out:json][timeout:60];
-(
-  nwr(${south},${west},${north},${east})["amenity"~"${AMENITY_FILTER}"];
-  nwr(${south},${west},${north},${east})["amenity"~"^(pub|bar)$"]["live_music"="yes"];
-);
-out center tags;`
-
-const buildNightlifeRadiusQuery = (
-  lat: number,
-  lng: number,
-  radiusMeters: number
-) => `[out:json][timeout:60];
-(
-  nwr(around:${radiusMeters},${lat},${lng})["amenity"~"${AMENITY_FILTER}"];
-  nwr(around:${radiusMeters},${lat},${lng})["amenity"~"^(pub|bar)$"]["live_music"="yes"];
-);
-out center tags;`
 
 const OVERPASS_ENDPOINTS = [
   "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
@@ -119,8 +96,13 @@ const elementsToFeatureCollection = (
       }
       seen.add(featureId)
 
-      const amenity = element.tags?.amenity ?? null
-      const liveMusic = element.tags?.live_music === "yes"
+      const amenity = normalizeNightlifeAmenity(element.tags)
+      if (!isLocalNoiseAmenity(amenity)) {
+        return null
+      }
+
+      const liveMusic =
+        element.tags?.live_music === "yes" || amenity === "music_venue"
 
       return {
         type: "Feature" as const,
@@ -150,7 +132,7 @@ const elementsToFeatureCollection = (
     features,
     meta: {
       source: "osm-overpass",
-      filter: "pub|bar|nightclub|music_venue|hospital|live_music=yes",
+      filter: nightlifeFilterDescription,
       featureCount: features.length,
       retrievedAt: new Date().toISOString(),
       ...meta,
@@ -175,7 +157,7 @@ export const getNightlifeGeoJsonForCell = async (cell: OsmGridCell) =>
   withOsmDiskCache(
     "nightlife",
     [
-      "v3-grid-bbox",
+      NIGHTLIFE_CACHE_VERSION,
       osmGridCellKey(cell.row, cell.col),
       cell.west.toFixed(4),
       cell.south.toFixed(4),
@@ -187,7 +169,8 @@ export const getNightlifeGeoJsonForBbox = async (bbox: OsmNightlifeBboxInput) =>
   withOsmDiskCache(
     "nightlife",
     [
-      "v3-adhoc-bbox",
+      NIGHTLIFE_CACHE_VERSION,
+      "adhoc-bbox",
       bbox.west.toFixed(4),
       bbox.south.toFixed(4),
       bbox.east.toFixed(4),
@@ -203,7 +186,7 @@ export const getNightlifeGeoJson = async ({
 }: OsmNightlifeInput) =>
   withOsmDiskCache(
     "nightlife",
-    ["v2-local-noise-sources", lat.toFixed(3), lng.toFixed(3), radiusMeters],
+    [NIGHTLIFE_CACHE_VERSION, "radius", lat.toFixed(3), lng.toFixed(3), radiusMeters],
     () => fetchNightlifeGeoJson({ lat, lng, radiusMeters })
   )
 

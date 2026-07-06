@@ -56,6 +56,16 @@
   -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M4.5 10h11' stroke='%23000' stroke-width='1.75' stroke-linecap='round'/%3E%3C/svg%3E");
 }
 
+.map-noise-sampling .maplibregl-canvas-container,
+.map-noise-sampling .maplibregl-canvas {
+  cursor: crosshair !important;
+}
+
+.map-noise-sampling .maplibregl-ctrl,
+.map-noise-sampling .maplibregl-ctrl button {
+  cursor: pointer !important;
+}
+
 .map-data-credits-marquee-mask {
   -webkit-mask-image: linear-gradient(
     to right,

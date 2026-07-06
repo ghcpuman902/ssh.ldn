@@ -49,7 +49,7 @@ export const NOISE_AUDIO_CLIPS: Record<NoiseAudioSourceKind, NoiseAudioClip> = {
     description: "Jet pass-over — DEFRA airport noise layer",
     durationSec: 3.0,
     sourceFilename: "flight.mp3",
-    defaultGain: 0.65,
+    defaultGain: 0.82,
   },
 
   // ── OSM local sources (nightlife layer) ─────────────────────────────────

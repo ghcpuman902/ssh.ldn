@@ -50,13 +50,13 @@ export const AMENITY_FALLBACK_ACTIVITY: Record<
   },
   nightclub: {
     "weekday-day": 0.05,
-    "weekday-night": 0.85,
+    "weekday-night": 0,
     "weekend-day": 0.1,
     "weekend-night": 1,
   },
   music_venue: {
     "weekday-day": 0.05,
-    "weekday-night": 0.8,
+    "weekday-night": 0.35,
     "weekend-day": 0.15,
     "weekend-night": 0.95,
   },
@@ -87,6 +87,27 @@ export const slotToProbeDate = ({ week, part }: NoiseTimeSlot): Date => {
   return new Date(Date.UTC(year, month, 5, 1, 0, 0)) // Sun 01:00 UTC
 }
 
+/** Probe the breadth of each slot, not just one day, so weekend-only venues stand out. */
+export const slotToProbeDates = (slot: NoiseTimeSlot): Date[] => {
+  const year = 2026
+  const month = 6 // July — avoids DST edge cases in UK summer time
+
+  if (slot.part === "day") {
+    const days = slot.week === "weekday" ? [6, 7, 8, 9, 10] : [11, 12]
+    return days.flatMap((day) => [
+      new Date(Date.UTC(year, month, day, 12, 0, 0)),
+      new Date(Date.UTC(year, month, day, 17, 0, 0)),
+    ])
+  }
+
+  const nightStarts = slot.week === "weekday" ? [6, 7, 8, 9] : [10, 11]
+  return nightStarts.flatMap((day) => [
+    new Date(Date.UTC(year, month, day, 23, 0, 0)),
+    new Date(Date.UTC(year, month, day + 1, 1, 0, 0)),
+    new Date(Date.UTC(year, month, day + 1, 3, 0, 0)),
+  ])
+}
+
 const resolveAmenity = (
   amenity: string | null | undefined
 ): LocalNoiseAmenity => (isLocalNoiseAmenity(amenity) ? amenity : "pub")
@@ -99,26 +120,16 @@ const getFallbackActivity = (
   return AMENITY_FALLBACK_ACTIVITY[key][slotKey(slot)]
 }
 
-const isOpenFromHours = (
+const activityFromHours = (
   openingHours: string,
   slot: NoiseTimeSlot
-): boolean | null => {
+): number | null => {
   try {
     const oh = new opening_hours(openingHours)
-    const probe = slotToProbeDate(slot)
+    const probes = slotToProbeDates(slot)
+    const openProbeCount = probes.filter((probe) => oh.getState(probe)).length
 
-    if (slot.part === "day") {
-      return oh.getState(probe)
-    }
-
-    const nightStart = new Date(probe)
-    nightStart.setUTCHours(23, 0, 0, 0)
-    const nightEnd = new Date(probe)
-    nightEnd.setUTCHours(7, 0, 0, 0)
-
-    return (
-      oh.getState(nightStart) || oh.getState(probe) || oh.getState(nightEnd)
-    )
+    return openProbeCount / probes.length
   } catch {
     return null
   }
@@ -130,9 +141,9 @@ export const isVenueActiveInSlot = (
   slot: NoiseTimeSlot
 ): boolean => {
   if (openingHours) {
-    const parsed = isOpenFromHours(openingHours, slot)
+    const parsed = activityFromHours(openingHours, slot)
     if (parsed !== null) {
-      return parsed
+      return parsed > 0
     }
   }
 
@@ -148,9 +159,9 @@ export const venueSlotActivity = (
   const base = AMENITY_BASE_WEIGHT[key]
 
   if (openingHours) {
-    const parsed = isOpenFromHours(openingHours, slot)
+    const parsed = activityFromHours(openingHours, slot)
     if (parsed !== null) {
-      return parsed ? base : base * 0.15
+      return parsed > 0 ? base * Math.max(0.35, parsed) : 0
     }
   }
 

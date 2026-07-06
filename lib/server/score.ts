@@ -1,4 +1,8 @@
 import {
+  getPlanningNoiseRelevance,
+  type PlanningNoiseRelevance,
+} from "@/lib/map/planning-application-meta"
+import {
   buildEvidenceBundle,
   buildEvidenceBundleFromCoordinates,
 } from "@/lib/server/bundle"
@@ -10,6 +14,15 @@ import {
   DEFAULT_NOISE_TIME_SLOT,
   type NoiseTimeSlot,
 } from "@/lib/map/noise-time"
+import {
+  blendTransportNoiseScore,
+  buildTransportContributors,
+  transportIntensityToScore,
+} from "@/lib/map/transport-noise-scoring"
+import { parsePlanningDate } from "@/lib/server/planning"
+import {
+  presentPlanningApplications,
+} from "@/lib/server/planning-urls"
 
 const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value))
@@ -42,45 +55,49 @@ type PlanningApplicationLike = {
   distanceMeters: number | null
   decisionDate: string | null
   status: string | null
+  decisionType: string | null
+  applicationTypeFull: string | null
+  developmentType: string | null
+  description: string | null
 }
 
-const isPlanningApplicationActive = (
+const PLANNING_NOISE_RELEVANCE_WEIGHT: Record<PlanningNoiseRelevance, number> = {
+  low: 0.35,
+  medium: 0.7,
+  high: 1,
+}
+
+const getPlanningActivityWeight = (
   application: PlanningApplicationLike,
   now: number
 ) => {
-  const statusLower = application.status?.toLowerCase() ?? ""
+  const statusLower = [
+    application.status,
+    application.decisionType,
+  ]
+    .map((value) => value?.toLowerCase() ?? "")
+    .join(" ")
+
+  if (/refused|rejected|withdrawn|closed|not required|lapsed/.test(statusLower)) {
+    return 0.15
+  }
+
   if (
     !application.status ||
-    /pending|undecided|submitted|awaiting|progress/.test(statusLower)
+    /pending|undecided|submitted|awaiting|progress|received|opinion issued/.test(
+      statusLower
+    )
   ) {
-    return true
+    return 1
   }
 
-  if (!application.decisionDate) {
-    return true
-  }
-
-  const decisionTime = Date.parse(application.decisionDate)
-  if (Number.isNaN(decisionTime)) {
-    return true
+  const decisionTime = parsePlanningDate(application.decisionDate)
+  if (decisionTime === null) {
+    return 0.85
   }
 
   const ageYears = (now - decisionTime) / PLANNING_MILLIS_PER_YEAR
-  return ageYears <= PLANNING_RECENCY_YEARS
-}
-
-const PLANNING_DATA_GOV_UK_ENTITY_BASE_URL =
-  "https://www.planning.data.gov.uk/entity"
-const LONDON_PLANNING_DATAHUB_URL = "https://planningdata.london.gov.uk/"
-
-const planningApplicationUrl = (application: {
-  applicationId: string | null
-  source: string
-}) => {
-  if (application.source === "planning.data.gov.uk" && application.applicationId) {
-    return `${PLANNING_DATA_GOV_UK_ENTITY_BASE_URL}/${application.applicationId}`
-  }
-  return LONDON_PLANNING_DATAHUB_URL
+  return ageYears <= PLANNING_RECENCY_YEARS ? 0.85 : 0.35
 }
 
 /** Nearby construction/development activity is a plausible near-term noise source. */
@@ -97,11 +114,18 @@ const computePlanningScore = (applications: PlanningApplicationLike[]) => {
 
     const proximityWeight =
       1 - application.distanceMeters / PLANNING_RADIUS_METERS
-    const activityWeight = isPlanningApplicationActive(application, now)
-      ? 1
-      : 0.4
+    const activityWeight = getPlanningActivityWeight(application, now)
+    const relevanceWeight = PLANNING_NOISE_RELEVANCE_WEIGHT[
+      getPlanningNoiseRelevance({
+        status: application.status,
+        decisionType: application.decisionType,
+        applicationTypeFull: application.applicationTypeFull,
+        developmentType: application.developmentType,
+        description: application.description,
+      })
+    ]
 
-    return total + proximityWeight * activityWeight * 35
+    return total + proximityWeight * activityWeight * relevanceWeight * 35
   }, 0)
 
   return clamp(contribution, 0, 100)
@@ -160,7 +184,9 @@ export const scoreFromBundle = async ({
 
   const roadScore = normalizeDb(road)
   const railScore = normalizeDb(rail)
-  const airportScore = normalizeDb(airport, 40, 65)
+  const airportRawIntensity =
+    airport === null ? 0 : clamp((airport - 38) / (58 - 38), 0, 1)
+  const airportScore = transportIntensityToScore(airportRawIntensity, "airport")
   const trafficScore = bundle.sources.dft.aadfTotal
     ? Math.min(100, bundle.sources.dft.aadfTotal / 500)
     : 0
@@ -168,20 +194,27 @@ export const scoreFromBundle = async ({
   const planningScore = computePlanningScore(planningApplications)
   const floorAdj = clamp(1 - Math.max(floor - 1, 0) * 0.03, 0.7, 1)
 
-  const weighted =
-    0.3 * roadScore +
-    0.22 * railScore +
-    0.13 * airportScore +
-    0.15 * localNoiseScore +
-    0.1 * trafficScore +
-    0.1 * planningScore
+  const transportScore = blendTransportNoiseScore({
+    roadScore,
+    railScore,
+    airportScore,
+    localScore: localNoiseScore,
+    airportRawIntensity,
+  })
 
-  const noiseScore = Math.round(clamp(weighted * floorAdj, 0, 100))
+  const noiseScore = Math.round(
+    clamp(
+      (transportScore * 0.8 + trafficScore * 0.1 + planningScore * 0.1) * floorAdj,
+      0,
+      100
+    )
+  )
   const confidenceScore = Math.round(
     clamp(
       55 +
         (road !== null ? 10 : 0) +
         (rail !== null ? 10 : 0) +
+        (airport !== null && airport >= 45 ? 10 : 0) +
         (floor > 0 ? 10 : 0) +
         (facing !== "unknown" ? 5 : 0) +
         (localNoiseFeatures.length > 0 ? 5 : 0) +
@@ -192,10 +225,13 @@ export const scoreFromBundle = async ({
   )
 
   const contributors = [
-    { source: "road", weight: 0.3, score: Math.round(roadScore) },
-    { source: "rail", weight: 0.22, score: Math.round(railScore) },
-    { source: "airport", weight: 0.13, score: Math.round(airportScore) },
-    { source: "nightlife", weight: 0.15, score: Math.round(localNoiseScore) },
+    ...buildTransportContributors({
+      roadScore,
+      railScore,
+      airportScore,
+      localScore: localNoiseScore,
+      airportRawIntensity,
+    }),
     { source: "traffic", weight: 0.1, score: Math.round(trafficScore) },
     { source: "planning", weight: 0.1, score: Math.round(planningScore) },
   ].sort((a, b) => b.score - a.score)
@@ -233,16 +269,7 @@ export const scoreFromBundle = async ({
     },
     dominantSources: contributors.slice(0, 2).map((item) => item.source),
     evidenceRows: bundle.sources.osm.features.slice(0, 8),
-    planningApplications: planningApplications.slice(0, 5).map((application) => ({
-      applicationId: application.applicationId,
-      reference: application.reference,
-      description: application.description,
-      status: application.status,
-      decisionDate: application.decisionDate,
-      distanceMeters: application.distanceMeters,
-      planningAuthority: application.planningAuthority,
-      url: planningApplicationUrl(application),
-    })),
+    planningApplications: presentPlanningApplications(planningApplications),
     caveats: bundle.warnings,
     recommendedChecks: [
       "Visit during the active period if nearby venues, hospitals, or rail metrics are elevated.",
