@@ -19,6 +19,13 @@ import {
   LOCAL_AMENITY_META,
   NOISE_CONTRIBUTOR_META,
 } from "@/lib/map/noise-contributor-meta"
+import {
+  DEFAULT_VISUAL_LAYER_VISIBILITY,
+  VISUAL_LAYER_META,
+  VISUAL_LAYER_ORDER,
+  type VisualLayerKey,
+  type VisualLayerVisibility,
+} from "@/lib/map/visual-layers"
 import type { LocalAmenityLevels } from "@/hooks/use-cursor-noise"
 import { LOCAL_NOISE_AMENITIES } from "@/lib/map/venue-time"
 import { cn } from "@/lib/utils"
@@ -26,12 +33,14 @@ import type { NoiseTimeSlot } from "@/lib/map/noise-time"
 
 type NoiseLayerControlsProps = {
   visibility: NoiseLayerVisibility
+  visualVisibility?: VisualLayerVisibility
   timeSlot: NoiseTimeSlot
   intensityPercentages: NoiseAudioChannelLevels
   localAmenityPercentages: LocalAmenityLevels
   audioEnabled: boolean
   audioSampleMode?: "cursor" | "center"
   onVisibilityChange: (next: NoiseLayerVisibility) => void
+  onVisualVisibilityChange?: (next: VisualLayerVisibility) => void
   onTimeSlotChange: (slot: NoiseTimeSlot) => void
   onAudioEnabledChange: (enabled: boolean) => void
 }
@@ -174,6 +183,62 @@ const LayerToggle = ({
   )
 }
 
+const VisualLayerToggle = ({
+  layerKey,
+  active,
+  onToggle,
+}: {
+  layerKey: VisualLayerKey
+  active: boolean
+  onToggle: (key: VisualLayerKey, next: boolean) => void
+}) => {
+  const meta = VISUAL_LAYER_META[layerKey]
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          aria-pressed={active}
+          aria-label={`Toggle ${meta.label}`}
+          onClick={() => onToggle(layerKey, !active)}
+          className={cn(
+            "relative flex size-[29px] items-center justify-center overflow-hidden rounded-full border transition-colors",
+            active ? "border-border bg-white" : "border-border/40 bg-white/50"
+          )}
+        >
+          <span className="text-sm leading-none" aria-hidden="true">
+            {meta.emoji}
+          </span>
+          {!active ? (
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 flex items-center justify-center"
+            >
+              <span className="h-px w-[140%] rotate-45 bg-border/70" />
+            </span>
+          ) : null}
+        </button>
+      </TooltipTrigger>
+      <MapTooltipContent
+        side="left"
+        className="max-w-56 flex-col items-start gap-1 py-2 whitespace-normal"
+      >
+        <p className="font-medium">{meta.label}</p>
+        <p className="text-muted-foreground">{meta.description}</p>
+        <a
+          href={meta.datasetUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="text-foreground underline underline-offset-2 hover:text-primary"
+        >
+          Dataset details ↗
+        </a>
+      </MapTooltipContent>
+    </Tooltip>
+  )
+}
+
 const getAudioTooltipText = (
   audioEnabled: boolean,
   audioSampleMode: "cursor" | "center"
@@ -191,17 +256,23 @@ const getAudioTooltipText = (
 
 export const NoiseLayerControls = ({
   visibility,
+  visualVisibility = DEFAULT_VISUAL_LAYER_VISIBILITY,
   timeSlot,
   intensityPercentages,
   localAmenityPercentages,
   audioEnabled,
   audioSampleMode = "cursor",
   onVisibilityChange,
+  onVisualVisibilityChange,
   onTimeSlotChange,
   onAudioEnabledChange,
 }: NoiseLayerControlsProps) => {
   const handleToggle = (key: LayerKey, checked: boolean) => {
     onVisibilityChange({ ...visibility, [key]: checked })
+  }
+
+  const handleVisualToggle = (key: VisualLayerKey, checked: boolean) => {
+    onVisualVisibilityChange?.({ ...visualVisibility, [key]: checked })
   }
 
   const handleAudioToggle = () => {
@@ -272,7 +343,7 @@ export const NoiseLayerControls = ({
       <div
         role="group"
         aria-label="Noise layer visibility"
-        className="grid w-fit grid-cols-2 gap-1"
+        className="flex w-fit flex-row gap-1"
       >
         {LAYER_ORDER.map((key) => {
           const meta = LAYER_META[key]
@@ -305,6 +376,42 @@ export const NoiseLayerControls = ({
             />
           )
         })}
+      </div>
+
+      <div className="mt-3 mb-2 flex w-full items-center justify-end gap-0.5">
+        <p className="text-xs font-medium text-foreground">Visual layers</p>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              aria-label="About visual layers"
+              className="text-muted-foreground/70 transition-colors hover:text-muted-foreground"
+            >
+              <Info className="size-3" />
+            </button>
+          </TooltipTrigger>
+          <MapTooltipContent
+            side="left"
+            className="max-w-56 flex-col items-start whitespace-normal"
+          >
+            Context overlays for transport and greenery — not noise measurements.
+          </MapTooltipContent>
+        </Tooltip>
+      </div>
+
+      <div
+        role="group"
+        aria-label="Visual layer visibility"
+        className="flex w-fit flex-row gap-1"
+      >
+        {VISUAL_LAYER_ORDER.map((key) => (
+          <VisualLayerToggle
+            key={key}
+            layerKey={key}
+            active={visualVisibility[key]}
+            onToggle={handleVisualToggle}
+          />
+        ))}
       </div>
     </section>
   )

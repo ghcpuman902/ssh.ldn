@@ -1,14 +1,116 @@
+export type GeoJsonMeta = {
+  source: string;
+  filter?: string;
+  radiusMeters?: number;
+  center?: { lat: number; lng: number };
+  featureCount: number;
+  retrievedAt: string;
+  [key: string]: unknown;
+};
+
 export type RailLineFeatureCollection = {
   type: "FeatureCollection";
   features: Array<{
     type: "Feature";
-    id?: number;
+    id?: number | string;
     properties: Record<string, string | null>;
     geometry: {
       type: "LineString";
       coordinates: Array<[number, number]>;
     };
   }>;
+  meta?: GeoJsonMeta;
+};
+
+export type RailStationFeatureCollection = {
+  type: "FeatureCollection";
+  features: Array<{
+    type: "Feature";
+    id?: number | string;
+    properties: {
+      featureId: string;
+      name: string | null;
+      railway: string | null;
+    };
+    geometry: {
+      type: "Point";
+      coordinates: [number, number];
+    };
+  }>;
+  meta?: GeoJsonMeta;
+};
+
+export type TubeLineFeatureCollection = {
+  type: "FeatureCollection";
+  features: Array<{
+    type: "Feature";
+    id?: string;
+    properties: {
+      featureId: string;
+      lineId: string;
+      lineName: string | null;
+      color: string;
+    };
+    geometry: {
+      type: "LineString";
+      coordinates: Array<[number, number]>;
+    };
+  }>;
+  meta?: GeoJsonMeta;
+};
+
+export type TubeStationFeatureCollection = {
+  type: "FeatureCollection";
+  features: Array<{
+    type: "Feature";
+    id?: string;
+    properties: {
+      featureId: string;
+      name: string | null;
+      lineIds: string[];
+      zone: string | null;
+    };
+    geometry: {
+      type: "Point";
+      coordinates: [number, number];
+    };
+  }>;
+  meta?: GeoJsonMeta;
+};
+
+export type CanopyFeatureCollection = {
+  type: "FeatureCollection";
+  features: Array<{
+    type: "Feature";
+    id?: string | number;
+    properties: {
+      name: string | null;
+      canopyPercent: number | null;
+    };
+    geometry: {
+      type: "Polygon" | "MultiPolygon";
+      coordinates: number[][][] | number[][][][];
+    };
+  }>;
+  meta?: GeoJsonMeta;
+};
+
+export type GreenSpaceFeatureCollection = {
+  type: "FeatureCollection";
+  features: Array<{
+    type: "Feature";
+    id?: number | string;
+    properties: {
+      featureId: string;
+      name: string | null;
+      kind: string | null;
+    };
+    geometry: {
+      type: "Polygon" | "MultiPolygon" | "LineString";
+      coordinates: number[][] | number[][][] | number[][][][];
+    };
+  }>;
+  meta?: GeoJsonMeta;
 };
 
 export type NightlifeVenueProperties = {

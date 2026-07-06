@@ -69,7 +69,31 @@ export const OSM_RAIL_CREDIT: DataCredit = {
   datasetUrl: "https://www.openstreetmap.org/copyright",
   version: "Live Overpass extract",
   attribution: "© OpenStreetMap contributors · ODbL",
-  notes: "Overground rail lines only; tube/tunnel segments excluded.",
+  notes: "Overground rail lines and stations; tube/tunnel segments excluded.",
+}
+
+export const OSM_GREEN_SPACES_CREDIT: DataCredit = {
+  id: "osm-green-spaces",
+  title: "OpenStreetMap parks and green space",
+  provider: "OpenStreetMap contributors",
+  licence: "ODbL 1.0",
+  licenceUrl: "https://opendatacommons.org/licenses/odbl/1-0/",
+  datasetUrl: "https://www.openstreetmap.org/copyright",
+  version: "Live Overpass extract",
+  attribution: "© OpenStreetMap contributors · ODbL",
+  notes: "Parks, commons, woods, and recreation grounds.",
+}
+
+export const TFL_GEOMETRY_CREDIT: DataCredit = {
+  id: "tfl-tube-geometry",
+  title: "TfL Unified API route geometry",
+  provider: "Transport for London",
+  licence: "TfL Open Data",
+  licenceUrl: "https://tfl.gov.uk/info-for/open-data-users/",
+  datasetUrl: "https://api.tfl.gov.uk/",
+  version: "Live API extract",
+  attribution: "© Transport for London · Tube route geometry",
+  notes: "London Underground line paths and station locations.",
 }
 
 export const OSM_NIGHTLIFE_CREDIT: DataCredit = {
@@ -101,6 +125,9 @@ export const MAP_DATA_CREDITS: DataCredit[] = [
   CARTO_BASEMAP_CREDIT,
   ...Object.values(DEFRA_NOISE_CREDITS),
   OSM_NIGHTLIFE_CREDIT,
+  OSM_RAIL_CREDIT,
+  OSM_GREEN_SPACES_CREDIT,
+  TFL_GEOMETRY_CREDIT,
 ]
 
 export const getDefraCredit = (kind: DefraNoiseKind) =>

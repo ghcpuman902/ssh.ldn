@@ -28,6 +28,8 @@ import {
 import { MapDataCredits } from "@/components/map/map-data-credits"
 import { MapSearchBar, type MapSearchSelection } from "@/components/map/map-search-bar"
 import { NoiseLayerControls } from "@/components/map/noise-layer-controls"
+import { VisualMapLayers } from "@/components/map/visual-map-layers"
+import { useVisualLayerData } from "@/hooks/use-visual-layer-data"
 import type { MapTheme } from "@/lib/map/config"
 import {
   DEFAULT_NOISE_TIME_SLOT,
@@ -52,6 +54,10 @@ import {
   bindNightlifeEmojiImages,
   refreshNightlifeEmojiImages,
 } from "@/lib/map/nightlife-emoji-images"
+import {
+  DEFAULT_VISUAL_LAYER_VISIBILITY,
+  type VisualLayerVisibility,
+} from "@/lib/map/visual-layers"
 import { cn } from "@/lib/utils"
 
 import "maplibre-gl/dist/maplibre-gl.css"
@@ -87,6 +93,8 @@ export const MapShell = () => {
   const [layerVisibility, setLayerVisibility] = useState<NoiseLayerVisibility>(
     DEFAULT_NOISE_LAYER_VISIBILITY
   )
+  const [visualLayerVisibility, setVisualLayerVisibility] =
+    useState<VisualLayerVisibility>(DEFAULT_VISUAL_LAYER_VISIBILITY)
   const [timeSlot, setTimeSlot] = useState(DEFAULT_NOISE_TIME_SLOT)
   const [mapReady, setMapReady] = useState(false)
   const [analyseState, setAnalyseState] = useState<AnalyseState>({
@@ -117,6 +125,11 @@ export const MapShell = () => {
   const layoutGridRef = useRef<HTMLDivElement>(null)
   const applyZoomControlStyles = useMapZoomControlStyles(mapRef)
   const nightlifeGeoJson = useViewportNightlifeGeoJson(mapRef, mounted && mapReady)
+  const visualLayerData = useVisualLayerData(
+    mapRef,
+    mounted && mapReady,
+    visualLayerVisibility
+  )
   const mapTheme = resolveMapTheme(resolvedTheme)
   const audioSampleMode = isMobile ? "center" : "cursor"
   const { intensityPercentages, localAmenityPercentages } = useCursorNoise({
@@ -698,6 +711,10 @@ export const MapShell = () => {
                 timeSlot={timeSlot}
                 nightlifeGeoJson={nightlifeGeoJson}
               />
+              <VisualMapLayers
+                visibility={visualLayerVisibility}
+                data={visualLayerData}
+              />
               {selectedLocation ? (
                 <Marker
                   longitude={selectedLocation.longitude}
@@ -836,12 +853,14 @@ export const MapShell = () => {
             <div className="pointer-events-auto absolute bottom-24 right-2 w-fit max-w-[calc(100%-2rem)] md:bottom-28 md:right-2.5">
               <NoiseLayerControls
                 visibility={layerVisibility}
+                visualVisibility={visualLayerVisibility}
                 timeSlot={timeSlot}
                 intensityPercentages={intensityPercentages}
                 localAmenityPercentages={localAmenityPercentages}
                 audioEnabled={audioEnabled}
                 audioSampleMode={audioSampleMode}
                 onVisibilityChange={setLayerVisibility}
+                onVisualVisibilityChange={setVisualLayerVisibility}
                 onTimeSlotChange={setTimeSlot}
                 onAudioEnabledChange={handleAudioEnabledChange}
               />
