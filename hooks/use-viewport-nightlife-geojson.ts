@@ -11,7 +11,6 @@ import {
 import type { NightlifeFeatureCollection } from "@/lib/map/geojson-types"
 
 const DEBOUNCE_MS = 350
-const MAX_INFLIGHT = 2
 const BATCH_GAP_MS = 150
 
 const mergeNightlifeCollections = (
@@ -41,18 +40,15 @@ export const useViewportNightlifeGeoJson = (
 ) => {
   const fetchedKeysRef = useRef(new Set<string>())
   const [geoJson, setGeoJson] = useState<NightlifeFeatureCollection | null>(null)
-  const inflightCountRef = useRef(0)
   const abortControllersRef = useRef(new Set<AbortController>())
   const processingRef = useRef(false)
 
   const fetchGridCell = useCallback(async (row: number, col: number) => {
     const key = osmGridCellKey(row, col)
     if (fetchedKeysRef.current.has(key)) return
-    if (inflightCountRef.current >= MAX_INFLIGHT) return
 
     const controller = new AbortController()
     abortControllersRef.current.add(controller)
-    inflightCountRef.current += 1
 
     try {
       const params = new URLSearchParams({
@@ -72,7 +68,6 @@ export const useViewportNightlifeGeoJson = (
     } catch {
       // keep previously merged features visible
     } finally {
-      inflightCountRef.current -= 1
       abortControllersRef.current.delete(controller)
     }
   }, [])
@@ -101,9 +96,9 @@ export const useViewportNightlifeGeoJson = (
     const batch = pending.slice(0, limit)
 
     try {
-      await Promise.all(
-        batch.map((cell) => fetchGridCell(cell.row, cell.col))
-      )
+      for (const cell of batch) {
+        await fetchGridCell(cell.row, cell.col)
+      }
     } finally {
       processingRef.current = false
     }

@@ -35,7 +35,10 @@ import {
   LONDON_VIEWPORT,
   MAP_CONFIG,
 } from "@/lib/map/config"
-import { registerNightlifeEmojiImages } from "@/lib/map/nightlife-emoji-images"
+import {
+  bindNightlifeEmojiImages,
+  refreshNightlifeEmojiImages,
+} from "@/lib/map/nightlife-emoji-images"
 import { cn } from "@/lib/utils"
 
 import "maplibre-gl/dist/maplibre-gl.css"
@@ -121,15 +124,17 @@ export const MapShell = () => {
     const map = mapRef.current?.getMap()
     if (!map) return
 
-    const register = () => registerNightlifeEmojiImages(map)
-
-    if (map.isStyleLoaded()) {
-      register()
-      return
-    }
-
-    map.once("styledata", register)
+    bindNightlifeEmojiImages(map)
   }, [mounted, mapTheme])
+
+  useEffect(() => {
+    if (!nightlifeGeoJson?.features.length) return
+
+    const map = mapRef.current?.getMap()
+    if (!map) return
+
+    refreshNightlifeEmojiImages(map)
+  }, [nightlifeGeoJson])
 
   const handleSearch = useCallback(
     async ({ address, testPointId }: MapSearchSelection) => {
@@ -293,7 +298,7 @@ export const MapShell = () => {
               reuseMaps
               onLoad={() => {
                 const map = mapRef.current?.getMap()
-                if (map) registerNightlifeEmojiImages(map)
+                if (map) bindNightlifeEmojiImages(map)
                 setMapReady(true)
                 updateClip()
                 mapRef.current?.resize()
