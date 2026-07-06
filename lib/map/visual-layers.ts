@@ -27,8 +27,8 @@ export const VISUAL_LAYER_META: Record<VisualLayerKey, VisualLayerMeta> = {
     emoji: "🚇",
     label: "Tube lines & stations",
     description:
-      "London Underground route geometry and station locations from TfL Unified API.",
-    datasetUrl: "https://api.tfl.gov.uk/",
+      "London Underground track geometry from OpenStreetMap route relations, with TfL station names and line colours.",
+    datasetUrl: "https://www.openstreetmap.org/copyright",
   },
   greenSpaces: {
     emoji: "🌿",

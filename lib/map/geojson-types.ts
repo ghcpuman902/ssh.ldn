@@ -50,6 +50,8 @@ export type TubeLineFeatureCollection = {
       lineId: string;
       lineName: string | null;
       color: string;
+      /** Perpendicular pixel offset for overlapping shared trunk segments. */
+      lineOffset?: number;
     };
     geometry: {
       type: "LineString";
@@ -67,29 +69,13 @@ export type TubeStationFeatureCollection = {
     properties: {
       featureId: string;
       name: string | null;
+      label: string | null;
       lineIds: string[];
       zone: string | null;
     };
     geometry: {
       type: "Point";
       coordinates: [number, number];
-    };
-  }>;
-  meta?: GeoJsonMeta;
-};
-
-export type CanopyFeatureCollection = {
-  type: "FeatureCollection";
-  features: Array<{
-    type: "Feature";
-    id?: string | number;
-    properties: {
-      name: string | null;
-      canopyPercent: number | null;
-    };
-    geometry: {
-      type: "Polygon" | "MultiPolygon";
-      coordinates: number[][][] | number[][][][];
     };
   }>;
   meta?: GeoJsonMeta;

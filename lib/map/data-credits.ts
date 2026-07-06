@@ -86,14 +86,26 @@ export const OSM_GREEN_SPACES_CREDIT: DataCredit = {
 
 export const TFL_GEOMETRY_CREDIT: DataCredit = {
   id: "tfl-tube-geometry",
-  title: "TfL Unified API route geometry",
+  title: "TfL Unified API stations",
   provider: "Transport for London",
   licence: "TfL Open Data",
   licenceUrl: "https://tfl.gov.uk/info-for/open-data-users/",
   datasetUrl: "https://api.tfl.gov.uk/",
   version: "Live API extract",
-  attribution: "© Transport for London · Tube route geometry",
-  notes: "London Underground line paths and station locations.",
+  attribution: "© Transport for London · Tube stations",
+  notes: "Station names, zones, and line colours. Line geometry from OpenStreetMap.",
+}
+
+export const OSM_TUBE_GEOMETRY_CREDIT: DataCredit = {
+  id: "osm-tube-geometry",
+  title: "OpenStreetMap tube route geometry",
+  provider: "OpenStreetMap contributors",
+  licence: "ODbL 1.0",
+  licenceUrl: "https://opendatacommons.org/licenses/odbl/1-0/",
+  datasetUrl: "https://www.openstreetmap.org/copyright",
+  version: "Live Overpass extract",
+  attribution: "© OpenStreetMap contributors · Tube track geometry · ODbL",
+  notes: "London Underground route relations — dense track-following polylines.",
 }
 
 export const OSM_NIGHTLIFE_CREDIT: DataCredit = {
@@ -127,6 +139,7 @@ export const MAP_DATA_CREDITS: DataCredit[] = [
   OSM_NIGHTLIFE_CREDIT,
   OSM_RAIL_CREDIT,
   OSM_GREEN_SPACES_CREDIT,
+  OSM_TUBE_GEOMETRY_CREDIT,
   TFL_GEOMETRY_CREDIT,
 ]
 

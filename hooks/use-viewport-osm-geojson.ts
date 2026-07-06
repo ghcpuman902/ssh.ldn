@@ -159,28 +159,59 @@ export const useViewportOsmGeoJson = <T extends FeatureCollection>({
   return geoJson
 }
 
-export const useStaticGeoJson = <T>(url: string, enabled: boolean) => {
-  const [data, setData] = useState<T | null>(null)
+const staticGeoJsonCache = new Map<string, unknown>()
+const staticGeoJsonInflight = new Map<string, Promise<unknown>>()
+
+const loadStaticGeoJson = async <T>(url: string, signal?: AbortSignal): Promise<T | null> => {
+  if (staticGeoJsonCache.has(url)) {
+    return staticGeoJsonCache.get(url) as T
+  }
+
+  let request = staticGeoJsonInflight.get(url) as Promise<T | null> | undefined
+
+  if (!request) {
+    request = (async () => {
+      try {
+        const response = await fetch(url)
+        if (!response.ok) return null
+        const data = (await response.json()) as T
+        staticGeoJsonCache.set(url, data)
+        return data
+      } finally {
+        staticGeoJsonInflight.delete(url)
+      }
+    })()
+
+    staticGeoJsonInflight.set(url, request)
+  }
+
+  if (signal?.aborted) return null
+
+  return request
+}
+
+/** Fetch once, cache in memory, and prefetch before the layer is toggled on. */
+export const useStaticGeoJson = <T>(url: string, prefetch: boolean) => {
+  const [data, setData] = useState<T | null>(
+    () => (staticGeoJsonCache.get(url) as T | undefined) ?? null,
+  )
 
   useEffect(() => {
-    if (!enabled) return
+    if (!prefetch) return
+
+    if (staticGeoJsonCache.has(url)) {
+      setData(staticGeoJsonCache.get(url) as T)
+      return
+    }
 
     const controller = new AbortController()
 
-    const load = async () => {
-      try {
-        const response = await fetch(url, { signal: controller.signal })
-        if (!response.ok) return
-        setData((await response.json()) as T)
-      } catch {
-        // keep previous data if fetch fails
-      }
-    }
-
-    void load()
+    void loadStaticGeoJson<T>(url, controller.signal).then((next) => {
+      if (next) setData(next)
+    })
 
     return () => controller.abort()
-  }, [enabled, url])
+  }, [prefetch, url])
 
   return data
 }

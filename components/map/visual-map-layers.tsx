@@ -1,5 +1,6 @@
 "use client"
 
+import type { ExpressionSpecification } from "maplibre-gl"
 import { Layer, Source } from "react-map-gl/maplibre"
 
 import type { VisualLayerData } from "@/hooks/use-visual-layer-data"
@@ -8,6 +9,36 @@ import type { VisualLayerVisibility } from "@/lib/map/visual-layers"
 
 const layerVisibility = (visible: boolean): "visible" | "none" =>
   visible ? "visible" : "none"
+
+const TUBE_LINE_OFFSET: ExpressionSpecification = [
+  "coalesce",
+  ["get", "lineOffset"],
+  0,
+]
+
+const TUBE_LINE_WIDTH: ExpressionSpecification = [
+  "interpolate",
+  ["linear"],
+  ["zoom"],
+  10,
+  2.2,
+  14,
+  3.8,
+  16,
+  5,
+]
+
+const TUBE_LABEL_SIZE: ExpressionSpecification = [
+  "interpolate",
+  ["linear"],
+  ["zoom"],
+  12,
+  10,
+  14,
+  11,
+  16,
+  12,
+]
 
 type VisualMapLayersProps = {
   visibility: VisualLayerVisibility
@@ -105,6 +136,22 @@ export const VisualMapLayers = ({ visibility, data }: VisualMapLayersProps) => {
       {showTube && data.tubeLines ? (
         <Source id="tube-lines" type="geojson" data={data.tubeLines}>
           <Layer
+            id="tube-lines-casing"
+            type="line"
+            beforeId={BASEMAP_LABELS_LAYER_ID}
+            layout={{
+              visibility: layerVisibility(visibility.tube),
+              "line-join": "round",
+              "line-cap": "round",
+            }}
+            paint={{
+              "line-color": "#ffffff",
+              "line-width": TUBE_LINE_WIDTH,
+              "line-offset": TUBE_LINE_OFFSET,
+              "line-opacity": 0.92,
+            }}
+          />
+          <Layer
             id="tube-lines-stroke"
             type="line"
             beforeId={BASEMAP_LABELS_LAYER_ID}
@@ -120,13 +167,14 @@ export const VisualMapLayers = ({ visibility, data }: VisualMapLayersProps) => {
                 ["linear"],
                 ["zoom"],
                 10,
-                1.8,
+                1.4,
                 14,
-                3.2,
+                2.6,
                 16,
-                4.2,
+                3.4,
               ],
-              "line-opacity": 0.9,
+              "line-offset": TUBE_LINE_OFFSET,
+              "line-opacity": 0.95,
             }}
           />
         </Source>
@@ -146,16 +194,43 @@ export const VisualMapLayers = ({ visibility, data }: VisualMapLayersProps) => {
                 ["linear"],
                 ["zoom"],
                 10,
-                2,
+                2.5,
                 14,
-                3.5,
+                4,
                 16,
-                4.5,
+                5,
               ],
               "circle-color": "#ffffff",
               "circle-stroke-color": "#111827",
-              "circle-stroke-width": 1.2,
-              "circle-opacity": 0.95,
+              "circle-stroke-width": 1.4,
+              "circle-opacity": 0.98,
+            }}
+          />
+          <Layer
+            id="tube-stations-label"
+            type="symbol"
+            beforeId={BASEMAP_LABELS_LAYER_ID}
+            minzoom={12}
+            layout={{
+              visibility: layerVisibility(visibility.tube),
+              "text-field": [
+                "coalesce",
+                ["get", "label"],
+                ["get", "name"],
+                "",
+              ],
+              "text-size": TUBE_LABEL_SIZE,
+              "text-offset": [0, 1.15],
+              "text-anchor": "top",
+              "text-max-width": 8,
+              "text-allow-overlap": false,
+              "text-optional": true,
+              "text-padding": 2,
+            }}
+            paint={{
+              "text-color": "#111827",
+              "text-halo-color": "#ffffff",
+              "text-halo-width": 1.6,
             }}
           />
         </Source>

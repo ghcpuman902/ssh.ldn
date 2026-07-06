@@ -60,7 +60,7 @@ export const useVisualLayerData = (
 
   const tubeGeometry = useStaticGeoJson<TubeGeometryBundle>(
     "/api/map/tube-geometry",
-    enabled && visibility.tube,
+    enabled,
   )
 
   return useMemo(
