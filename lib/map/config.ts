@@ -39,16 +39,53 @@ export const isWithinLondonBounds = (latitude: number, longitude: number) =>
 const OSM_ATTRIBUTION =
   "© OpenStreetMap contributors · © CARTO"
 
-const createQuietRasterStyle = (
-  tiles: string[],
-  name: string
+/**
+ * High-zoom label overlay kicks in here — below this, small street labels stay
+ * under heatmaps as part of the full basemap.
+ */
+export const BASEMAP_LABEL_OVERLAY_MIN_ZOOM = 14
+
+/** Shared opacity for the high-zoom label overlay. */
+export const BASEMAP_LABEL_OVERLAY_OPACITY = 0.7
+
+/** Insert noise/POI layers before this id so labels stay on top. */
+export const BASEMAP_LABELS_LAYER_ID = "basemap-labels"
+
+const BASEMAP_PAINT = {
+  light: {
+    "raster-contrast": 0.08,
+    "raster-fade-duration": 0,
+  },
+  dark: {
+    "raster-contrast": 0.06,
+    "raster-fade-duration": 0,
+  },
+} as const
+
+/** CARTO bakes halos/shadows into label tiles — only fade + opacity here. */
+const BASEMAP_LABELS_PAINT = {
+  "raster-opacity": BASEMAP_LABEL_OVERLAY_OPACITY,
+  "raster-fade-duration": 0,
+} as const
+
+const createBasemapStyle = (
+  allTiles: string[],
+  labelTiles: string[],
+  name: string,
+  theme: "light" | "dark"
 ): StyleSpecification => ({
   version: 8,
   name,
   sources: {
     basemap: {
       type: "raster",
-      tiles,
+      tiles: allTiles,
+      tileSize: 256,
+      attribution: OSM_ATTRIBUTION,
+    },
+    "basemap-labels-src": {
+      type: "raster",
+      tiles: labelTiles,
       tileSize: 256,
       attribution: OSM_ATTRIBUTION,
     },
@@ -60,28 +97,48 @@ const createQuietRasterStyle = (
       source: "basemap",
       minzoom: 0,
       maxzoom: 20,
+      paint: BASEMAP_PAINT[theme],
+    },
+    {
+      id: BASEMAP_LABELS_LAYER_ID,
+      type: "raster",
+      source: "basemap-labels-src",
+      minzoom: BASEMAP_LABEL_OVERLAY_MIN_ZOOM,
+      maxzoom: 20,
+      paint: BASEMAP_LABELS_PAINT,
     },
   ],
 })
 
 /**
- * Muted basemaps derived from OpenStreetMap data.
- * Positron (light) and Dark Matter (dark) stay out of the way of overlays.
+ * Full Positron / Dark Matter basemap with a high-zoom label overlay above heatmaps.
+ * Positron/Dark Matter label tiles ship with subtle baked-in halos — no extra passes.
  */
 export const MAP_TILE_STYLES = {
-  light: createQuietRasterStyle(
+  light: createBasemapStyle(
     ["https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"],
-    "positron-quiet"
+    ["https://basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png"],
+    "positron-quiet",
+    "light"
   ),
-  dark: createQuietRasterStyle(
+  dark: createBasemapStyle(
     ["https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"],
-    "dark-matter-quiet"
+    ["https://basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png"],
+    "dark-matter-quiet",
+    "dark"
   ),
 } as const
 
 export type MapTheme = keyof typeof MAP_TILE_STYLES
 
 export const getMapStyle = (theme: MapTheme = "light") => MAP_TILE_STYLES[theme]
+
+/** Retina-aware canvas scale; capped to balance sharpness and GPU cost. */
+export const getMapPixelRatio = () => {
+  if (typeof window === "undefined") return 1
+
+  return Math.min(Math.max(window.devicePixelRatio || 1, 1), 3)
+}
 
 export const MAP_CONFIG = {
   minZoom: 9,
@@ -93,16 +150,16 @@ export const MAP_CONFIG = {
 
 /**
  * DEFRA strategic noise: z10–12 pre-cached (~13 MB for London via download script).
- * z13 loads on demand from DEFRA WMS and is write-through cached as you pan.
- * z14+ overzooms z13 — avoids GB-scale bulk downloads.
+ * z13–14 load on demand from DEFRA WMS and are write-through cached as you pan.
+ * z15+ overzooms z14 — avoids GB-scale bulk downloads.
  */
 export const NOISE_TILE_MIN_ZOOM = 10
 export const NOISE_TILE_PRECACHE_MAX_ZOOM = 12
-export const NOISE_TILE_MAX_ZOOM = 13
+export const NOISE_TILE_MAX_ZOOM = 14
 
 /**
  * Prebuilt OSM POI density tiles mirror the DEFRA overview strategy:
- * zoomed-out rendering is raster/pixel-based, then live symbols take over.
+ * zoomed-out rendering is raster/pixel-based through z14, then live symbols take over.
  */
 export const POI_DENSITY_TILE_MIN_ZOOM = 10
-export const POI_DENSITY_TILE_MAX_ZOOM = 12
+export const POI_DENSITY_TILE_MAX_ZOOM = 14

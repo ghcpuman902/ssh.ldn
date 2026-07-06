@@ -29,6 +29,27 @@ const londonBox = (): LngLatBox => {
 
 export const osmGridCellKey = (row: number, col: number) => `${row}:${col}`
 
+export const osmGridCellForLatLng = (
+  latitude: number,
+  longitude: number
+): OsmGridCell | null => {
+  const london = londonBox();
+
+  if (
+    longitude < london.west ||
+    longitude > london.east ||
+    latitude < london.south ||
+    latitude > london.north
+  ) {
+    return null;
+  }
+
+  const col = Math.floor((longitude - london.west) / OSM_GRID_CELL_DEG);
+  const row = Math.floor((latitude - london.south) / OSM_GRID_CELL_DEG);
+
+  return osmGridCellBbox(row, col);
+};
+
 export const osmGridCellBbox = (row: number, col: number): OsmGridCell => {
   const { west, south } = londonBox()
   const cellWest = west + col * OSM_GRID_CELL_DEG

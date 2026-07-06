@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo } from "react"
-import type { ExpressionSpecification } from "maplibre-gl"
+import type { ExpressionSpecification, FilterSpecification } from "maplibre-gl"
 import { Layer, Source } from "react-map-gl/maplibre"
 
 import {
@@ -11,6 +11,7 @@ import {
   type DefraMapKind,
 } from "@/lib/map/defra-layers"
 import {
+  BASEMAP_LABELS_LAYER_ID,
   NOISE_TILE_MAX_ZOOM,
   NOISE_TILE_MIN_ZOOM,
   POI_DENSITY_TILE_MAX_ZOOM,
@@ -101,6 +102,12 @@ const NIGHTLIFE_ICON_IMAGE: ExpressionSpecification = [
 const layerVisibility = (visible: boolean): "visible" | "none" =>
   visible ? "visible" : "none"
 
+const ACTIVE_LOCAL_SOURCE_FILTER: FilterSpecification = [
+  ">",
+  ["coalesce", ["get", "activity"], 0],
+  0.1,
+]
+
 const defraTileUrl = (kind: DefraMapKind, period: string) =>
   `/api/map/defra/${kind}/{z}/{x}/{y}.png?period=${period}`
 
@@ -173,6 +180,7 @@ const DefraNoiseRasterLayers = ({
           <Layer
             id={`defra-noise-${kind}-${period}-layer`}
             type="raster"
+            beforeId={BASEMAP_LABELS_LAYER_ID}
             layout={{ visibility: layerVisibility(visibility[kind]) }}
             paint={{
               "raster-opacity": Math.min(getOpacity(kind), 0.95),
@@ -218,6 +226,7 @@ const PoiDensityRasterLayer = ({
       <Layer
         id={`poi-density-${slot}-layer`}
         type="raster"
+        beforeId={BASEMAP_LABELS_LAYER_ID}
         layout={{ visibility: layerVisibility(visible) }}
         paint={{
           "raster-opacity": opacity * 0.82,
@@ -242,7 +251,9 @@ const NightlifeVenueLayers = ({
       <Layer
         id="nightlife-venues-noise-aura"
         type="circle"
+        beforeId={BASEMAP_LABELS_LAYER_ID}
         minzoom={13}
+        filter={ACTIVE_LOCAL_SOURCE_FILTER}
         layout={{
           visibility: layerVisibility(visible),
         }}
@@ -379,7 +390,9 @@ const NightlifeVenueLayers = ({
       <Layer
         id="nightlife-venues-noise-core"
         type="circle"
+        beforeId={BASEMAP_LABELS_LAYER_ID}
         minzoom={13}
+        filter={ACTIVE_LOCAL_SOURCE_FILTER}
         layout={{
           visibility: layerVisibility(visible),
         }}
@@ -479,10 +492,14 @@ const NightlifeVenueLayers = ({
         minzoom={11}
         maxzoom={14}
         filter={[
-          "any",
-          ["==", ["get", "amenity"], "hospital"],
-          ["==", ["get", "amenity"], "nightclub"],
-          ["==", ["get", "amenity"], "music_venue"],
+          "all",
+          ACTIVE_LOCAL_SOURCE_FILTER,
+          [
+            "any",
+            ["==", ["get", "amenity"], "hospital"],
+            ["==", ["get", "amenity"], "nightclub"],
+            ["==", ["get", "amenity"], "music_venue"],
+          ],
         ]}
         layout={{
           visibility: layerVisibility(visible),
@@ -507,6 +524,7 @@ const NightlifeVenueLayers = ({
         id="nightlife-venues-symbol"
         type="symbol"
         minzoom={14}
+        filter={ACTIVE_LOCAL_SOURCE_FILTER}
         layout={{
           visibility: layerVisibility(visible),
           "icon-image": NIGHTLIFE_ICON_IMAGE,

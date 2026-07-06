@@ -1,5 +1,12 @@
 import { extractUkPostcode } from "@/lib/server/geocode-types";
-import type { SearchSuggestion } from "@/lib/map/search-suggestions";
+
+type PostcodesAutocompleteSuggestion = {
+  id: string;
+  label: string;
+  address: string;
+  postcode?: string;
+  source: "postcodes.io";
+};
 
 const POSTCODES_IO_BASE = "https://api.postcodes.io";
 
@@ -21,7 +28,7 @@ type PostcodesQueryResponse = {
 const toPostcodeSuggestion = (
   postcode: string,
   adminDistrict?: string | null
-): SearchSuggestion => ({
+): PostcodesAutocompleteSuggestion => ({
   id: `postcode:${postcode.replace(/\s+/g, "")}`,
   label: adminDistrict ? `${postcode}, ${adminDistrict}` : postcode,
   address: postcode,
@@ -31,7 +38,7 @@ const toPostcodeSuggestion = (
 
 export const autocompleteWithPostcodesIo = async (
   query: string
-): Promise<SearchSuggestion[]> => {
+): Promise<PostcodesAutocompleteSuggestion[]> => {
   const trimmed = query.trim();
 
   if (trimmed.length < 2) {

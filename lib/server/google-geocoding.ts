@@ -35,6 +35,14 @@ export type GoogleGeocodeInput = {
   testPointId?: string;
 };
 
+export type GoogleReverseGeocodeInput = {
+  latitude: number;
+  longitude: number;
+};
+
+export const hasGoogleGeocodingKey = (): boolean =>
+  Boolean(process.env.GOOGLE_API_KEY?.trim());
+
 const getGoogleApiKey = (): string => {
   const apiKey = process.env.GOOGLE_API_KEY;
 
@@ -95,9 +103,7 @@ export const geocodeWithGoogle = async ({
   testPointId,
 }: GoogleGeocodeInput): Promise<GeocodeResult> => {
   const apiKey = getGoogleApiKey();
-  const warnings: string[] = [
-    "Google Geocoding API is billable; use server-side only and respect quota limits.",
-  ];
+  const warnings: string[] = ["Address matched using Google Maps."];
 
   const params = new URLSearchParams({
     address,
@@ -146,13 +152,79 @@ export const geocodeWithGoogle = async ({
 
   if (coordinatePrecision === "postcode") {
     warnings.push(
-      "Google returned postcode-level or approximate coordinates; lower confidence."
+      "This is an approximate location — try adding a house number or street name for a more precise pin."
     );
   }
 
   return {
     testPointId,
     inputAddress: address,
+    normalizedAddress: top.formatted_address,
+    latitude: top.geometry.location.lat,
+    longitude: top.geometry.location.lng,
+    postcode,
+    coordinatePrecision,
+    geocoderName: "google",
+    geocoderConfidence: confidenceFromPrecision(coordinatePrecision),
+    source: "google-geocoding",
+    sourceEndpoint: `GET ${GOOGLE_GEOCODE_BASE}`,
+    retrievedAt: new Date().toISOString(),
+    sourceLicence: "Google Maps Platform (Geocoding API)",
+    warnings,
+    rawResponse,
+  };
+};
+
+export const reverseGeocodeWithGoogle = async ({
+  latitude,
+  longitude,
+}: GoogleReverseGeocodeInput): Promise<GeocodeResult> => {
+  const apiKey = getGoogleApiKey();
+  const warnings: string[] = ["Location matched using Google Maps."];
+
+  const params = new URLSearchParams({
+    latlng: `${latitude},${longitude}`,
+    key: apiKey,
+    region: "gb",
+  });
+
+  const response = await fetch(`${GOOGLE_GEOCODE_BASE}?${params.toString()}`, {
+    headers: { Accept: "application/json" },
+    next: { revalidate: 0 },
+  });
+
+  const rawResponse = (await response.json()) as GoogleGeocodeResponse;
+
+  if (!response.ok) {
+    throw new Error(`Google Geocoding request failed (${response.status})`);
+  }
+
+  if (rawResponse.status === "ZERO_RESULTS") {
+    throw new Error("Google Geocoding returned no results for coordinates");
+  }
+
+  if (rawResponse.status !== "OK") {
+    throw new Error(
+      rawResponse.error_message ??
+        `Google Geocoding failed with status ${rawResponse.status}`
+    );
+  }
+
+  const top = rawResponse.results[0];
+
+  if (!top) {
+    throw new Error("Google Geocoding returned no results for coordinates");
+  }
+
+  const coordinatePrecision = inferPrecisionFromGoogle(
+    top.geometry.location_type,
+    top.types
+  );
+
+  const postcode = extractPostcodeFromComponents(top.address_components);
+
+  return {
+    inputAddress: `${latitude}, ${longitude}`,
     normalizedAddress: top.formatted_address,
     latitude: top.geometry.location.lat,
     longitude: top.geometry.location.lng,

@@ -51,6 +51,29 @@ export const useMapWindowClip = () => {
     container.style.clipPath = toClipPath(path)
   }, [])
 
+  const syncClipDuringTransition = useCallback(
+    (durationMs: number, onFrame?: () => void) => {
+      let rafId = 0
+      const start = performance.now()
+
+      const tick = () => {
+        updateClip()
+        onFrame?.()
+
+        if (performance.now() - start < durationMs + 48) {
+          rafId = requestAnimationFrame(tick)
+        }
+      }
+
+      rafId = requestAnimationFrame(tick)
+
+      return () => {
+        cancelAnimationFrame(rafId)
+      }
+    },
+    [updateClip]
+  )
+
   useEffect(() => {
     let rafId = 0
 
@@ -82,5 +105,6 @@ export const useMapWindowClip = () => {
     mapWindowRef,
     logoRef,
     updateClip,
+    syncClipDuringTransition,
   }
 }

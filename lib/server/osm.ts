@@ -1,6 +1,10 @@
 import { execFile } from "node:child_process"
 import { promisify } from "node:util"
 
+import {
+  buildNightlifeRadiusClauses,
+  normalizeNightlifeAmenity,
+} from "@/lib/map/nightlife-venue-tags"
 import { bearingDegrees, haversineMeters } from "@/lib/server/geo"
 
 const execFileAsync = promisify(execFile)
@@ -23,10 +27,7 @@ type OverpassElement = {
 const buildOverpassQuery = (lat: number, lng: number, radiusMeters: number) =>
   `[out:json][timeout:25];
 (
-  node(around:${radiusMeters},${lat},${lng})["amenity"~"^(pub|bar|nightclub|music_venue|hospital)$"];
-  way(around:${radiusMeters},${lat},${lng})["amenity"~"^(pub|bar|nightclub|music_venue|hospital)$"];
-  node(around:${radiusMeters},${lat},${lng})["amenity"~"pub|bar"]["live_music"="yes"];
-  way(around:${radiusMeters},${lat},${lng})["amenity"~"pub|bar"]["live_music"="yes"];
+${buildNightlifeRadiusClauses(lat, lng, radiusMeters)}
   node(around:${radiusMeters},${lat},${lng})["railway"~"rail|subway|light_rail|station"];
   way(around:${radiusMeters},${lat},${lng})["railway"~"rail|subway|light_rail"];
   way(around:${radiusMeters},${lat},${lng})["highway"~"motorway|trunk|primary|secondary"];
@@ -124,7 +125,7 @@ export const getOsmLocalContext = async ({
         osmId: element.id,
         osmType: element.type,
         name: element.tags?.name ?? null,
-        amenity: element.tags?.amenity ?? null,
+        amenity: normalizeNightlifeAmenity(element.tags),
         highway: element.tags?.highway ?? null,
         railway: element.tags?.railway ?? null,
         building: element.tags?.building ?? null,

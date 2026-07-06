@@ -2,11 +2,14 @@ import {
   type CoordinatePrecision,
   type GeocodeResult,
   confidenceFromPrecision,
+  extractUkPostcode,
   inferPrecisionFromNominatim,
 } from "@/lib/server/geocode-types";
-import { extractUkPostcode } from "@/lib/server/geocode-types";
+import { nominatimReverse, nominatimSearch } from "@/lib/server/nominatim-client";
+import { LONDON_BBOX } from "@/lib/map/config";
 
 const NOMINATIM_BASE = "https://nominatim.openstreetmap.org";
+const LONDON_VIEWBOX = `${LONDON_BBOX.west},${LONDON_BBOX.north},${LONDON_BBOX.east},${LONDON_BBOX.south}`;
 
 type NominatimResult = {
   place_id: number;
@@ -30,6 +33,11 @@ type NominatimResult = {
 export type NominatimGeocodeInput = {
   address: string;
   testPointId?: string;
+};
+
+export type NominatimReverseGeocodeInput = {
+  latitude: number;
+  longitude: number;
 };
 
 const mapAddresstypeToPrecision = (
@@ -62,30 +70,19 @@ export const geocodeWithNominatim = async ({
   testPointId,
 }: NominatimGeocodeInput): Promise<GeocodeResult> => {
   const warnings: string[] = [
-    "Nominatim is for development only; respect 1 req/s rate limit and OSM usage policy.",
+    "Address data provided by OpenStreetMap contributors.",
   ];
 
   const params = new URLSearchParams({
-    q: address,
-    format: "json",
+    q: address.includes("London") ? address : `${address}, London, UK`,
     limit: "1",
     countrycodes: "gb",
     addressdetails: "1",
+    viewbox: LONDON_VIEWBOX,
+    dedupe: "1",
   });
 
-  const response = await fetch(`${NOMINATIM_BASE}/search?${params.toString()}`, {
-    headers: {
-      Accept: "application/json",
-      "User-Agent": "ssh.ldn-hackathon-discovery/0.1 (local dev)",
-    },
-    next: { revalidate: 0 },
-  });
-
-  const rawResponse = (await response.json()) as NominatimResult[];
-
-  if (!response.ok) {
-    throw new Error(`Nominatim request failed (${response.status})`);
-  }
+  const rawResponse = (await nominatimSearch(params)) as NominatimResult[];
 
   const top = rawResponse[0];
 
@@ -113,6 +110,58 @@ export const geocodeWithNominatim = async ({
     geocoderConfidence: confidenceFromPrecision(coordinatePrecision),
     source: "nominatim",
     sourceEndpoint: `GET ${NOMINATIM_BASE}/search`,
+    retrievedAt: new Date().toISOString(),
+    sourceLicence: "ODbL (OpenStreetMap contributors)",
+    warnings,
+    rawResponse,
+  };
+};
+
+export const reverseGeocodeWithNominatim = async ({
+  latitude,
+  longitude,
+}: NominatimReverseGeocodeInput): Promise<GeocodeResult> => {
+  const warnings: string[] = [
+    "Location data provided by OpenStreetMap contributors.",
+  ];
+
+  const params = new URLSearchParams({
+    lat: String(latitude),
+    lon: String(longitude),
+    addressdetails: "1",
+    zoom: "18",
+  });
+
+  const rawResponse = (await nominatimReverse(params)) as
+    | (NominatimResult & { error?: string })
+    | { error: string };
+
+  if (!rawResponse || "error" in rawResponse) {
+    throw new Error(
+      (rawResponse as { error?: string })?.error ??
+        "Nominatim returned no results for coordinates"
+    );
+  }
+
+  const coordinatePrecision =
+    mapAddresstypeToPrecision(rawResponse.addresstype, rawResponse.class) !==
+    "unknown"
+      ? mapAddresstypeToPrecision(rawResponse.addresstype, rawResponse.class)
+      : inferPrecisionFromNominatim(rawResponse.type, rawResponse.class);
+
+  const postcode = rawResponse.address?.postcode ?? null;
+
+  return {
+    inputAddress: `${latitude}, ${longitude}`,
+    normalizedAddress: rawResponse.display_name,
+    latitude: Number(rawResponse.lat),
+    longitude: Number(rawResponse.lon),
+    postcode,
+    coordinatePrecision,
+    geocoderName: "nominatim",
+    geocoderConfidence: confidenceFromPrecision(coordinatePrecision),
+    source: "nominatim",
+    sourceEndpoint: `GET ${NOMINATIM_BASE}/reverse`,
     retrievedAt: new Date().toISOString(),
     sourceLicence: "ODbL (OpenStreetMap contributors)",
     warnings,

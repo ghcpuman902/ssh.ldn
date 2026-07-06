@@ -8,18 +8,38 @@ import {
   useState,
   type KeyboardEvent,
 } from "react"
-import { Loader2, MapPin, Search } from "lucide-react"
+import { Clock3, Crosshair, Loader2, MapPin, Search, X } from "lucide-react"
 
-import type { SearchSuggestion } from "@/lib/map/search-suggestions"
+import { buildGeocodeResultFromPlace } from "@/lib/map/build-geocode-result"
+import {
+  createAutocompleteSessionToken,
+  fetchPlaceSuggestions,
+  hasGooglePlacesClientKey,
+  resolvePlacePrediction,
+  type ResolvedPlace,
+} from "@/lib/map/google-places"
+import {
+  pushRecentSearch,
+  readRecentSearches,
+  recentSearchesToSuggestions,
+} from "@/lib/map/recent-searches"
+import {
+  mergeSearchSuggestions,
+  placeSuggestionsToSearchSuggestions,
+  type SearchSuggestion,
+} from "@/lib/map/search-suggestions"
+import type { GeocodeResult } from "@/lib/server/geocode-types"
 import { cn } from "@/lib/utils"
 
 export type MapSearchSelection = {
   address: string
-  testPointId?: string
+  placeId?: string
+  resolvedGeocode?: GeocodeResult
 }
 
 type MapSearchBarProps = {
   onSearch: (selection: MapSearchSelection) => void
+  onSelectFromMap?: () => void
   isSearching?: boolean
   variant?: "floating" | "docked"
   instanceId?: string
@@ -32,6 +52,7 @@ type MapSearchBarProps = {
 
 export const MapSearchBar = ({
   onSearch,
+  onSelectFromMap,
   isSearching = false,
   variant = "floating",
   instanceId = "search",
@@ -45,12 +66,16 @@ export const MapSearchBar = ({
   const listboxId = `${baseId}-${instanceId}`
   const containerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const sessionTokenRef =
+    useRef<google.maps.places.AutocompleteSessionToken | null>(null)
   const [queryInternal, setQueryInternal] = useState("")
   const [expandedInternal, setExpandedInternal] = useState(false)
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([])
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false)
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [activeIndex, setActiveIndex] = useState(-1)
+  const [placesAvailable] = useState(hasGooglePlacesClientKey)
+  const [recentSearches, setRecentSearches] = useState<SearchSuggestion[]>([])
 
   const query = queryProp ?? queryInternal
   const expanded =
@@ -78,31 +103,73 @@ export const MapSearchBar = ({
     [expandedProp, isDocked, onExpandedChange]
   )
 
-  const fetchSuggestions = useCallback(async (value: string) => {
-    setIsLoadingSuggestions(true)
+  const refreshRecentSearches = useCallback(() => {
+    setRecentSearches(recentSearchesToSuggestions(readRecentSearches()))
+  }, [])
 
-    try {
-      const params = new URLSearchParams({ q: value })
-      const response = await fetch(
-        `/api/discovery/postcodes/autocomplete?${params.toString()}`
-      )
-      const data = (await response.json()) as {
-        suggestions: SearchSuggestion[]
+  const ensureSessionToken = useCallback(async () => {
+    if (!sessionTokenRef.current) {
+      sessionTokenRef.current = await createAutocompleteSessionToken()
+    }
+
+    return sessionTokenRef.current
+  }, [])
+
+  const resetSessionToken = useCallback(() => {
+    sessionTokenRef.current = null
+  }, [])
+
+  const fetchSuggestions = useCallback(
+    async (value: string) => {
+      const trimmed = value.trim()
+
+      if (!placesAvailable) {
+        setSuggestions(
+          trimmed.length < 2 ? recentSearchesToSuggestions(readRecentSearches()) : []
+        )
+        return
       }
 
-      setSuggestions(data.suggestions ?? [])
-      setActiveIndex(-1)
-    } catch {
-      setSuggestions([])
-    } finally {
-      setIsLoadingSuggestions(false)
-    }
-  }, [])
+      if (trimmed.length < 2) {
+        refreshRecentSearches()
+        setSuggestions(recentSearchesToSuggestions(readRecentSearches()))
+        setActiveIndex(-1)
+        return
+      }
+
+      setIsLoadingSuggestions(true)
+
+      try {
+        const sessionToken = await ensureSessionToken()
+        const places = await fetchPlaceSuggestions({
+          input: trimmed,
+          sessionToken,
+        })
+
+        setSuggestions(
+          mergeSearchSuggestions(
+            [],
+            placeSuggestionsToSearchSuggestions(places)
+          )
+        )
+        setActiveIndex(-1)
+      } catch {
+        setSuggestions([])
+      } finally {
+        setIsLoadingSuggestions(false)
+      }
+    },
+    [ensureSessionToken, placesAvailable, refreshRecentSearches]
+  )
+
+  useEffect(() => {
+    refreshRecentSearches()
+  }, [refreshRecentSearches])
 
   useEffect(() => {
     if (!expanded) return
 
-    const debounceMs = query.trim().length >= 2 ? 220 : 0
+    const debounceMs = query.trim().length >= 2 ? 400 : 0
     const timeoutId = window.setTimeout(() => {
       void fetchSuggestions(query)
     }, debounceMs)
@@ -112,7 +179,17 @@ export const MapSearchBar = ({
 
   useEffect(() => {
     const handlePointerDown = (event: MouseEvent) => {
-      if (!containerRef.current?.contains(event.target as Node)) {
+      const container = containerRef.current
+      if (!container) return
+
+      // Other MapSearchBar instances (e.g. the mobile-floating variant while
+      // viewing desktop) stay mounted but hidden via responsive `display:
+      // none` classes. Their container can never "contain" a click target,
+      // so without this guard they'd treat every click as "outside" and
+      // force-collapse the shared expanded/query state.
+      if (container.offsetParent === null) return
+
+      if (!container.contains(event.target as Node)) {
         setShowSuggestions(false)
 
         if (!isDocked && !query.trim()) {
@@ -126,6 +203,80 @@ export const MapSearchBar = ({
     return () => document.removeEventListener("pointerdown", handlePointerDown)
   }, [isDocked, query, setExpanded])
 
+  const recordRecentSearch = useCallback(
+    (entry: { label: string; address: string; placeId?: string }) => {
+      pushRecentSearch(entry)
+      refreshRecentSearches()
+    },
+    [refreshRecentSearches]
+  )
+
+  const emitSearch = useCallback(
+    ({
+      address,
+      placeId,
+      resolvedGeocode,
+      label,
+    }: {
+      address: string
+      placeId?: string
+      resolvedGeocode?: GeocodeResult
+      label?: string
+    }) => {
+      recordRecentSearch({
+        label: label ?? address,
+        address,
+        placeId,
+      })
+
+      onSearch({
+        address,
+        placeId,
+        resolvedGeocode,
+      })
+      setShowSuggestions(false)
+      resetSessionToken()
+    },
+    [onSearch, recordRecentSearch, resetSessionToken]
+  )
+
+  const resolveAndSearch = useCallback(
+    async ({
+      address,
+      placeId,
+      label,
+    }: {
+      address: string
+      placeId?: string
+      label: string
+    }) => {
+      if (!placeId || !placesAvailable) {
+        emitSearch({ address, placeId, label })
+        return
+      }
+
+      setIsLoadingSuggestions(true)
+
+      try {
+        const resolved: ResolvedPlace = await resolvePlacePrediction({
+          placeId,
+        })
+
+        emitSearch({
+          address: resolved.normalizedAddress,
+          placeId,
+          label,
+          resolvedGeocode: buildGeocodeResultFromPlace(address, resolved),
+        })
+      } catch {
+        emitSearch({ address, placeId, label })
+      } finally {
+        setIsLoadingSuggestions(false)
+      }
+    },
+    [emitSearch, ensureSessionToken, placesAvailable]
+  )
+
   const handleExpand = () => {
     setExpanded(true)
     setShowSuggestions(true)
@@ -137,34 +288,65 @@ export const MapSearchBar = ({
 
     if (!trimmed) return
 
-    const matchedPreset = suggestions.find(
+    const matchedSuggestion = suggestions.find(
       (suggestion) =>
-        suggestion.source === "preset" &&
-        suggestion.address.toLowerCase() === trimmed.toLowerCase()
+        suggestion.address.toLowerCase() === trimmed.toLowerCase() ||
+        suggestion.label.toLowerCase() === trimmed.toLowerCase()
     )
 
-    onSearch({
+    if (matchedSuggestion) {
+      void resolveAndSearch({
+        address: matchedSuggestion.address,
+        placeId: matchedSuggestion.placeId,
+        label: matchedSuggestion.label,
+      })
+      return
+    }
+
+    void resolveAndSearch({
       address: trimmed,
-      testPointId: matchedPreset?.testPointId,
+      label: trimmed,
     })
-    setShowSuggestions(false)
   }
 
   const handleSelectSuggestion = (suggestion: SearchSuggestion) => {
-    setQuery(suggestion.address)
-    onSearch({
+    setQuery(suggestion.label)
+
+    void resolveAndSearch({
       address: suggestion.address,
-      testPointId: suggestion.testPointId,
+      placeId: suggestion.placeId,
+      label: suggestion.label,
     })
+  }
+
+  const handleSelectFromMapClick = () => {
     setShowSuggestions(false)
+    setActiveIndex(-1)
+    inputRef.current?.blur()
+
+    if (!isDocked && !query.trim()) {
+      setExpanded(false)
+    }
+
+    onSelectFromMap?.()
+  }
+
+  const handleClear = () => {
+    setQuery("")
+    setShowSuggestions(false)
+    setActiveIndex(-1)
+    resetSessionToken()
+    window.requestAnimationFrame(() => inputRef.current?.focus())
   }
 
   const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    const items = showRecentWhenIdle ? recentSearches : suggestions
+
     if (event.key === "ArrowDown") {
       event.preventDefault()
       setShowSuggestions(true)
       setActiveIndex((current) =>
-        current >= suggestions.length - 1 ? 0 : current + 1
+        current >= items.length - 1 ? 0 : current + 1
       )
       return
     }
@@ -173,7 +355,7 @@ export const MapSearchBar = ({
       event.preventDefault()
       setShowSuggestions(true)
       setActiveIndex((current) =>
-        current <= 0 ? suggestions.length - 1 : current - 1
+        current <= 0 ? items.length - 1 : current - 1
       )
       return
     }
@@ -181,8 +363,8 @@ export const MapSearchBar = ({
     if (event.key === "Enter") {
       event.preventDefault()
 
-      if (activeIndex >= 0 && suggestions[activeIndex]) {
-        handleSelectSuggestion(suggestions[activeIndex])
+      if (activeIndex >= 0 && items[activeIndex]) {
+        handleSelectSuggestion(items[activeIndex])
         return
       }
 
@@ -199,6 +381,17 @@ export const MapSearchBar = ({
     }
   }
 
+  const showRecentWhenIdle =
+    query.trim().length < 2 && recentSearches.length > 0 && !isLoadingSuggestions
+  const visibleSuggestions = showRecentWhenIdle ? recentSearches : suggestions
+  const listVisible =
+    expanded &&
+    showSuggestions &&
+    (Boolean(onSelectFromMap) ||
+      visibleSuggestions.length > 0 ||
+      isLoadingSuggestions ||
+      (!placesAvailable && query.trim().length >= 2))
+
   return (
     <div
       ref={containerRef}
@@ -206,7 +399,7 @@ export const MapSearchBar = ({
     >
       <div
         className={cn(
-          "flex flex-row-reverse items-center overflow-hidden rounded-full border border-border/60 bg-white transition-[width] duration-300 ease-out",
+          "group flex flex-row-reverse items-center overflow-hidden rounded-full border border-border/60 bg-white transition-[width] duration-300 ease-out",
           isDocked
             ? "w-full"
             : expanded
@@ -236,6 +429,18 @@ export const MapSearchBar = ({
           )}
         </button>
 
+        {expanded && query.trim() ? (
+          <button
+            type="button"
+            aria-label="Clear search"
+            disabled={isSearching}
+            onClick={handleClear}
+            className="flex size-11 shrink-0 items-center justify-center text-muted-foreground opacity-0 pointer-events-none transition-[opacity,color,background-color] duration-200 ease-out group-focus-within:pointer-events-auto group-focus-within:opacity-100 hover:bg-muted/60 hover:text-foreground disabled:opacity-60"
+          >
+            <X className="size-4" aria-hidden="true" />
+          </button>
+        ) : null}
+
         <div
           className={cn(
             "min-w-0 flex-1 overflow-hidden transition-[opacity,width] duration-300 ease-out",
@@ -248,11 +453,11 @@ export const MapSearchBar = ({
           <input
             ref={inputRef}
             id={`${listboxId}-input`}
-            type="search"
+            type="text"
             autoComplete="off"
             role="combobox"
             aria-autocomplete="list"
-            aria-expanded={showSuggestions && suggestions.length > 0}
+            aria-expanded={listVisible}
             aria-controls={`${listboxId}-listbox`}
             aria-activedescendant={
               activeIndex >= 0
@@ -275,7 +480,7 @@ export const MapSearchBar = ({
         </div>
       </div>
 
-      {expanded && showSuggestions && (suggestions.length > 0 || isLoadingSuggestions) ? (
+      {listVisible ? (
         <ul
           id={`${listboxId}-listbox`}
           role="listbox"
@@ -287,6 +492,31 @@ export const MapSearchBar = ({
               : "right-0 w-[min(calc(100vw-2rem),22rem)]"
           )}
         >
+          {onSelectFromMap ? (
+            <li role="presentation">
+              <button
+                type="button"
+                onMouseDown={(event) => {
+                  event.preventDefault()
+                  handleSelectFromMapClick()
+                }}
+                className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-medium text-foreground transition-colors hover:bg-muted/70"
+              >
+                <Crosshair
+                  className="size-3.5 shrink-0 text-primary"
+                  aria-hidden="true"
+                />
+                Select from map
+              </button>
+            </li>
+          ) : null}
+
+          {showRecentWhenIdle ? (
+            <li className="px-3 py-1.5 text-xs font-medium text-muted-foreground">
+              Recent searches
+            </li>
+          ) : null}
+
           {isLoadingSuggestions ? (
             <li className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground">
               <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
@@ -294,7 +524,13 @@ export const MapSearchBar = ({
             </li>
           ) : null}
 
-          {suggestions.map((suggestion, index) => (
+          {!placesAvailable && query.trim().length >= 2 && !isLoadingSuggestions ? (
+            <li className="px-3 py-2 text-sm text-muted-foreground">
+              Google Places is not configured. Set NEXT_PUBLIC_GOOGLE_API.
+            </li>
+          ) : null}
+
+          {visibleSuggestions.map((suggestion, index) => (
             <li key={suggestion.id} role="presentation">
               <button
                 id={`${listboxId}-option-${index}`}
@@ -302,7 +538,10 @@ export const MapSearchBar = ({
                 role="option"
                 aria-selected={activeIndex === index}
                 onMouseEnter={() => setActiveIndex(index)}
-                onClick={() => handleSelectSuggestion(suggestion)}
+                onMouseDown={(event) => {
+                  event.preventDefault()
+                  handleSelectSuggestion(suggestion)
+                }}
                 className={cn(
                   "flex w-full items-start gap-2 rounded-xl px-3 py-2 text-left text-sm transition-colors",
                   activeIndex === index
@@ -310,21 +549,19 @@ export const MapSearchBar = ({
                     : "text-foreground hover:bg-muted/70"
                 )}
               >
-                <MapPin
-                  className="mt-0.5 size-3.5 shrink-0 text-muted-foreground"
-                  aria-hidden="true"
-                />
+                {suggestion.source === "recent" ? (
+                  <Clock3
+                    className="mt-0.5 size-3.5 shrink-0 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                ) : (
+                  <MapPin
+                    className="mt-0.5 size-3.5 shrink-0 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                )}
                 <span className="min-w-0 flex-1">
                   <span className="block truncate">{suggestion.label}</span>
-                  {suggestion.source === "preset" ? (
-                    <span className="mt-0.5 block text-xs text-muted-foreground">
-                      Demo address
-                    </span>
-                  ) : suggestion.source === "nominatim" ? (
-                    <span className="mt-0.5 block text-xs text-muted-foreground">
-                      Location
-                    </span>
-                  ) : null}
                 </span>
               </button>
             </li>

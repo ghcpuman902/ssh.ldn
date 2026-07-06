@@ -1,17 +1,14 @@
 import { type NextRequest } from "next/server";
 
-import { geocodeAddress } from "@/lib/server/geocode";
-import { getTestPointById } from "@/lib/test-points";
+import { geocodeAddress, geocodeFromTestPoint } from "@/lib/server/geocode";
+import { getTestPoint } from "@/lib/server/test-points";
 
 export const GET = async (request: NextRequest) => {
   const testPointId = request.nextUrl.searchParams.get("testPointId");
   const addressParam = request.nextUrl.searchParams.get("address");
 
-  let address = addressParam ?? "";
-  let resolvedTestPointId: string | undefined;
-
   if (testPointId) {
-    const testPoint = getTestPointById(testPointId);
+    const testPoint = getTestPoint(testPointId);
 
     if (!testPoint) {
       return Response.json(
@@ -20,9 +17,10 @@ export const GET = async (request: NextRequest) => {
       );
     }
 
-    address = testPoint.address;
-    resolvedTestPointId = testPoint.id;
+    return Response.json(geocodeFromTestPoint(testPointId));
   }
+
+  const address = addressParam ?? "";
 
   if (!address.trim()) {
     return Response.json(
@@ -32,10 +30,7 @@ export const GET = async (request: NextRequest) => {
   }
 
   try {
-    const result = await geocodeAddress({
-      address,
-      testPointId: resolvedTestPointId,
-    });
+    const result = await geocodeAddress({ address });
 
     return Response.json(result);
   } catch (error) {

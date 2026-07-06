@@ -52,7 +52,7 @@ export const geocodeWithPostcodesIo = async ({
   }
 
   warnings.push(
-    "Postcodes.io returns postcode centroid only; property-level precision is not available."
+    "This shows the centre of the postcode area rather than the exact address — try adding a house number or street name for a more precise pin."
   );
 
   const { result } = rawResponse;

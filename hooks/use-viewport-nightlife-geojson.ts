@@ -2,17 +2,20 @@
 
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react"
 import type { MapRef } from "react-map-gl/maplibre"
+import { mutate } from "swr"
 
 import {
-  LONDON_CENTER,
-} from "@/lib/map/config"
+  fetchNightlifeCell,
+  nightlifeCellApiKey,
+} from "@/lib/client/nightlife-cell-cache"
+import { LONDON_CENTER } from "@/lib/map/config"
+import type { NightlifeFeatureCollection } from "@/lib/map/geojson-types"
 import {
   osmGridCellKey,
   osmGridCellsForViewport,
   osmGridFetchLimitForZoom,
   prioritizeOsmGridCells,
 } from "@/lib/map/osm-grid"
-import type { NightlifeFeatureCollection } from "@/lib/map/geojson-types"
 
 const DEBOUNCE_MS = 350
 const BATCH_GAP_MS = 150
@@ -38,6 +41,26 @@ const mergeNightlifeCollections = (
   }
 }
 
+const loadNightlifeCell = async (row: number, col: number, signal?: AbortSignal) => {
+  const key = nightlifeCellApiKey(row, col)
+
+  return mutate(
+    key,
+    async () => {
+      const data = await fetchNightlifeCell(row, col, signal)
+      if (!data) {
+        throw new Error(`Nightlife cell fetch failed: ${key}`)
+      }
+
+      return data
+    },
+    {
+      populateCache: true,
+      revalidate: false,
+    }
+  )
+}
+
 export const useViewportNightlifeGeoJson = (
   mapRef: RefObject<MapRef | null>,
   enabled: boolean
@@ -55,18 +78,9 @@ export const useViewportNightlifeGeoJson = (
     abortControllersRef.current.add(controller)
 
     try {
-      const params = new URLSearchParams({
-        row: String(row),
-        col: String(col),
-      })
-      const response = await fetch(
-        `/api/discovery/osm/nightlife?${params.toString()}`,
-        { signal: controller.signal }
-      )
+      const data = await loadNightlifeCell(row, col, controller.signal)
+      if (!data) return
 
-      if (!response.ok) return
-
-      const data = (await response.json()) as NightlifeFeatureCollection
       fetchedKeysRef.current.add(key)
       setGeoJson((current) => mergeNightlifeCollections(current, data))
     } catch {

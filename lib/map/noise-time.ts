@@ -29,8 +29,36 @@ export const NOISE_DAY_PARTS: Array<{
 ]
 
 export const DEFAULT_NOISE_TIME_SLOT: NoiseTimeSlot = {
-  week: "weekend",
-  part: "night",
+  week: "weekday",
+  part: "day",
+}
+
+const LONDON_TIME_ZONE = "Europe/London"
+
+const getLondonClock = (date: Date) => {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: LONDON_TIME_ZONE,
+    weekday: "short",
+    hour: "numeric",
+    hour12: false,
+  }).formatToParts(date)
+
+  const weekday = parts.find((part) => part.type === "weekday")?.value ?? "Mon"
+  const hour = Number(parts.find((part) => part.type === "hour")?.value ?? 12)
+
+  return { weekday, hour }
+}
+
+/** Map the current London clock to the nearest UI time slot. */
+export const getCurrentNoiseTimeSlot = (
+  date: Date = new Date()
+): NoiseTimeSlot => {
+  const { weekday, hour } = getLondonClock(date)
+  const week: NoiseWeekSegment =
+    weekday === "Sat" || weekday === "Sun" ? "weekend" : "weekday"
+  const part: NoiseDayPart = hour >= 7 && hour < 19 ? "day" : "night"
+
+  return { week, part }
 }
 
 export const encodeNoiseTimeSlot = ({ week, part }: NoiseTimeSlot) =>

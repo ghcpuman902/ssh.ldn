@@ -16,6 +16,11 @@ import { fileURLToPath } from "node:url"
 
 import openingHours from "opening_hours"
 
+import {
+  buildNightlifeBboxQuery,
+  normalizeNightlifeAmenity,
+} from "../lib/map/nightlife-venue-tags.mjs"
+
 const execFileAsync = promisify(execFile)
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..")
@@ -27,7 +32,7 @@ const MANIFEST_PATH = path.join(PUBLIC_ROOT, "manifest.json")
 const TILE_SIZE = 256
 const BOUNDS = { west: -0.57, south: 51.24, east: 0.36, north: 51.73 }
 const DEFAULT_MIN_ZOOM = 10
-const DEFAULT_MAX_ZOOM = 12
+const DEFAULT_MAX_ZOOM = 14
 const OVERPASS_ENDPOINTS = [
   "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
   "https://overpass.kumi.systems/api/interpreter",
@@ -64,13 +69,13 @@ const FALLBACK_ACTIVITY = {
   },
   nightclub: {
     "weekday-day": 0.01,
-    "weekday-night": 0.62,
+    "weekday-night": 0,
     "weekend-day": 0.03,
     "weekend-night": 1,
   },
   music_venue: {
     "weekday-day": 0.02,
-    "weekday-night": 0.58,
+    "weekday-night": 0.35,
     "weekend-day": 0.08,
     "weekend-night": 0.9,
   },
@@ -98,6 +103,8 @@ const OVERVIEW_RADIUS_BOOST_BY_ZOOM = {
   10: 1.9,
   11: 1.35,
   12: 1,
+  13: 0.82,
+  14: 0.68,
 }
 
 // Cap is the 0–1 normalisation denominator before colour ramping.
@@ -105,6 +112,8 @@ const NORMALIZATION_CAP_BY_ZOOM = {
   10: 0.9,
   11: 0.72,
   12: 0.58,
+  13: 0.5,
+  14: 0.44,
 }
 
 const MAX_FEATURE_CONTRIBUTION = {
@@ -128,12 +137,7 @@ const minZoom = getArgNumber("--min-zoom", DEFAULT_MIN_ZOOM)
 const maxZoom = getArgNumber("--max-zoom", DEFAULT_MAX_ZOOM)
 const useCache = args.has("--from-cache")
 
-const buildOverpassQuery = () => `[out:json][timeout:180];
-(
-  nwr(${BOUNDS.south},${BOUNDS.west},${BOUNDS.north},${BOUNDS.east})["amenity"~"^(pub|bar|nightclub|music_venue|hospital)$"];
-  nwr(${BOUNDS.south},${BOUNDS.west},${BOUNDS.north},${BOUNDS.east})["amenity"~"^(pub|bar)$"]["live_music"="yes"];
-);
-out center tags;`
+const buildOverpassQuery = () => buildNightlifeBboxQuery(BOUNDS)
 
 const fetchOverpass = async () => {
   const query = buildOverpassQuery()
@@ -183,7 +187,7 @@ const normaliseElements = (elements) => {
 
   for (const element of elements) {
     const coordinates = elementCoordinates(element)
-    const amenity = element.tags?.amenity
+    const amenity = normalizeNightlifeAmenity(element.tags)
     if (!coordinates || !(amenity in WEIGHTS)) continue
 
     const id = `${element.type}/${element.id}`
@@ -204,11 +208,25 @@ const normaliseElements = (elements) => {
   return features
 }
 
-const probeDateForSlot = (slot) => {
-  if (slot === "weekday-day") return new Date(Date.UTC(2026, 6, 1, 12, 0, 0))
-  if (slot === "weekday-night") return new Date(Date.UTC(2026, 6, 2, 1, 0, 0))
-  if (slot === "weekend-day") return new Date(Date.UTC(2026, 6, 4, 12, 0, 0))
-  return new Date(Date.UTC(2026, 6, 5, 1, 0, 0))
+const probeDatesForSlot = (slot) => {
+  const [week, part] = slot.split("-")
+  const year = 2026
+  const month = 6
+
+  if (part === "day") {
+    const days = week === "weekday" ? [6, 7, 8, 9, 10] : [11, 12]
+    return days.flatMap((day) => [
+      new Date(Date.UTC(year, month, day, 12, 0, 0)),
+      new Date(Date.UTC(year, month, day, 17, 0, 0)),
+    ])
+  }
+
+  const nightStarts = week === "weekday" ? [6, 7, 8, 9] : [10, 11]
+  return nightStarts.flatMap((day) => [
+    new Date(Date.UTC(year, month, day, 23, 0, 0)),
+    new Date(Date.UTC(year, month, day + 1, 1, 0, 0)),
+    new Date(Date.UTC(year, month, day + 1, 3, 0, 0)),
+  ])
 }
 
 const activityForSlot = (feature, slot) => {
@@ -217,9 +235,12 @@ const activityForSlot = (feature, slot) => {
   }
 
   try {
-    return new openingHours(feature.openingHours).getState(probeDateForSlot(slot))
-      ? 1
-      : 0.18
+    const oh = new openingHours(feature.openingHours)
+    const probes = probeDatesForSlot(slot)
+    const openProbeCount = probes.filter((probe) => oh.getState(probe)).length
+    const openShare = openProbeCount / probes.length
+
+    return openShare > 0 ? Math.max(0.35, openShare) : 0
   } catch {
     return FALLBACK_ACTIVITY[feature.amenity][slot]
   }

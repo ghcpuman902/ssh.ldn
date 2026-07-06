@@ -9,13 +9,13 @@ import { defraPeriodFromDayPart, type DefraMapKind } from "@/lib/map/defra-layer
 import type { NightlifeFeatureCollection } from "@/lib/map/geojson-types"
 import {
   createEmptyNoiseAudioChannelLevels,
-  NOISE_AUDIO_CHANNELS,
   type NoiseAudioChannelLevels,
 } from "@/lib/map/noise-audio-map"
 import { noiseAudioEngine } from "@/lib/map/noise-audio-engine"
 import type { NoiseTimeSlot } from "@/lib/map/noise-time"
 import {
   isLocalNoiseAmenity,
+  LOCAL_NOISE_AMENITIES,
   type LocalNoiseAmenity,
   venueSlotActivity,
 } from "@/lib/map/venue-time"
@@ -35,26 +35,24 @@ const LOCAL_POINT_IMPACT_BOOST: Record<LocalNoiseAmenity, number> = {
 
 type ScreenPoint = { x: number; y: number }
 
-const createMixPercentages = (levels: NoiseAudioChannelLevels) => {
-  const weightedLevels = Object.fromEntries(
-    Object.entries(levels).map(([key, level]) => {
-      const channel = NOISE_AUDIO_CHANNELS[key as keyof typeof levels]
-      return [key, level * channel.defaultGain]
-    })
-  ) as NoiseAudioChannelLevels
-  const total = Object.values(weightedLevels).reduce(
-    (sum, level) => sum + level,
-    0
-  )
-  if (total <= 0) return createEmptyNoiseAudioChannelLevels()
+export type LocalAmenityLevels = Record<LocalNoiseAmenity, number>
 
-  return Object.fromEntries(
-    Object.entries(weightedLevels).map(([key, level]) => [
-      key,
-      (level / total) * 100,
-    ])
+export const createEmptyLocalAmenityLevels = (): LocalAmenityLevels =>
+  LOCAL_NOISE_AMENITIES.reduce(
+    (levels, amenity) => ({ ...levels, [amenity]: 0 }),
+    {} as LocalAmenityLevels
+  )
+
+/** Map sampled 0–1 channel levels to 0–100 bar widths (absolute, not mix share). */
+const createIntensityPercentages = (levels: NoiseAudioChannelLevels) =>
+  Object.fromEntries(
+    Object.entries(levels).map(([key, level]) => [key, level * 100])
   ) as NoiseAudioChannelLevels
-}
+
+const createLocalAmenityPercentages = (levels: LocalAmenityLevels) =>
+  Object.fromEntries(
+    Object.entries(levels).map(([key, level]) => [key, level * 100])
+  ) as LocalAmenityLevels
 
 const pointFalloff = (distancePx: number) => {
   if (distancePx >= LOCAL_HOVER_RADIUS_PX) return 0
@@ -74,8 +72,11 @@ const computeLocalLevels = ({
   nightlifeGeoJson: NightlifeFeatureCollection | null
   timeSlot: NoiseTimeSlot
 }) => {
-  const levels = createEmptyNoiseAudioChannelLevels()
-  if (!nightlifeGeoJson) return levels
+  const channelLevels = createEmptyNoiseAudioChannelLevels()
+  const amenityLevels = createEmptyLocalAmenityLevels()
+  if (!nightlifeGeoJson) {
+    return { channelLevels, amenityLevels }
+  }
 
   for (const feature of nightlifeGeoJson.features) {
     const amenity = feature.properties.amenity
@@ -94,20 +95,25 @@ const computeLocalLevels = ({
     )
     const weight = Math.min(1, heatWeight * falloff * LOCAL_CHANNEL_BOOST)
 
+    amenityLevels[amenity] = Math.max(amenityLevels[amenity], weight)
+
     if (amenity === "pub" || amenity === "bar") {
-      levels.pubBar = Math.max(levels.pubBar, weight)
+      channelLevels.pubBar = Math.max(channelLevels.pubBar, weight)
       continue
     }
 
     if (amenity === "nightclub" || amenity === "music_venue") {
-      levels.nightclubMusicVenue = Math.max(levels.nightclubMusicVenue, weight)
+      channelLevels.nightclubMusicVenue = Math.max(
+        channelLevels.nightclubMusicVenue,
+        weight
+      )
       continue
     }
 
-    levels.hospital = Math.max(levels.hospital, weight)
+    channelLevels.hospital = Math.max(channelLevels.hospital, weight)
   }
 
-  return levels
+  return { channelLevels, amenityLevels }
 }
 
 type UseCursorNoiseInput = {
@@ -115,7 +121,8 @@ type UseCursorNoiseInput = {
   nightlifeGeoJson: NightlifeFeatureCollection | null
   timeSlot: NoiseTimeSlot
   layerVisibility: NoiseLayerVisibility
-  enabled: boolean
+  samplingEnabled: boolean
+  audioEnabled: boolean
   sampleMode?: "cursor" | "center"
 }
 
@@ -124,23 +131,55 @@ export const useCursorNoise = ({
   nightlifeGeoJson,
   timeSlot,
   layerVisibility,
-  enabled,
+  samplingEnabled,
+  audioEnabled,
   sampleMode = "cursor",
 }: UseCursorNoiseInput) => {
   const [levels, setLevels] = useState<NoiseAudioChannelLevels>(() =>
     createEmptyNoiseAudioChannelLevels()
   )
+  const [amenityLevels, setAmenityLevels] = useState<LocalAmenityLevels>(() =>
+    createEmptyLocalAmenityLevels()
+  )
   const sampleIdRef = useRef(0)
+  const audioEnabledRef = useRef(audioEnabled)
 
-  const mixPercentages = useMemo(() => createMixPercentages(levels), [levels])
+  useEffect(() => {
+    audioEnabledRef.current = audioEnabled
+  }, [audioEnabled])
+
+  const intensityPercentages = useMemo(
+    () => createIntensityPercentages(levels),
+    [levels]
+  )
+
+  const localAmenityPercentages = useMemo(
+    () => createLocalAmenityPercentages(amenityLevels),
+    [amenityLevels]
+  )
+
+  useEffect(() => {
+    if (!audioEnabled) {
+      void noiseAudioEngine.disable()
+      return
+    }
+
+    void noiseAudioEngine.enable().catch(() => {
+      const emptyLevels = createEmptyNoiseAudioChannelLevels()
+      noiseAudioEngine.setIntensities(emptyLevels)
+    })
+  }, [audioEnabled])
 
   useEffect(() => {
     const map = mapRef.current?.getMap()
-    if (!map || !enabled) {
+    if (!map || !samplingEnabled) {
       const emptyLevels = createEmptyNoiseAudioChannelLevels()
+      const emptyAmenityLevels = createEmptyLocalAmenityLevels()
       setLevels(emptyLevels)
-      noiseAudioEngine.setIntensities(emptyLevels)
-      void noiseAudioEngine.disable()
+      setAmenityLevels(emptyAmenityLevels)
+      if (audioEnabledRef.current) {
+        noiseAudioEngine.setIntensities(emptyLevels)
+      }
       return
     }
 
@@ -150,6 +189,17 @@ export const useCursorNoise = ({
     let latestZoom = map.getZoom()
     let cancelled = false
 
+    const applyLevels = (
+      nextLevels: NoiseAudioChannelLevels,
+      nextAmenityLevels: LocalAmenityLevels
+    ) => {
+      setLevels(nextLevels)
+      setAmenityLevels(nextAmenityLevels)
+      if (audioEnabledRef.current) {
+        noiseAudioEngine.setIntensities(nextLevels)
+      }
+    }
+
     const updateLevels = async () => {
       frameId = null
       const cursor = latestCursor
@@ -158,14 +208,19 @@ export const useCursorNoise = ({
 
       const sampleId = ++sampleIdRef.current
       const period = defraPeriodFromDayPart(timeSlot.part)
-      const nextLevels = layerVisibility.nightlife
-        ? computeLocalLevels({
-            map,
-            cursorPoint,
-            nightlifeGeoJson,
-            timeSlot,
-          })
-        : createEmptyNoiseAudioChannelLevels()
+      const nextLevels = createEmptyNoiseAudioChannelLevels()
+      let nextAmenityLevels = createEmptyLocalAmenityLevels()
+
+      if (layerVisibility.nightlife) {
+        const local = computeLocalLevels({
+          map,
+          cursorPoint,
+          nightlifeGeoJson,
+          timeSlot,
+        })
+        Object.assign(nextLevels, local.channelLevels)
+        nextAmenityLevels = local.amenityLevels
+      }
 
       await Promise.all(
         TRANSPORT_KINDS.map(async (kind) => {
@@ -183,8 +238,7 @@ export const useCursorNoise = ({
 
       if (cancelled || sampleId !== sampleIdRef.current) return
 
-      setLevels(nextLevels)
-      noiseAudioEngine.setIntensities(nextLevels)
+      applyLevels(nextLevels, nextAmenityLevels)
     }
 
     const scheduleUpdate = () => {
@@ -221,13 +275,15 @@ export const useCursorNoise = ({
       latestCursor = null
       latestCursorPoint = null
       const emptyLevels = createEmptyNoiseAudioChannelLevels()
-      setLevels(emptyLevels)
-      noiseAudioEngine.setIntensities(emptyLevels)
+      const emptyAmenityLevels = createEmptyLocalAmenityLevels()
+      applyLevels(emptyLevels, emptyAmenityLevels)
     }
 
     const handleZoom = () => {
       latestZoom = map.getZoom()
-      noiseAudioEngine.setMasterFromZoom(latestZoom)
+      if (audioEnabledRef.current) {
+        noiseAudioEngine.setMasterFromZoom(latestZoom)
+      }
       if (sampleMode === "center") {
         updateCenterSample()
         return
@@ -241,12 +297,9 @@ export const useCursorNoise = ({
       updateCenterSample()
     }
 
-    void noiseAudioEngine.enable().catch(() => {
-      const emptyLevels = createEmptyNoiseAudioChannelLevels()
-      setLevels(emptyLevels)
-      noiseAudioEngine.setIntensities(emptyLevels)
-    })
-    noiseAudioEngine.setMasterFromZoom(latestZoom)
+    if (audioEnabledRef.current) {
+      noiseAudioEngine.setMasterFromZoom(latestZoom)
+    }
     if (sampleMode === "center") {
       updateCenterSample()
       map.on("move", handleMove)
@@ -269,13 +322,35 @@ export const useCursorNoise = ({
       }
       map.off("zoom", handleZoom)
       const emptyLevels = createEmptyNoiseAudioChannelLevels()
+      const emptyAmenityLevels = createEmptyLocalAmenityLevels()
       setLevels(emptyLevels)
-      noiseAudioEngine.setIntensities(emptyLevels)
+      setAmenityLevels(emptyAmenityLevels)
+      if (audioEnabledRef.current) {
+        noiseAudioEngine.setIntensities(emptyLevels)
+      }
     }
-  }, [enabled, layerVisibility, mapRef, nightlifeGeoJson, sampleMode, timeSlot])
+  }, [
+    samplingEnabled,
+    layerVisibility,
+    mapRef,
+    nightlifeGeoJson,
+    sampleMode,
+    timeSlot,
+  ])
+
+  useEffect(() => {
+    if (!audioEnabled) return
+
+    noiseAudioEngine.setIntensities(levels)
+    const map = mapRef.current?.getMap()
+    if (map) {
+      noiseAudioEngine.setMasterFromZoom(map.getZoom())
+    }
+  }, [audioEnabled, levels, mapRef])
 
   return {
     levels,
-    mixPercentages,
+    intensityPercentages,
+    localAmenityPercentages,
   }
 }

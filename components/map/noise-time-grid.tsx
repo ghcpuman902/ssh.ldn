@@ -51,6 +51,12 @@ const BAR_COUNT: Record<NoiseWeekSegment, number> = {
   weekend: WEEKEND_BAR_COUNT,
 };
 
+/** w-1.5 (6px); bar gap and column gap are derived from this width. */
+const NOISE_BAR_WIDTH_CLASS = "w-1.5";
+const NOISE_BAR_GAP_CLASS = "gap-[3px]";
+const NOISE_BAR_ROW_CLASS = cn("flex items-stretch", NOISE_BAR_GAP_CLASS);
+const NOISE_GROUP_GAP_CLASS = "gap-x-1.5 gap-y-1";
+
 const getButtonStyles = (
   slot: NoiseTimeSlot,
   isSelected: boolean
@@ -121,16 +127,16 @@ const TimeSlotButton = ({
           aria-label={`${WEEK_SEGMENT_LABELS[slot.week]} ${partLabel}, ${hours}`}
           onClick={() => onChange(slot)}
           className={cn(
-            "inline-flex w-fit items-center justify-center rounded-2xl border p-1.5 transition-colors",
-            slot.part === "day" ? "h-10" : "h-7",
+            "inline-flex w-fit items-center justify-center rounded-lg border p-1 transition-colors",
+            slot.part === "day" ? "h-7" : "h-5",
             getButtonStyles(slot, isSelected)
           )}
         >
-          <div className="flex h-full items-stretch gap-0.5" aria-hidden="true">
+          <div className={cn("h-full", NOISE_BAR_ROW_CLASS)} aria-hidden="true">
             {Array.from({ length: barCount }, (_, index) => (
               <span
                 key={index}
-                className={cn("w-2 rounded-lg", getBarStyles(slot, isSelected))}
+                className={cn(NOISE_BAR_WIDTH_CLASS, "rounded-sm", getBarStyles(slot, isSelected))}
               />
             ))}
           </div>
@@ -147,9 +153,9 @@ export const NoiseTimeGrid = ({ value, onChange }: NoiseTimeGridProps) => {
   const selectedId = encodeNoiseTimeSlot(value);
 
   return (
-    <div className="w-fit space-y-1.5 border-b border-border/50 pb-3">
-      <div className="flex w-full items-center justify-end gap-1">
-        <p className="text-sm font-medium text-foreground">When</p>
+    <div className="w-fit space-y-1 border-b border-border/50 pb-2">
+      <div className="flex w-full items-center justify-end gap-0.5">
+        <p className="text-xs font-medium text-foreground">When</p>
         <Tooltip>
           <TooltipTrigger asChild>
             <button
@@ -157,7 +163,7 @@ export const NoiseTimeGrid = ({ value, onChange }: NoiseTimeGridProps) => {
               aria-label="About these time periods"
               className="text-muted-foreground/70 transition-colors hover:text-muted-foreground"
             >
-              <Info className="size-3.5" />
+              <Info className="size-3" />
             </button>
           </TooltipTrigger>
           <MapTooltipContent
@@ -172,21 +178,24 @@ export const NoiseTimeGrid = ({ value, onChange }: NoiseTimeGridProps) => {
       <div
         role="group"
         aria-label="Weekday or weekend and day or night noise period"
-        className="grid w-fit grid-cols-[auto_auto_auto] items-center gap-1.5"
+        className={cn(
+          "grid w-fit grid-cols-[auto_auto_auto] items-center",
+          NOISE_GROUP_GAP_CLASS
+        )}
       >
         <div aria-hidden="true" />
         {WEEK_SEGMENTS.map((week) => (
           <p
             key={week}
-            className="text-center text-[10px] font-medium tracking-wide text-muted-foreground"
+            className="text-center text-[9px] font-medium leading-none tracking-[-0.06em] text-muted-foreground"
           >
-            {WEEK_SEGMENT_LETTERS[week]}
+            {WEEK_SEGMENT_LETTERS[week].replace(/ /g, "")}
           </p>
         ))}
 
         {NOISE_DAY_PARTS.map(({ part, label }) => (
           <Fragment key={part}>
-            <p className="pr-1 text-xs font-medium text-muted-foreground">
+            <p className="pr-0.5 text-[10px] font-medium text-muted-foreground">
               {label}
             </p>
             {WEEK_SEGMENTS.map((week) => (
