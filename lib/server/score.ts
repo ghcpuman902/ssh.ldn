@@ -14,6 +14,11 @@ import {
   DEFAULT_NOISE_TIME_SLOT,
   type NoiseTimeSlot,
 } from "@/lib/map/noise-time"
+import {
+  blendTransportNoiseScore,
+  buildTransportContributors,
+  transportIntensityToScore,
+} from "@/lib/map/transport-noise-scoring"
 import { parsePlanningDate } from "@/lib/server/planning"
 import {
   presentPlanningApplications,
@@ -179,7 +184,9 @@ export const scoreFromBundle = async ({
 
   const roadScore = normalizeDb(road)
   const railScore = normalizeDb(rail)
-  const airportScore = normalizeDb(airport, 40, 65)
+  const airportRawIntensity =
+    airport === null ? 0 : clamp((airport - 38) / (58 - 38), 0, 1)
+  const airportScore = transportIntensityToScore(airportRawIntensity, "airport")
   const trafficScore = bundle.sources.dft.aadfTotal
     ? Math.min(100, bundle.sources.dft.aadfTotal / 500)
     : 0
@@ -187,20 +194,27 @@ export const scoreFromBundle = async ({
   const planningScore = computePlanningScore(planningApplications)
   const floorAdj = clamp(1 - Math.max(floor - 1, 0) * 0.03, 0.7, 1)
 
-  const weighted =
-    0.3 * roadScore +
-    0.22 * railScore +
-    0.13 * airportScore +
-    0.15 * localNoiseScore +
-    0.1 * trafficScore +
-    0.1 * planningScore
+  const transportScore = blendTransportNoiseScore({
+    roadScore,
+    railScore,
+    airportScore,
+    localScore: localNoiseScore,
+    airportRawIntensity,
+  })
 
-  const noiseScore = Math.round(clamp(weighted * floorAdj, 0, 100))
+  const noiseScore = Math.round(
+    clamp(
+      (transportScore * 0.8 + trafficScore * 0.1 + planningScore * 0.1) * floorAdj,
+      0,
+      100
+    )
+  )
   const confidenceScore = Math.round(
     clamp(
       55 +
         (road !== null ? 10 : 0) +
         (rail !== null ? 10 : 0) +
+        (airport !== null && airport >= 45 ? 10 : 0) +
         (floor > 0 ? 10 : 0) +
         (facing !== "unknown" ? 5 : 0) +
         (localNoiseFeatures.length > 0 ? 5 : 0) +
@@ -211,10 +225,13 @@ export const scoreFromBundle = async ({
   )
 
   const contributors = [
-    { source: "road", weight: 0.3, score: Math.round(roadScore) },
-    { source: "rail", weight: 0.22, score: Math.round(railScore) },
-    { source: "airport", weight: 0.13, score: Math.round(airportScore) },
-    { source: "nightlife", weight: 0.15, score: Math.round(localNoiseScore) },
+    ...buildTransportContributors({
+      roadScore,
+      railScore,
+      airportScore,
+      localScore: localNoiseScore,
+      airportRawIntensity,
+    }),
     { source: "traffic", weight: 0.1, score: Math.round(trafficScore) },
     { source: "planning", weight: 0.1, score: Math.round(planningScore) },
   ].sort((a, b) => b.score - a.score)

@@ -210,9 +210,10 @@ const DAY_BAR_GAP_CLASS = "gap-[3px]"
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
 /**
- * Hard-edged bands: bottom = earlier time, top = later time within the block.
- * Grid stacks midnight→midday (top row) above midday→midnight (bottom row) so
- * noon sits in the middle between the two rows.
+ * Hard-edged bands: top = earlier time, bottom = later time within the block.
+ * Grid stacks midnight→midday (top row) above midday→midnight (bottom row),
+ * so reading straight down the whole widget always moves forward in time —
+ * 12am at the very top, noon in the middle, 12am again at the very bottom.
  */
 const buildSteppedGradient = (samples: boolean[], openColor: string) => {
   if (samples.length === 0) {
@@ -227,7 +228,7 @@ const buildSteppedGradient = (samples: boolean[], openColor: string) => {
     return [`${color} ${start}%`, `${color} ${end}%`]
   })
 
-  return `linear-gradient(to top, ${stops.join(", ")})`
+  return `linear-gradient(to bottom, ${stops.join(", ")})`
 }
 
 const DayCoverageBar = ({

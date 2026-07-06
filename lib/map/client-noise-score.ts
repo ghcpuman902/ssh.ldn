@@ -8,9 +8,13 @@ import {
   computeLocalNoiseSourceScore,
   isLocalNoiseAmenity,
 } from "@/lib/map/venue-time";
+import {
+  blendTransportNoiseScore,
+  buildTransportContributors,
+  transportIntensityToScore,
+} from "@/lib/map/transport-noise-scoring";
 import { haversineMeters } from "@/lib/server/geo";
 
-const TRANSPORT_KINDS: DefraMapKind[] = ["road", "rail", "airport"];
 const LOCAL_RADIUS_METERS = 300;
 
 const clamp = (value: number, min: number, max: number) =>
@@ -27,11 +31,6 @@ const bandFromScore = (score: number) => {
     return "Mixed";
   }
   return "Low risk";
-};
-
-const intensityToScore = (intensity: number, kind: DefraMapKind) => {
-  const base = clamp(intensity, 0, 1) * 100;
-  return kind === "airport" ? clamp(base * 1.08, 0, 100) : base;
 };
 
 const sampleTransportIntensity = async ({
@@ -143,9 +142,9 @@ export const estimateClientNoiseScore = async ({
       collectLocalFeatures(latitude, longitude, nightlifeGeoJson),
     ]);
 
-  const roadScore = intensityToScore(roadIntensity, "road");
-  const railScore = intensityToScore(railIntensity, "rail");
-  const airportScore = intensityToScore(airportIntensity, "airport");
+  const roadScore = transportIntensityToScore(roadIntensity, "road");
+  const railScore = transportIntensityToScore(railIntensity, "rail");
+  const airportScore = transportIntensityToScore(airportIntensity, "airport");
 
   const localScoreInputs = localFeatures.map((feature) => ({
     amenity: feature.amenity,
@@ -193,30 +192,49 @@ export const estimateClientNoiseScore = async ({
     zoom,
   });
 
-  const weighted =
-    0.375 * roadScore +
-    0.275 * railScore +
-    0.1625 * airportScore +
-    0.1875 * localNoiseScore;
+  const airportDayIntensity = await sampleTransportIntensity({
+    kind: "airport",
+    period: "day",
+    latitude,
+    longitude,
+    zoom,
+  });
+  const airportNightIntensity = await sampleTransportIntensity({
+    kind: "airport",
+    period: "night",
+    latitude,
+    longitude,
+    zoom,
+  });
 
-  const noiseScore = Math.round(clamp(weighted, 0, 100));
+  const noiseScore = Math.round(
+    blendTransportNoiseScore({
+      roadScore,
+      railScore,
+      airportScore,
+      localScore: localNoiseScore,
+      airportRawIntensity: airportIntensity,
+    })
+  );
   const confidenceScore = Math.round(
     clamp(
       50 +
         (roadIntensity > 0 ? 12 : 0) +
         (railIntensity > 0 ? 12 : 0) +
+        (airportIntensity >= 0.12 ? 10 : 0) +
         (localFeatures.length > 0 ? 8 : 0),
       0,
       85
     )
   );
 
-  const contributors = [
-    { source: "road", weight: 0.375, score: Math.round(roadScore) },
-    { source: "rail", weight: 0.275, score: Math.round(railScore) },
-    { source: "airport", weight: 0.1625, score: Math.round(airportScore) },
-    { source: "nightlife", weight: 0.1875, score: Math.round(localNoiseScore) },
-  ].sort((left, right) => right.score - left.score);
+  const contributors = buildTransportContributors({
+    roadScore,
+    railScore,
+    airportScore,
+    localScore: localNoiseScore,
+    airportRawIntensity: airportIntensity,
+  });
 
   return {
     noiseScore,
@@ -228,13 +246,20 @@ export const estimateClientNoiseScore = async ({
     contributors,
     timeProfile: {
       day: Math.round(
-        Math.max(intensityToScore(roadDayIntensity, "road"), localNoiseDayScore)
+        Math.max(
+          transportIntensityToScore(roadDayIntensity, "road"),
+          transportIntensityToScore(airportDayIntensity, "airport"),
+          localNoiseDayScore
+        )
       ),
-      evening: Math.round(intensityToScore(roadEveningIntensity, "road")),
+      evening: Math.round(
+        transportIntensityToScore(roadEveningIntensity, "road")
+      ),
       night: Math.round(
         Math.max(
-          intensityToScore(roadNightIntensity, "road"),
-          intensityToScore(railNightIntensity, "rail"),
+          transportIntensityToScore(roadNightIntensity, "road"),
+          transportIntensityToScore(railNightIntensity, "rail"),
+          transportIntensityToScore(airportNightIntensity, "airport"),
           localNoiseNightScore
         )
       ),

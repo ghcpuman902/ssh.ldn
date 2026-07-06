@@ -20,6 +20,7 @@ import {
   venueSlotActivity,
 } from "@/lib/map/venue-time"
 import { sampleDefraRasterIntensity } from "@/lib/map/raster-pixel-sampler"
+import { boostAirportRasterIntensity } from "@/lib/map/transport-noise-scoring"
 
 const TRANSPORT_KINDS: DefraMapKind[] = ["road", "rail", "airport"]
 const LOCAL_HOVER_RADIUS_PX = 64
@@ -232,7 +233,13 @@ export const useCursorNoise = ({
             longitude: cursor.longitude,
             latitude: cursor.latitude,
             zoom: latestZoom,
-          }).catch(() => 0)
+          })
+            .then((intensity) =>
+              kind === "airport"
+                ? boostAirportRasterIntensity(intensity)
+                : intensity
+            )
+            .catch(() => 0)
         })
       )
 
