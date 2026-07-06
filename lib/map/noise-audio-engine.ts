@@ -10,6 +10,8 @@ import { MAP_CONFIG } from "@/lib/map/config"
 const MAX_MASTER_GAIN = 0.9
 const MIN_ACTIVE_MASTER_GAIN = 0.05
 const GAIN_RAMP_SECONDS = 0.08
+/** Below this channel gain the loop is inaudible — treat as off to avoid ghost bleed. */
+const CHANNEL_GAIN_SILENCE_THRESHOLD = 0.012
 
 const clamp01 = (value: number) => Math.min(1, Math.max(0, value))
 
@@ -157,7 +159,11 @@ class NoiseAudioEngine {
     for (const id of NOISE_AUDIO_CHANNEL_IDS) {
       const node = this.nodes.get(id)
       const channel = NOISE_AUDIO_CHANNELS[id]
-      this.rampGain(node?.gain ?? null, this.levels[id] * channel.defaultGain)
+      const targetGain = this.levels[id] * channel.defaultGain
+      this.rampGain(
+        node?.gain ?? null,
+        targetGain < CHANNEL_GAIN_SILENCE_THRESHOLD ? 0 : targetGain
+      )
     }
   }
 

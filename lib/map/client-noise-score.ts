@@ -9,6 +9,7 @@ import {
   isLocalNoiseAmenity,
 } from "@/lib/map/venue-time";
 import {
+  airportZoneStrengthFromRaster,
   blendTransportNoiseScore,
   buildTransportContributors,
   transportIntensityToScore,
@@ -145,6 +146,7 @@ export const estimateClientNoiseScore = async ({
   const roadScore = transportIntensityToScore(roadIntensity, "road");
   const railScore = transportIntensityToScore(railIntensity, "rail");
   const airportScore = transportIntensityToScore(airportIntensity, "airport");
+  const airportZoneStrength = airportZoneStrengthFromRaster(airportIntensity);
 
   const localScoreInputs = localFeatures.map((feature) => ({
     amenity: feature.amenity,
@@ -213,7 +215,7 @@ export const estimateClientNoiseScore = async ({
       railScore,
       airportScore,
       localScore: localNoiseScore,
-      airportRawIntensity: airportIntensity,
+      airportZoneStrength,
     })
   );
   const confidenceScore = Math.round(
@@ -233,7 +235,7 @@ export const estimateClientNoiseScore = async ({
     railScore,
     airportScore,
     localScore: localNoiseScore,
-    airportRawIntensity: airportIntensity,
+    airportZoneStrength,
   });
 
   return {

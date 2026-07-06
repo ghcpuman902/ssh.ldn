@@ -15,9 +15,10 @@ import {
   type NoiseTimeSlot,
 } from "@/lib/map/noise-time"
 import {
+  airportDbToScore,
+  airportZoneStrengthFromDb,
   blendTransportNoiseScore,
   buildTransportContributors,
-  transportIntensityToScore,
 } from "@/lib/map/transport-noise-scoring"
 import { parsePlanningDate } from "@/lib/server/planning"
 import {
@@ -184,9 +185,8 @@ export const scoreFromBundle = async ({
 
   const roadScore = normalizeDb(road)
   const railScore = normalizeDb(rail)
-  const airportRawIntensity =
-    airport === null ? 0 : clamp((airport - 38) / (58 - 38), 0, 1)
-  const airportScore = transportIntensityToScore(airportRawIntensity, "airport")
+  const airportScore = airportDbToScore(airport)
+  const airportZoneStrength = airportZoneStrengthFromDb(airport)
   const trafficScore = bundle.sources.dft.aadfTotal
     ? Math.min(100, bundle.sources.dft.aadfTotal / 500)
     : 0
@@ -199,7 +199,7 @@ export const scoreFromBundle = async ({
     railScore,
     airportScore,
     localScore: localNoiseScore,
-    airportRawIntensity,
+    airportZoneStrength,
   })
 
   const noiseScore = Math.round(
@@ -230,7 +230,7 @@ export const scoreFromBundle = async ({
       railScore,
       airportScore,
       localScore: localNoiseScore,
-      airportRawIntensity,
+      airportZoneStrength,
     }),
     { source: "traffic", weight: 0.1, score: Math.round(trafficScore) },
     { source: "planning", weight: 0.1, score: Math.round(planningScore) },

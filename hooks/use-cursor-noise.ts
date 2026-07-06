@@ -21,9 +21,11 @@ import {
 } from "@/lib/map/venue-time"
 import { sampleDefraRasterIntensity } from "@/lib/map/raster-pixel-sampler"
 import { boostAirportRasterIntensity } from "@/lib/map/transport-noise-scoring"
+import { haversineMeters } from "@/lib/server/geo"
 
 const TRANSPORT_KINDS: DefraMapKind[] = ["road", "rail", "airport"]
-const LOCAL_HOVER_RADIUS_PX = 64
+/** Match the score's local radius so audio agrees with the analysis. */
+const LOCAL_AUDIO_RADIUS_METERS = 300
 const LOCAL_CHANNEL_BOOST = 1.35
 
 const LOCAL_POINT_IMPACT_BOOST: Record<LocalNoiseAmenity, number> = {
@@ -55,21 +57,19 @@ const createLocalAmenityPercentages = (levels: LocalAmenityLevels) =>
     Object.entries(levels).map(([key, level]) => [key, level * 100])
   ) as LocalAmenityLevels
 
-const pointFalloff = (distancePx: number) => {
-  if (distancePx >= LOCAL_HOVER_RADIUS_PX) return 0
+const distanceFalloff = (distanceMeters: number) => {
+  if (distanceMeters >= LOCAL_AUDIO_RADIUS_METERS) return 0
 
-  const normalized = 1 - distancePx / LOCAL_HOVER_RADIUS_PX
+  const normalized = 1 - distanceMeters / LOCAL_AUDIO_RADIUS_METERS
   return normalized * normalized
 }
 
 const computeLocalLevels = ({
-  map,
-  cursorPoint,
+  cursor,
   nightlifeGeoJson,
   timeSlot,
 }: {
-  map: MapLibreMap
-  cursorPoint: ScreenPoint
+  cursor: { latitude: number; longitude: number }
   nightlifeGeoJson: NightlifeFeatureCollection | null
   timeSlot: NoiseTimeSlot
 }) => {
@@ -84,9 +84,13 @@ const computeLocalLevels = ({
     if (!isLocalNoiseAmenity(amenity)) continue
 
     const [longitude, latitude] = feature.geometry.coordinates
-    const point = map.project([longitude, latitude])
-    const distancePx = Math.hypot(point.x - cursorPoint.x, point.y - cursorPoint.y)
-    const falloff = pointFalloff(distancePx)
+    const distanceMeters = haversineMeters(
+      cursor.latitude,
+      cursor.longitude,
+      latitude,
+      longitude
+    )
+    const falloff = distanceFalloff(distanceMeters)
     if (falloff <= 0) continue
 
     const heatWeight = Math.min(
@@ -214,8 +218,7 @@ export const useCursorNoise = ({
 
       if (layerVisibility.nightlife) {
         const local = computeLocalLevels({
-          map,
-          cursorPoint,
+          cursor,
           nightlifeGeoJson,
           timeSlot,
         })

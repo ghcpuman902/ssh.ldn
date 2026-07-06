@@ -3,7 +3,10 @@ import {
   NOISE_TILE_MIN_ZOOM,
 } from "@/lib/map/config"
 import type { DefraMapKind, DefraNoisePeriod } from "@/lib/map/defra-layers"
-import { defraRasterPixelToIntensity } from "@/lib/map/defra-raster-legend"
+import {
+  defraRasterPixelToIntensity,
+  sanitizeTransportRasterIntensity,
+} from "@/lib/map/defra-raster-legend"
 import { lngLatToTilePixel } from "@/lib/map/web-mercator"
 
 const TILE_SIZE = 256
@@ -105,10 +108,12 @@ export const sampleDefraRasterIntensity = async ({
 
   const index = (tile.pixelY * TILE_SIZE + tile.pixelX) * 4
 
-  return defraRasterPixelToIntensity({
+  const intensity = defraRasterPixelToIntensity({
     red: imageData.data[index] ?? 0,
     green: imageData.data[index + 1] ?? 0,
     blue: imageData.data[index + 2] ?? 0,
     alpha: imageData.data[index + 3] ?? 0,
   })
+
+  return sanitizeTransportRasterIntensity(intensity, kind)
 }
