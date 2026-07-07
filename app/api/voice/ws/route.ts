@@ -5,9 +5,10 @@ import {
   getSpeechEngine,
   getSpeechEngineServer,
 } from "@/lib/server/speech-engine"
-
-export const runtime = "nodejs"
-export const dynamic = "force-dynamic"
+import {
+  isVoiceModeEnabled,
+  voiceModeDisabledResponse,
+} from "@/lib/server/voice-mode"
 
 const headersToRecord = (headers: Headers) => {
   const record: Record<string, string | string[] | undefined> = {}
@@ -20,6 +21,10 @@ const headersToRecord = (headers: Headers) => {
 }
 
 export const GET = async (request: Request) => {
+  if (!isVoiceModeEnabled()) {
+    return voiceModeDisabledResponse()
+  }
+
   await connection()
 
   const upgradeHeader = request.headers.get("upgrade")

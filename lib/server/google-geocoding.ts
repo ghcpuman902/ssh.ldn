@@ -4,6 +4,7 @@ import {
   confidenceFromPrecision,
   extractUkPostcode,
 } from "@/lib/server/geocode-types";
+import { cacheLife } from "next/cache";
 
 const GOOGLE_GEOCODE_BASE = "https://maps.googleapis.com/maps/api/geocode/json";
 
@@ -102,6 +103,9 @@ export const geocodeWithGoogle = async ({
   address,
   testPointId,
 }: GoogleGeocodeInput): Promise<GeocodeResult> => {
+  "use cache";
+  cacheLife("days");
+
   const apiKey = getGoogleApiKey();
   const warnings: string[] = ["Address matched using Google Maps."];
 
@@ -114,7 +118,6 @@ export const geocodeWithGoogle = async ({
 
   const response = await fetch(`${GOOGLE_GEOCODE_BASE}?${params.toString()}`, {
     headers: { Accept: "application/json" },
-    next: { revalidate: 0 },
   });
 
   const rawResponse = (await response.json()) as GoogleGeocodeResponse;
@@ -179,6 +182,9 @@ export const reverseGeocodeWithGoogle = async ({
   latitude,
   longitude,
 }: GoogleReverseGeocodeInput): Promise<GeocodeResult> => {
+  "use cache";
+  cacheLife("days");
+
   const apiKey = getGoogleApiKey();
   const warnings: string[] = ["Location matched using Google Maps."];
 
@@ -190,7 +196,6 @@ export const reverseGeocodeWithGoogle = async ({
 
   const response = await fetch(`${GOOGLE_GEOCODE_BASE}?${params.toString()}`, {
     headers: { Accept: "application/json" },
-    next: { revalidate: 0 },
   });
 
   const rawResponse = (await response.json()) as GoogleGeocodeResponse;

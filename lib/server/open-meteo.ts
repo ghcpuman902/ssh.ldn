@@ -1,3 +1,5 @@
+import { cacheLife } from "next/cache";
+
 const OPEN_METEO_FORECAST_BASE = "https://api.open-meteo.com/v1/forecast";
 const OPEN_METEO_CLIMATE_BASE = "https://climate-api.open-meteo.com/v1/climate";
 
@@ -15,7 +17,6 @@ export type OpenMeteoClimateInput = {
 const fetchOpenMeteoJson = async (url: string, sourceEndpoint: string) => {
   const response = await fetch(url, {
     headers: { Accept: "application/json" },
-    next: { revalidate: 0 },
   });
 
   const rawResponse = await response.json();
@@ -48,6 +49,9 @@ export const getOpenMeteoForecast = async ({
   lng,
   forecastDays = 2,
 }: OpenMeteoForecastInput) => {
+  "use cache";
+  cacheLife("minutes");
+
   const params = new URLSearchParams({
     latitude: String(lat),
     longitude: String(lng),
@@ -108,6 +112,9 @@ export const getOpenMeteoClimateNormals = async ({
   lat,
   lng,
 }: OpenMeteoClimateInput) => {
+  "use cache";
+  cacheLife("days");
+
   const params = new URLSearchParams({
     latitude: String(lat),
     longitude: String(lng),

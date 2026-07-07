@@ -2,6 +2,7 @@ import TflClient from "tfl-ts";
 
 import { haversineMeters } from "@/lib/server/geo";
 import { getTestPoint } from "@/lib/server/test-points";
+import { cacheLife } from "next/cache";
 
 let tflClient: TflClient | null = null;
 
@@ -142,6 +143,9 @@ export const getNearbyTflStops = async ({
   searchQuery,
   testPointId,
 }: NearbyTflStopsInput) => {
+  "use cache";
+  cacheLife({ revalidate: 60 });
+
   try {
     const response = await getTflClient().stopPoint.getByGeoPoint({
       lat,
@@ -184,6 +188,9 @@ export const getTflLineStatus = async ({
   lineIds,
   detail = true,
 }: TflLineStatusInput) => {
+  "use cache";
+  cacheLife({ revalidate: 60 });
+
   const lines = await getTflClient().line.getStatus({ lineIds, detail });
 
   return {

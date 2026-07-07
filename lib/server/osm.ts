@@ -6,6 +6,7 @@ import {
   normalizeNightlifeAmenity,
 } from "@/lib/map/nightlife-venue-tags"
 import { bearingDegrees, haversineMeters } from "@/lib/server/geo"
+import { cacheLife } from "next/cache"
 
 const execFileAsync = promisify(execFile)
 
@@ -96,6 +97,9 @@ export const getOsmLocalContext = async ({
   lng,
   radiusMeters = 300,
 }: OsmContextInput) => {
+  "use cache";
+  cacheLife("days");
+
   const query = buildOverpassQuery(lat, lng, radiusMeters)
   const { payload, endpoint } = await fetchOverpass(query)
 

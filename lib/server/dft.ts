@@ -1,5 +1,6 @@
 import londonCountPoints from "@/data/dft-london-count-points.json";
 import { haversineMeters } from "@/lib/server/geo";
+import { cacheLife } from "next/cache";
 
 type CountPoint = {
   countPointId: number;
@@ -64,6 +65,9 @@ export const getNearestDftTraffic = async ({
   lng,
   radiusMeters = 500,
 }: DftTrafficInput) => {
+  "use cache";
+  cacheLife("days");
+
   const nearest = findNearestCountPoint(lat, lng, radiusMeters);
 
   if (!nearest) {

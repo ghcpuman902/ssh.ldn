@@ -1,9 +1,27 @@
 import { type NextRequest } from "next/server";
 
+import { enforceBotProtection } from "@/lib/server/bot-protection";
 import { geocodeAddress, geocodeFromTestPoint } from "@/lib/server/geocode";
+import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { getTestPoint } from "@/lib/server/test-points";
 
 export const GET = async (request: NextRequest) => {
+  const rateLimited = await enforceRateLimit(request, {
+    routeName: "discovery-geocode",
+    limit: 20,
+    windowSeconds: 60,
+  });
+
+  if (rateLimited) {
+    return rateLimited;
+  }
+
+  const botBlocked = await enforceBotProtection();
+
+  if (botBlocked) {
+    return botBlocked;
+  }
+
   const testPointId = request.nextUrl.searchParams.get("testPointId");
   const addressParam = request.nextUrl.searchParams.get("address");
 

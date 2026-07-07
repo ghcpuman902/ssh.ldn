@@ -1,4 +1,5 @@
 import { bboxAroundPoint, haversineMeters } from "@/lib/server/geo";
+import { cacheLife } from "next/cache";
 
 export type PlanningApplication = {
   applicationId: string | null;
@@ -282,6 +283,9 @@ export const getNearbyPlanningApplications = async ({
   lng,
   radiusMeters = 300,
 }: PlanningInput) => {
+  "use cache";
+  cacheLife("days");
+
   const [national, london] = await Promise.all([
     fetchPlanningDataEngland(lat, lng, radiusMeters),
     fetchLondonPlanningDatahub(lat, lng, radiusMeters),

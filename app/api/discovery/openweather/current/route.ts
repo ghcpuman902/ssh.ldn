@@ -1,8 +1,19 @@
 import { type NextRequest } from "next/server";
 
 import { getOpenWeatherCurrent } from "@/lib/server/openweather";
+import { enforceRateLimit } from "@/lib/server/rate-limit";
 
 export const GET = async (request: NextRequest) => {
+  const rateLimited = await enforceRateLimit(request, {
+    routeName: "openweather-current",
+    limit: 20,
+    windowSeconds: 60,
+  });
+
+  if (rateLimited) {
+    return rateLimited;
+  }
+
   const latParam = request.nextUrl.searchParams.get("lat");
   const lngParam = request.nextUrl.searchParams.get("lng");
   const lat = Number(latParam);

@@ -1,9 +1,20 @@
 import { type NextRequest } from "next/server";
 
 import { decodeNoiseTimeSlot } from "@/lib/map/noise-time";
+import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { scoreFromBundle } from "@/lib/server/score";
 
 export const GET = async (request: NextRequest) => {
+  const rateLimited = await enforceRateLimit(request, {
+    routeName: "score",
+    limit: 30,
+    windowSeconds: 60,
+  });
+
+  if (rateLimited) {
+    return rateLimited;
+  }
+
   const testPointId = request.nextUrl.searchParams.get("testPointId") ?? undefined;
   const latParam = request.nextUrl.searchParams.get("lat");
   const lngParam = request.nextUrl.searchParams.get("lng");

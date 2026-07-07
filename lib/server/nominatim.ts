@@ -7,6 +7,7 @@ import {
 } from "@/lib/server/geocode-types";
 import { nominatimReverse, nominatimSearch } from "@/lib/server/nominatim-client";
 import { LONDON_BBOX } from "@/lib/map/config";
+import { cacheLife } from "next/cache";
 
 const NOMINATIM_BASE = "https://nominatim.openstreetmap.org";
 const LONDON_VIEWBOX = `${LONDON_BBOX.west},${LONDON_BBOX.north},${LONDON_BBOX.east},${LONDON_BBOX.south}`;
@@ -69,6 +70,9 @@ export const geocodeWithNominatim = async ({
   address,
   testPointId,
 }: NominatimGeocodeInput): Promise<GeocodeResult> => {
+  "use cache";
+  cacheLife("days");
+
   const warnings: string[] = [
     "Address data provided by OpenStreetMap contributors.",
   ];
@@ -121,6 +125,9 @@ export const reverseGeocodeWithNominatim = async ({
   latitude,
   longitude,
 }: NominatimReverseGeocodeInput): Promise<GeocodeResult> => {
+  "use cache";
+  cacheLife("days");
+
   const warnings: string[] = [
     "Location data provided by OpenStreetMap contributors.",
   ];

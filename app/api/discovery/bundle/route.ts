@@ -1,8 +1,19 @@
 import { type NextRequest } from "next/server";
 
 import { buildEvidenceBundle } from "@/lib/server/bundle";
+import { enforceRateLimit } from "@/lib/server/rate-limit";
 
 export const GET = async (request: NextRequest) => {
+  const rateLimited = await enforceRateLimit(request, {
+    routeName: "discovery-bundle",
+    limit: 30,
+    windowSeconds: 60,
+  });
+
+  if (rateLimited) {
+    return rateLimited;
+  }
+
   const testPointId = request.nextUrl.searchParams.get("testPointId");
 
   if (!testPointId) {

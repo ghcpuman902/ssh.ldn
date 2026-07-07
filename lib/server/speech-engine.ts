@@ -7,6 +7,10 @@ import type {
 import { generateText, streamText } from "ai"
 
 import {
+  buildRateLimitKey,
+  checkRateLimit,
+} from "@/lib/server/rate-limit"
+import {
   buildLocationContextPrompt,
   enrichLocationContext,
   type LocationContext,
@@ -18,6 +22,8 @@ import {
 
 const DEFAULT_VOICE_MODEL = "openai/gpt-5-mini"
 const MAX_VOICE_OUTPUT_TOKENS = 500
+const MAX_VOICE_TURNS_PER_CONVERSATION = 30
+const VOICE_CONVERSATION_WINDOW_SECONDS = 3_600
 
 const openrouter = createOpenAICompatible({
   name: "openrouter",
@@ -192,6 +198,19 @@ const createSpeechEngineCallbacks = (): SpeechEngineCallbacks => ({
 
     const context = getVoiceContextForConversation(conversationId)
     const enrichedContext = context ? enrichLocationContext(context) : null
+
+    const turnLimit = await checkRateLimit({
+      key: buildRateLimitKey("voice-openrouter-turns", conversationId),
+      limit: MAX_VOICE_TURNS_PER_CONVERSATION,
+      windowSeconds: VOICE_CONVERSATION_WINDOW_SECONDS,
+    })
+
+    if (!turnLimit.allowed) {
+      await session.sendResponse(
+        "This conversation has reached its limit. Please restart voice mode."
+      )
+      return
+    }
 
     await session.sendResponse(
       streamVoiceAnswer(question, enrichedContext, signal)

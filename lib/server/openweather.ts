@@ -1,3 +1,5 @@
+import { cacheLife } from "next/cache";
+
 const OPENWEATHER_CURRENT_BASE =
   "https://api.openweathermap.org/data/2.5/weather";
 
@@ -10,6 +12,9 @@ export const getOpenWeatherCurrent = async ({
   lat,
   lng,
 }: OpenWeatherCurrentInput) => {
+  "use cache";
+  cacheLife("minutes");
+
   const apiKey = process.env.OPENWEATHER_API_KEY;
 
   if (!apiKey) {
@@ -29,7 +34,6 @@ export const getOpenWeatherCurrent = async ({
     `${OPENWEATHER_CURRENT_BASE}?${params.toString()}`,
     {
       headers: { Accept: "application/json" },
-      next: { revalidate: 0 },
     }
   );
 

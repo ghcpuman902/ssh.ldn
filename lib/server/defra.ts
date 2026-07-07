@@ -1,3 +1,5 @@
+import { cacheLife } from "next/cache";
+
 const DEFRA_DATASETS = {
   road: {
     datasetId: "562c9d56-7c2d-4d42-83bb-578d6e97a517",
@@ -134,6 +136,9 @@ export const getDefraNoiseSample = async ({
   lng,
   radiusMeters = 50,
 }: DefraNoiseInput & { kind: DefraNoiseKind }) => {
+  "use cache";
+  cacheLife("days");
+
   const config = DEFRA_DATASETS[kind];
   const retrievedAt = new Date().toISOString();
 

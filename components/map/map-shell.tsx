@@ -32,6 +32,7 @@ import {
   getCurrentNoiseTimeSlot,
 } from "@/lib/map/noise-time"
 import { locationContextFromAnalyse } from "@/lib/voice/location-context"
+import { isVoiceModeEnabledClient } from "@/lib/voice/voice-mode"
 import { estimateClientNoiseScore } from "@/lib/map/client-noise-score"
 import {
   fetchNearbyNoisyPois,
@@ -904,7 +905,7 @@ export const MapShell = () => {
             onNoisyPoiFocus={handleNoisyPoiFocus}
           />
 
-          {analyseOpen ? (
+          {analyseOpen && isVoiceModeEnabledClient() ? (
             <div className="shrink-0 px-0 pt-3">
               <VoiceModeButton context={voiceContext} />
             </div>

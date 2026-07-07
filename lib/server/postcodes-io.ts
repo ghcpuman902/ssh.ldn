@@ -2,6 +2,7 @@ import {
   type GeocodeResult,
   extractUkPostcode,
 } from "@/lib/server/geocode-types";
+import { cacheLife } from "next/cache";
 
 const POSTCODES_IO_BASE = "https://api.postcodes.io";
 
@@ -27,6 +28,9 @@ export const geocodeWithPostcodesIo = async ({
   address,
   testPointId,
 }: PostcodesIoGeocodeInput): Promise<GeocodeResult> => {
+  "use cache";
+  cacheLife("days");
+
   const postcode = extractUkPostcode(address);
   const warnings: string[] = [];
 
@@ -39,7 +43,6 @@ export const geocodeWithPostcodesIo = async ({
     `${POSTCODES_IO_BASE}/postcodes/${encodedPostcode}`,
     {
       headers: { Accept: "application/json" },
-      next: { revalidate: 0 },
     }
   );
 
