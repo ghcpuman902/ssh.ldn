@@ -92,6 +92,7 @@ export const MapShell = () => {
     useState(readVisualLayerVisibility)
   const [timeSlot, setTimeSlot] = useState(DEFAULT_NOISE_TIME_SLOT)
   const [mapReady, setMapReady] = useState(false)
+  const [backgroundPrefetchReady, setBackgroundPrefetchReady] = useState(false)
   const [analyseState, setAnalyseState] = useState<AnalyseState>({
     status: "idle",
   })
@@ -123,7 +124,8 @@ export const MapShell = () => {
   const visualLayerData = useVisualLayerData(
     mapRef,
     mounted && mapReady,
-    visualLayerVisibility
+    visualLayerVisibility,
+    backgroundPrefetchReady,
   )
   const mapTheme = resolveMapTheme(resolvedTheme)
   const audioSampleMode = isMobile ? "center" : "cursor"
@@ -695,6 +697,7 @@ export const MapShell = () => {
                 const map = mapRef.current?.getMap()
                 if (map) {
                   bindNightlifeEmojiImages(map)
+                  map.once("idle", () => setBackgroundPrefetchReady(true))
                   if (process.env.NODE_ENV === "development") {
                     ;(
                       window as Window & {

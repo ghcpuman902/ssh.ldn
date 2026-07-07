@@ -5,7 +5,8 @@ export const LONDON_CENTER = {
   latitude: 51.507,
 } as const
 
-export const DEFAULT_ZOOM = 11
+/** Tighter central-London default — fewer viewport grid cells on first paint, still within pre-cached DEFRA tiles (z10–12). */
+export const DEFAULT_ZOOM = 12
 
 export const LONDON_VIEWPORT = {
   ...LONDON_CENTER,
