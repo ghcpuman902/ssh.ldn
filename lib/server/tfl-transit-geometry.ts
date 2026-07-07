@@ -11,6 +11,8 @@ import type {
 import { defaultLineColor } from "@/lib/map/visual-layers";
 import {
   fetchOverpass,
+  type OverpassElement,
+  type OverpassNode,
   type OverpassRelation,
   type OverpassWay,
 } from "@/lib/server/osm-overpass";
@@ -27,6 +29,7 @@ export type TransitGeometryBundle = {
 };
 
 type CoordPair = [number, number];
+type StationFeature = TubeStationFeatureCollection["features"][number];
 
 type TflMatchedStop = {
   id?: string;
@@ -46,6 +49,7 @@ type TransitModeConfig = {
   cacheKey: string;
   tflMode: string;
   osmRelationQuery: string;
+  osmStationQuery: string;
   osmFilterLabel: string;
   tflFilterLabel: string;
   resolveLineId: (relation: OverpassRelation) => string | null;
@@ -56,9 +60,13 @@ const OVERGROUND_LINE_RE =
 
 const TRANSIT_MODE_CONFIG: Record<TransitMode, TransitModeConfig> = {
   tube: {
-    cacheKey: "london-v9",
+    cacheKey: "london-v11",
     tflMode: "tube",
     osmRelationQuery: `relation["type"="route"]["route"="subway"]["network"="London Underground"](${LONDON_BBOX});`,
+    osmStationQuery: `node["railway"="station"]["station"="subway"]["network"="London Underground"](${LONDON_BBOX});
+  node["public_transport"="station"]["subway"="yes"]["network"="London Underground"](${LONDON_BBOX});
+  way["railway"="station"]["station"="subway"]["network"="London Underground"](${LONDON_BBOX});
+  relation["railway"="station"]["station"="subway"]["network"="London Underground"](${LONDON_BBOX});`,
     osmFilterLabel: "London Underground route relations — track-following geometry",
     tflFilterLabel: "London Underground stations",
     resolveLineId: (relation) => {
@@ -67,10 +75,14 @@ const TRANSIT_MODE_CONFIG: Record<TransitMode, TransitModeConfig> = {
     },
   },
   overground: {
-    cacheKey: "overground-v1",
+    cacheKey: "overground-v2",
     tflMode: "overground",
     osmRelationQuery: `relation["route"="train"]["network"="London Overground"](${LONDON_BBOX});
   relation["type"="route"]["route"="train"]["ref"~"Liberty|Lioness|Mildmay|Windrush|Weaver|Suffragette"](${LONDON_BBOX});`,
+    osmStationQuery: `node["railway"="station"]["network"="London Overground"](${LONDON_BBOX});
+  node["public_transport"="station"]["network"="London Overground"](${LONDON_BBOX});
+  way["railway"="station"]["network"="London Overground"](${LONDON_BBOX});
+  relation["railway"="station"]["network"="London Overground"](${LONDON_BBOX});`,
     osmFilterLabel:
       "London Overground route relations — named line geometry (Liberty, Lioness, etc.)",
     tflFilterLabel: "London Overground stations",
@@ -88,9 +100,13 @@ const TRANSIT_MODE_CONFIG: Record<TransitMode, TransitModeConfig> = {
     },
   },
   elizabeth: {
-    cacheKey: "elizabeth-v1",
+    cacheKey: "elizabeth-v2",
     tflMode: "elizabeth-line",
     osmRelationQuery: `relation["route"="train"]["name"~"Elizabeth line",i](${LONDON_BBOX});`,
+    osmStationQuery: `node["railway"="station"]["name"~"Elizabeth line",i](${LONDON_BBOX});
+  node["public_transport"="station"]["name"~"Elizabeth line",i](${LONDON_BBOX});
+  way["railway"="station"]["name"~"Elizabeth line",i](${LONDON_BBOX});
+  relation["railway"="station"]["name"~"Elizabeth line",i](${LONDON_BBOX});`,
     osmFilterLabel: "Elizabeth line route relations — track-following geometry",
     tflFilterLabel: "Elizabeth line stations",
     resolveLineId: () => "elizabeth",
@@ -126,7 +142,7 @@ const fetchRouteSequence = (lineId: string) =>
   );
 
 const upsertStation = (
-  stationMap: Map<string, TubeStationFeatureCollection["features"][number]>,
+  stationMap: Map<string, StationFeature>,
   stop: TflMatchedStop,
   lineId: string,
 ) => {
@@ -164,6 +180,100 @@ const upsertStation = (
       coordinates: [stop.lon, stop.lat],
     },
   });
+};
+
+const normalizeStationName = (name: string | null | undefined) =>
+  stripStationLabel(name)
+    ?.toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/\bst\b/g, "saint")
+    .replace(/[^a-z0-9]+/g, "")
+    .trim() ?? null;
+
+const getOsmElementCoordinates = (
+  element: OverpassElement,
+): CoordPair | null => {
+  if (
+    element.type === "node" &&
+    typeof (element as OverpassNode).lat === "number" &&
+    typeof (element as OverpassNode).lon === "number"
+  ) {
+    return [(element as OverpassNode).lon!, (element as OverpassNode).lat!];
+  }
+
+  if (
+    "center" in element &&
+    typeof element.center?.lat === "number" &&
+    typeof element.center.lon === "number"
+  ) {
+    return [element.center.lon, element.center.lat];
+  }
+
+  return null;
+};
+
+const fetchStationCoordinatesFromOsm = async (config: TransitModeConfig) => {
+  const query = `[out:json][timeout:60];
+(
+${config.osmStationQuery}
+);
+out center;`;
+
+  const payload = await fetchOverpass(query);
+  const coordinatesByName = new Map<string, CoordPair>();
+
+  for (const element of payload.elements ?? []) {
+    const stationName = normalizeStationName(element.tags?.name);
+    if (!stationName || coordinatesByName.has(stationName)) continue;
+
+    const coordinates = getOsmElementCoordinates(element);
+    if (!coordinates) continue;
+
+    coordinatesByName.set(stationName, coordinates);
+  }
+
+  return coordinatesByName;
+};
+
+const withOsmStationCoordinates = (
+  stations: TubeStationFeatureCollection,
+  coordinatesByName: Map<string, CoordPair>,
+): TubeStationFeatureCollection => {
+  if (coordinatesByName.size === 0) return stations;
+
+  let matchedCount = 0;
+  const features = stations.features.map((station) => {
+    const normalizedName = normalizeStationName(
+      station.properties.name ?? station.properties.label,
+    );
+    const coordinates = normalizedName
+      ? coordinatesByName.get(normalizedName)
+      : null;
+
+    if (!coordinates) return station;
+
+    matchedCount += 1;
+
+    return {
+      ...station,
+      geometry: {
+        ...station.geometry,
+        coordinates,
+      },
+    };
+  });
+
+  return {
+    ...stations,
+    features,
+    meta: stations.meta
+      ? {
+          ...stations.meta,
+          coordinateSource: "osm-overpass",
+          osmCoordinateMatches: matchedCount,
+        }
+      : undefined,
+  };
 };
 
 const lineFeaturesFromSequence = (
@@ -378,9 +488,8 @@ const groupFeaturesByLineId = (features: TubeLineFeature[]) => {
 };
 
 /**
- * TfL route sequences enumerate every branch; OSM route relations can be
- * incomplete (one branch kept) or noisy (many duplicate variants). Prefer OSM
- * track geometry only when branch coverage matches TfL without excess variants.
+ * TfL route sequences enumerate every branch, but they are schematic polylines.
+ * Use them only as a fallback for non-tube modes; tube must stay track-following.
  */
 const selectLineFeatures = (
   osmFeatures: TubeLineFeature[],
@@ -489,19 +598,28 @@ const buildTransitGeometry = async (
 ): Promise<TransitGeometryBundle> => {
   const config = TRANSIT_MODE_CONFIG[mode];
   const retrievedAt = new Date().toISOString();
+  const allowTflLineFallback = mode !== "tube";
 
-  const [stations, tflLines, osmLineFeatures] = await Promise.all([
-    fetchStationsFromTfl(config.tflMode, config.tflFilterLabel),
-    fetchLinesFromTfl(config.tflMode, config.tflFilterLabel),
-    mode === "tube"
-      ? Promise.resolve([] as TubeLineFeature[])
-      : fetchLinesFromOsmRelations(config).catch(() => [] as TubeLineFeature[]),
-  ]);
+  const [tflStations, osmStationCoordinates, osmLineFeatures, tflLines] =
+    await Promise.all([
+      fetchStationsFromTfl(config.tflMode, config.tflFilterLabel),
+      fetchStationCoordinatesFromOsm(config).catch(
+        () => new Map<string, CoordPair>(),
+      ),
+      fetchLinesFromOsmRelations(config).catch(() => [] as TubeLineFeature[]),
+      allowTflLineFallback
+        ? fetchLinesFromTfl(config.tflMode, config.tflFilterLabel)
+        : Promise.resolve<TubeLineFeatureCollection | null>(null),
+    ]);
+  const stations = withOsmStationCoordinates(
+    tflStations,
+    osmStationCoordinates,
+  );
 
   const selectedLineFeatures =
-    mode === "tube"
-      ? tflLines.features
-      : selectLineFeatures(osmLineFeatures, tflLines.features);
+    allowTflLineFallback && tflLines
+      ? selectLineFeatures(osmLineFeatures, tflLines.features)
+      : osmLineFeatures;
 
   if (selectedLineFeatures.length > 0) {
     const osmRelationCount = selectedLineFeatures.filter((feature) =>
@@ -529,7 +647,23 @@ const buildTransitGeometry = async (
     });
   }
 
-  return bundleWithLineOffsets({ lines: tflLines, stations });
+  if (tflLines) {
+    return bundleWithLineOffsets({ lines: tflLines, stations });
+  }
+
+  return bundleWithLineOffsets({
+    lines: {
+      type: "FeatureCollection",
+      features: [],
+      meta: {
+        source: "osm-route-relations",
+        filter: config.osmFilterLabel,
+        featureCount: 0,
+        retrievedAt,
+      },
+    },
+    stations,
+  });
 };
 
 export const getTransitGeometryGeoJson = async (

@@ -6,7 +6,7 @@ export const GET = async () => {
 
     return Response.json(geometry, {
       headers: {
-        "Cache-Control": "public, max-age=3600, stale-while-revalidate=86400",
+        "Cache-Control": "public, max-age=604800, stale-while-revalidate=2592000",
       },
     });
   } catch (error) {
