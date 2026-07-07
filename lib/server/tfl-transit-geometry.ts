@@ -56,7 +56,7 @@ const OVERGROUND_LINE_RE =
 
 const TRANSIT_MODE_CONFIG: Record<TransitMode, TransitModeConfig> = {
   tube: {
-    cacheKey: "london-v7",
+    cacheKey: "london-v9",
     tflMode: "tube",
     osmRelationQuery: `relation["type"="route"]["route"="subway"]["network"="London Underground"](${LONDON_BBOX});`,
     osmFilterLabel: "London Underground route relations — track-following geometry",
@@ -350,6 +350,73 @@ const assembleRelationCoordinates = (
 const osmRefToLineId = (ref: string) =>
   ref.toLowerCase().replace(/\s*&\s*/g, "-").replace(/\s+/g, "-");
 
+const roundCoordKey = (value: number) => value.toFixed(4);
+
+/** Direction-agnostic signature so duplicate route variants dedupe cleanly. */
+const relationGeometryKey = (lineId: string, coordinates: CoordPair[]) => {
+  const start = coordinates[0];
+  const end = coordinates[coordinates.length - 1];
+  const forward = `${roundCoordKey(start[0])},${roundCoordKey(start[1])}|${roundCoordKey(end[0])},${roundCoordKey(end[1])}|${coordinates.length}`;
+  const reverse = `${roundCoordKey(end[0])},${roundCoordKey(end[1])}|${roundCoordKey(start[0])},${roundCoordKey(start[1])}|${coordinates.length}`;
+
+  return `${lineId}::${forward < reverse ? forward : reverse}`;
+};
+
+type TubeLineFeature = TubeLineFeatureCollection["features"][number];
+
+const groupFeaturesByLineId = (features: TubeLineFeature[]) => {
+  const grouped = new Map<string, TubeLineFeature[]>();
+
+  for (const feature of features) {
+    const lineId = feature.properties.lineId;
+    const list = grouped.get(lineId) ?? [];
+    list.push(feature);
+    grouped.set(lineId, list);
+  }
+
+  return grouped;
+};
+
+/**
+ * TfL route sequences enumerate every branch; OSM route relations can be
+ * incomplete (one branch kept) or noisy (many duplicate variants). Prefer OSM
+ * track geometry only when branch coverage matches TfL without excess variants.
+ */
+const selectLineFeatures = (
+  osmFeatures: TubeLineFeature[],
+  tflFeatures: TubeLineFeature[],
+): TubeLineFeature[] => {
+  if (osmFeatures.length === 0) return tflFeatures;
+  if (tflFeatures.length === 0) return osmFeatures;
+
+  const osmByLine = groupFeaturesByLineId(osmFeatures);
+  const tflByLine = groupFeaturesByLineId(tflFeatures);
+  const lineIds = new Set([...osmByLine.keys(), ...tflByLine.keys()]);
+  const selected: TubeLineFeature[] = [];
+
+  for (const lineId of lineIds) {
+    const osm = osmByLine.get(lineId) ?? [];
+    const tfl = tflByLine.get(lineId) ?? [];
+
+    if (tfl.length === 0) {
+      selected.push(...osm);
+      continue;
+    }
+
+    if (osm.length === 0) {
+      selected.push(...tfl);
+      continue;
+    }
+
+    const osmComplete = osm.length >= tfl.length;
+    const osmNotExcessive = osm.length <= tfl.length * 2;
+
+    selected.push(...(osmComplete && osmNotExcessive ? osm : tfl));
+  }
+
+  return selected;
+};
+
 const fetchLinesFromOsmRelations = async (
   config: TransitModeConfig,
 ): Promise<TubeLineFeatureCollection["features"]> => {
@@ -370,10 +437,8 @@ out geom;`;
     }
   }
 
-  const bestByLineId = new Map<
-    string,
-    { lineId: string; lineName: string; coordinates: CoordPair[] }
-  >();
+  const seenGeometry = new Set<string>();
+  const features: TubeLineFeatureCollection["features"] = [];
 
   for (const element of payload.elements ?? []) {
     if (!isRouteRelation(element)) continue;
@@ -384,35 +449,32 @@ out geom;`;
     const coordinates = assembleRelationCoordinates(element, wayById);
     if (coordinates.length < 2) continue;
 
+    const geometryKey = relationGeometryKey(lineId, coordinates);
+    if (seenGeometry.has(geometryKey)) continue;
+    seenGeometry.add(geometryKey);
+
     const lineName =
       element.tags?.name?.split(":")[0]?.trim() ??
       element.tags?.ref ??
       lineId;
-    const existing = bestByLineId.get(lineId);
 
-    if (!existing || coordinates.length > existing.coordinates.length) {
-      bestByLineId.set(lineId, {
+    features.push({
+      type: "Feature",
+      id: `relation/${element.id}`,
+      properties: {
+        featureId: `relation/${element.id}`,
         lineId,
         lineName,
+        color: defaultLineColor(lineId),
+      },
+      geometry: {
+        type: "LineString",
         coordinates,
-      });
-    }
+      },
+    });
   }
 
-  return [...bestByLineId.values()].map(({ lineId, lineName, coordinates }) => ({
-    type: "Feature" as const,
-    id: `relation/${lineId}`,
-    properties: {
-      featureId: `relation/${lineId}`,
-      lineId,
-      lineName,
-      color: defaultLineColor(lineId),
-    },
-    geometry: {
-      type: "LineString" as const,
-      coordinates,
-    },
-  }));
+  return features;
 };
 
 const bundleWithLineOffsets = (
@@ -428,37 +490,46 @@ const buildTransitGeometry = async (
   const config = TRANSIT_MODE_CONFIG[mode];
   const retrievedAt = new Date().toISOString();
 
-  try {
-    const [osmLineFeatures, stations] = await Promise.all([
-      fetchLinesFromOsmRelations(config),
-      fetchStationsFromTfl(config.tflMode, config.tflFilterLabel),
-    ]);
-
-    if (osmLineFeatures.length > 0) {
-      return bundleWithLineOffsets({
-        lines: {
-          type: "FeatureCollection",
-          features: osmLineFeatures,
-          meta: {
-            source: "osm-route-relations",
-            filter: config.osmFilterLabel,
-            featureCount: osmLineFeatures.length,
-            retrievedAt,
-          },
-        },
-        stations,
-      });
-    }
-  } catch {
-    // Fall through to TfL line geometry.
-  }
-
-  const [lines, stations] = await Promise.all([
-    fetchLinesFromTfl(config.tflMode, config.osmFilterLabel),
+  const [stations, tflLines, osmLineFeatures] = await Promise.all([
     fetchStationsFromTfl(config.tflMode, config.tflFilterLabel),
+    fetchLinesFromTfl(config.tflMode, config.tflFilterLabel),
+    mode === "tube"
+      ? Promise.resolve([] as TubeLineFeature[])
+      : fetchLinesFromOsmRelations(config).catch(() => [] as TubeLineFeature[]),
   ]);
 
-  return bundleWithLineOffsets({ lines, stations });
+  const selectedLineFeatures =
+    mode === "tube"
+      ? tflLines.features
+      : selectLineFeatures(osmLineFeatures, tflLines.features);
+
+  if (selectedLineFeatures.length > 0) {
+    const osmRelationCount = selectedLineFeatures.filter((feature) =>
+      String(feature.id ?? feature.properties.featureId).startsWith(
+        "relation/",
+      ),
+    ).length;
+    const usesOsmGeometry =
+      osmRelationCount > 0 && osmRelationCount === selectedLineFeatures.length;
+
+    return bundleWithLineOffsets({
+      lines: {
+        type: "FeatureCollection",
+        features: selectedLineFeatures,
+        meta: {
+          source: usesOsmGeometry ? "osm-route-relations" : "tfl-unified-api",
+          filter: usesOsmGeometry
+            ? config.osmFilterLabel
+            : config.tflFilterLabel,
+          featureCount: selectedLineFeatures.length,
+          retrievedAt,
+        },
+      },
+      stations,
+    });
+  }
+
+  return bundleWithLineOffsets({ lines: tflLines, stations });
 };
 
 export const getTransitGeometryGeoJson = async (
