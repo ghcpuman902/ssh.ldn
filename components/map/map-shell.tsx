@@ -972,7 +972,7 @@ export const MapShell = () => {
             <div
               ref={logoRef}
               aria-label="ssh-ldn London Noise Map"
-              className="pointer-events-auto absolute left-0 top-0 flex w-fit flex-col items-center gap-1 pb-3 pr-4 text-center md:pb-3.5 md:pr-5"
+              className="pointer-events-auto absolute left-0 top-0 flex w-fit flex-col items-center gap-0.5 pb-2 pr-2.5 text-center md:pb-2.5 md:pr-3.5"
             >
               <div className="flex items-center justify-center gap-1.5 md:gap-2">
                 <span
@@ -985,20 +985,12 @@ export const MapShell = () => {
                 >
                   🤫
                 </span>
-                <span className="text-base font-semibold tracking-tight text-foreground md:text-4xl">
+                <span className="font-mono text-base font-bold tracking-tight text-foreground md:text-4xl">
                   ssh-ldn
                 </span>
               </div>
-              <p className="text-[10px] leading-none text-muted-foreground md:text-xs">
-                London Noise Map by{" "}
-                <a
-                  href="https://x.com/manglekuo"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline-offset-2 hover:text-foreground hover:underline"
-                >
-                  @manglekuo
-                </a>
+              <p className="text-[9px] leading-none text-muted-foreground md:text-[10px]">
+                ssh-ldn.app - London Noise Map
               </p>
             </div>
 
