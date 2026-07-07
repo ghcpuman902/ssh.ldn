@@ -21,3 +21,32 @@ export const buildGeocodeResultFromPlace = (
   warnings: [],
   rawResponse: { placeId: place.placeId },
 });
+
+type CoordinateGeocodeMeta = {
+  geocoderName: string
+  source: string
+  sourceEndpoint: string
+  warnings?: string[]
+}
+
+export const buildGeocodeResultFromCoordinates = (
+  inputAddress: string,
+  latitude: number,
+  longitude: number,
+  meta: CoordinateGeocodeMeta
+): GeocodeResult => ({
+  inputAddress,
+  normalizedAddress: inputAddress,
+  latitude,
+  longitude,
+  postcode: null,
+  coordinatePrecision: "unknown",
+  geocoderName: meta.geocoderName,
+  geocoderConfidence: "low",
+  source: meta.source,
+  sourceEndpoint: meta.sourceEndpoint,
+  retrievedAt: new Date().toISOString(),
+  sourceLicence: "n/a",
+  warnings: meta.warnings ?? [],
+  rawResponse: null,
+});

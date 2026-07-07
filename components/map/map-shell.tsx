@@ -7,6 +7,7 @@ import Map, {
   type MapLayerMouseEvent,
   type MapRef,
 } from "react-map-gl/maplibre"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useTheme } from "next-themes"
 import { toast } from "sonner"
 import { useCursorNoise } from "@/hooks/use-cursor-noise"
@@ -26,9 +27,13 @@ import { NoiseLayerControls } from "@/components/map/noise-layer-controls"
 import { VisualMapLayers } from "@/components/map/visual-map-layers"
 import { useVisualLayerData } from "@/hooks/use-visual-layer-data"
 import type { MapTheme } from "@/lib/map/config"
+import { buildGeocodeResultFromCoordinates } from "@/lib/map/build-geocode-result"
 import {
   DEFAULT_NOISE_TIME_SLOT,
+  decodeNoiseTimeSlot,
+  encodeNoiseTimeSlot,
   getCurrentNoiseTimeSlot,
+  type NoiseTimeSlot,
 } from "@/lib/map/noise-time"
 import { locationContextFromAnalyse } from "@/lib/voice/location-context"
 import { isVoiceModeEnabledClient } from "@/lib/voice/voice-mode"
@@ -83,7 +88,44 @@ type PlanningApplicationResponse = {
 const resolveMapTheme = (resolvedTheme: string | undefined): MapTheme =>
   resolvedTheme === "dark" ? "dark" : "light"
 
+const parseShareCoordinates = (latParam: string | null, lngParam: string | null) => {
+  if (latParam === null || lngParam === null) {
+    return null
+  }
+
+  const latitude = Number(latParam)
+  const longitude = Number(lngParam)
+
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+    return null
+  }
+
+  return { latitude, longitude }
+}
+
+const buildShareQuery = ({
+  address,
+  latitude,
+  longitude,
+  timeSlot,
+}: {
+  address: string
+  latitude: number
+  longitude: number
+  timeSlot: NoiseTimeSlot
+}) => {
+  const params = new URLSearchParams()
+  params.set("address", address)
+  params.set("lat", latitude.toFixed(6))
+  params.set("lng", longitude.toFixed(6))
+  params.set("timeSlot", encodeNoiseTimeSlot(timeSlot))
+  return params.toString()
+}
+
 export const MapShell = () => {
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
   const { resolvedTheme } = useTheme()
   const isMobile = useIsMobile()
   const [mounted, setMounted] = useState(false)
@@ -111,6 +153,8 @@ export const MapShell = () => {
   const [focusedNoisyPoiId, setFocusedNoisyPoiId] = useState<string | null>(null)
   const mapRef = useRef<MapRef>(null)
   const latestRequestIdRef = useRef(0)
+  const hasHydratedFromUrlRef = useRef(false)
+  const isRestoringFromUrlRef = useRef(false)
   const {
     clipContainerRef,
     mapWindowRef,
@@ -433,6 +477,129 @@ export const MapShell = () => {
     setFocusedNoisyPoiId(null)
   }, [])
 
+  const urlAddress =
+    analyseState.status === "analysing" ? analyseState.address : null
+  const urlLatitude =
+    analyseState.status === "analysing" &&
+    analyseState.geocode.status === "done"
+      ? analyseState.geocode.data.latitude
+      : null
+  const urlLongitude =
+    analyseState.status === "analysing" &&
+    analyseState.geocode.status === "done"
+      ? analyseState.geocode.data.longitude
+      : null
+
+  useEffect(() => {
+    if (!mounted || !mapReady || hasHydratedFromUrlRef.current) return
+
+    hasHydratedFromUrlRef.current = true
+
+    const address = searchParams.get("address")?.trim() ?? ""
+    const coordinates = parseShareCoordinates(
+      searchParams.get("lat"),
+      searchParams.get("lng")
+    )
+    const decodedTimeSlot = decodeNoiseTimeSlot(
+      searchParams.get("timeSlot") ?? ""
+    )
+
+    if (decodedTimeSlot) {
+      setTimeSlot(decodedTimeSlot)
+    }
+
+    const hasShareTarget = Boolean(address || coordinates)
+
+    if (!hasShareTarget) {
+      return
+    }
+
+    isRestoringFromUrlRef.current = true
+
+    if (address && coordinates) {
+      void handleSearch({
+        address,
+        resolvedGeocode: buildGeocodeResultFromCoordinates(
+          address,
+          coordinates.latitude,
+          coordinates.longitude,
+          {
+            geocoderName: "shared-url",
+            source: "shared-url",
+            sourceEndpoint: "client-side URL params",
+          }
+        ),
+      })
+      return
+    }
+
+    if (address) {
+      void handleSearch({ address })
+      return
+    }
+
+    if (coordinates) {
+      const fallbackAddress = `${coordinates.latitude.toFixed(5)}, ${coordinates.longitude.toFixed(5)}`
+
+      void handleSearch({
+        address: fallbackAddress,
+        resolvedGeocode: buildGeocodeResultFromCoordinates(
+          fallbackAddress,
+          coordinates.latitude,
+          coordinates.longitude,
+          {
+            geocoderName: "shared-url",
+            source: "shared-url",
+            sourceEndpoint: "client-side URL params",
+          }
+        ),
+      })
+    }
+  }, [handleSearch, mapReady, mounted, searchParams])
+
+  useEffect(() => {
+    if (!mounted || !mapReady || !hasHydratedFromUrlRef.current) return
+
+    if (isRestoringFromUrlRef.current) {
+      if (analyseState.status === "analysing") {
+        isRestoringFromUrlRef.current = false
+      } else {
+        return
+      }
+    }
+
+    const nextQuery =
+      urlAddress !== null && urlLatitude !== null && urlLongitude !== null
+        ? buildShareQuery({
+            address: urlAddress,
+            latitude: urlLatitude,
+            longitude: urlLongitude,
+            timeSlot,
+          })
+        : ""
+
+    const currentQuery = searchParams.toString()
+
+    if (nextQuery === currentQuery) {
+      return
+    }
+
+    router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, {
+      scroll: false,
+    })
+  }, [
+    analyseState.status,
+    mounted,
+    mapReady,
+    pathname,
+    router,
+    searchParams,
+    timeSlot,
+    urlAddress,
+    urlLatitude,
+    urlLongitude,
+  ])
+
   const handleNoisyPoiFocus = useCallback((poi: NearbyNoisyPoiSummary) => {
     setFocusedNoisyPoiId((current) =>
       current === poi.placeId ? null : poi.placeId
@@ -463,26 +630,22 @@ export const MapShell = () => {
         })
       } catch {
         const fallbackAddress = `Dropped pin (${latitude.toFixed(5)}, ${longitude.toFixed(5)})`
-        const fallbackGeocode: GeocodeResult = {
-          inputAddress: fallbackAddress,
-          normalizedAddress: fallbackAddress,
-          latitude,
-          longitude,
-          postcode: null,
-          coordinatePrecision: "unknown",
-          geocoderName: "map-pin-drop",
-          geocoderConfidence: "low",
-          source: "map-pin-drop",
-          sourceEndpoint: "client-side map click",
-          retrievedAt: new Date().toISOString(),
-          sourceLicence: "n/a",
-          warnings: ["Reverse geocoding failed; using dropped pin coordinates."],
-          rawResponse: null,
-        }
 
         await handleSearch({
           address: fallbackAddress,
-          resolvedGeocode: fallbackGeocode,
+          resolvedGeocode: buildGeocodeResultFromCoordinates(
+            fallbackAddress,
+            latitude,
+            longitude,
+            {
+              geocoderName: "map-pin-drop",
+              source: "map-pin-drop",
+              sourceEndpoint: "client-side map click",
+              warnings: [
+                "Reverse geocoding failed; using dropped pin coordinates.",
+              ],
+            }
+          ),
         })
       }
     },
