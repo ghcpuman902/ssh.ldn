@@ -1,6 +1,6 @@
 const NOMINATIM_BASE = "https://nominatim.openstreetmap.org";
 const NOMINATIM_USER_AGENT =
-  "ssh.ldn-hackathon-discovery/0.1 (local dev; contact: dev@ssh.ldn)";
+  "ssh-ldn-hackathon-discovery/0.1 (local dev; contact: dev@ssh-ldn.app)";
 
 /** Nominatim usage policy: max 1 request per second. */
 const MIN_REQUEST_INTERVAL_MS = 1100;

@@ -17,7 +17,7 @@ export const localNoiseTilePath = ({
   z: number;
   x: number;
   y: number;
-}) => path.join(TILE_ROOT, kind, period, String(z), String(x), `${y}.png`);
+}) => `${TILE_ROOT}/${kind}/${period}/${z}/${x}/${y}.png`;
 
 export const readLocalNoiseTile = async (params: {
   kind: DefraMapKind;
@@ -28,7 +28,7 @@ export const readLocalNoiseTile = async (params: {
 }) => {
   try {
     const filePath = localNoiseTilePath(params);
-    const buffer = await readFile(filePath);
+    const buffer = await readFile(/* turbopackIgnore: true */ filePath);
     return buffer.buffer.slice(
       buffer.byteOffset,
       buffer.byteOffset + buffer.byteLength

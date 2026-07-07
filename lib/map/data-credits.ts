@@ -159,7 +159,7 @@ export const CARTO_BASEMAP_CREDIT: DataCredit = {
 export const DATA_SOURCES_PAGE_CREDIT: DataCredit = {
   id: "data-sources-page",
   title: "Data sources & attributions",
-  provider: "ssh.ldn",
+  provider: "ssh-ldn",
   licence: "n/a",
   licenceUrl: "/data-sources",
   datasetUrl: "/data-sources",

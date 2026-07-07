@@ -1,7 +1,6 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react"
-import Image from "next/image"
 import Map, {
   Marker,
   NavigationControl,
@@ -62,7 +61,6 @@ import { cn } from "@/lib/utils"
 import "maplibre-gl/dist/maplibre-gl.css"
 import "@/components/map/map-controls.css"
 
-const LOGO_PATH = "/ssh.ldn logo.svg"
 const SEARCH_RESULT_ZOOM = 15
 const PANEL_WIDTH = "26rem"
 const PANEL_TRANSITION_MS = 300
@@ -807,6 +805,7 @@ export const MapShell = () => {
           <div className="pointer-events-none absolute inset-0 z-10">
             <div
               ref={logoRef}
+              aria-label="ssh-ldn London Noise Map"
               className="pointer-events-auto absolute left-0 top-0 flex w-fit flex-col items-center gap-1 pb-3 pr-4 text-center md:pb-3.5 md:pr-5"
             >
               <div className="flex items-center justify-center gap-1.5 md:gap-2">
@@ -820,14 +819,9 @@ export const MapShell = () => {
                 >
                   🤫
                 </span>
-                <Image
-                  src={LOGO_PATH}
-                  alt="ssh.ldn"
-                  width={924}
-                  height={179}
-                  priority
-                  className="h-7 w-auto md:h-8"
-                />
+                <span className="text-base font-semibold tracking-tight text-foreground md:text-4xl">
+                  ssh-ldn
+                </span>
               </div>
               <p className="text-[10px] leading-none text-muted-foreground md:text-xs">
                 London Noise Map by{" "}

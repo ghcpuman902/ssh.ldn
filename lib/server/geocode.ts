@@ -50,7 +50,7 @@ export const geocodeFromTestPoint = (testPointId: string): GeocodeResult => {
     coordinatePrecision: "building",
     geocoderName: "seeded-test-point",
     geocoderConfidence: "high",
-    source: "ssh.ldn demo seed",
+    source: "ssh-ldn demo seed",
     sourceEndpoint: "/api/discovery/geocode?testPointId",
     retrievedAt: new Date().toISOString(),
     sourceLicence: "internal demo data",

@@ -1,4 +1,4 @@
-const DEFAULT_ALLOWED_ORIGINS = ["https://sshldn.vercel.app"]
+const DEFAULT_ALLOWED_ORIGINS = ["https://ssh-ldn.app"]
 
 const isLocalDevelopmentOrigin = (origin: string) => {
   try {

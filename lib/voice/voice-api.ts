@@ -1,4 +1,4 @@
-const DEFAULT_PRODUCTION_VOICE_API_URL = "https://sshldn.vercel.app"
+const DEFAULT_PRODUCTION_VOICE_API_URL = "https://ssh-ldn.app"
 
 export const getVoiceApiBaseUrl = () => {
   const configured = process.env.NEXT_PUBLIC_VOICE_API_URL?.replace(/\/$/, "")

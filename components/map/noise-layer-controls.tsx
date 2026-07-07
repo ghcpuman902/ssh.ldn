@@ -129,7 +129,7 @@ const LayerToggle = ({
           aria-label={`Toggle ${meta.label}`}
           onClick={() => onToggle(layerKey, !active)}
           className={cn(
-            "relative flex size-[29px] items-center justify-center overflow-hidden rounded-full border transition-colors",
+            "relative flex size-8 items-center justify-center overflow-hidden rounded-full border transition-colors",
             active ? "border-border bg-white" : "border-border/40 bg-white/50"
           )}
         >
@@ -180,7 +180,7 @@ const VisualLayerToggle = ({
           aria-label={`Toggle ${meta.label}`}
           onClick={() => onToggle(layerKey, !active)}
           className={cn(
-            "relative flex size-[29px] items-center justify-center overflow-hidden rounded-full border transition-colors",
+            "relative flex size-8 items-center justify-center overflow-hidden rounded-full border transition-colors",
             active ? "border-border bg-white" : "border-border/40 bg-white/50"
           )}
         >
@@ -255,7 +255,36 @@ export const NoiseLayerControls = ({
     >
       <NoiseTimeGrid value={timeSlot} onChange={onTimeSlotChange} />
 
-      <div className="mt-3 mb-2 flex w-full items-center justify-end gap-0.5">
+      <div className="mt-3 mb-2 flex w-full items-center justify-end gap-1">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              aria-pressed={audioEnabled}
+              aria-label={
+                audioEnabled
+                  ? "Turn representative sound preview off"
+                  : "Turn representative sound preview on"
+              }
+              onClick={handleAudioToggle}
+              className={cn(
+                "flex size-4 shrink-0 items-center justify-center rounded-full border border-border/50 bg-white shadow-sm transition-colors",
+                audioEnabled
+                  ? "text-primary hover:bg-white/90"
+                  : "text-muted-foreground hover:bg-white/90 hover:text-foreground"
+              )}
+            >
+              {audioEnabled ? (
+                <Volume2 className="size-2.5" aria-hidden="true" />
+              ) : (
+                <VolumeX className="size-2.5" aria-hidden="true" />
+              )}
+            </button>
+          </TooltipTrigger>
+          <MapTooltipContent side="bottom" className="max-w-56 whitespace-normal">
+            {getAudioTooltipText(audioEnabled, audioSampleMode)}
+          </MapTooltipContent>
+        </Tooltip>
         <p className="text-xs font-medium text-foreground">Noise layers</p>
         <Tooltip>
           <TooltipTrigger asChild>
@@ -272,35 +301,6 @@ export const NoiseLayerControls = ({
             className="max-w-56 flex-col items-start whitespace-normal"
           >
             Strategic DEFRA maps — annual averages, not live measurement.
-          </MapTooltipContent>
-        </Tooltip>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              aria-pressed={audioEnabled}
-              aria-label={
-                audioEnabled
-                  ? "Turn representative sound preview off"
-                  : "Turn representative sound preview on"
-              }
-              onClick={handleAudioToggle}
-              className={cn(
-                "flex size-6 items-center justify-center rounded-full text-foreground transition-colors",
-                audioEnabled
-                  ? "bg-primary/10 text-primary hover:bg-primary/15"
-                  : "text-muted-foreground/70 hover:bg-muted/60 hover:text-muted-foreground"
-              )}
-            >
-              {audioEnabled ? (
-                <Volume2 className="size-3.5" aria-hidden="true" />
-              ) : (
-                <VolumeX className="size-3.5" aria-hidden="true" />
-              )}
-            </button>
-          </TooltipTrigger>
-          <MapTooltipContent side="bottom" className="max-w-56 whitespace-normal">
-            {getAudioTooltipText(audioEnabled, audioSampleMode)}
           </MapTooltipContent>
         </Tooltip>
       </div>

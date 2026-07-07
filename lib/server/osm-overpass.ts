@@ -53,7 +53,7 @@ export const fetchOverpass = async (query: string) => {
           "--data-urlencode",
           `data=${query}`,
           "-H",
-          "User-Agent: ssh.ldn-map/1.0",
+          "User-Agent: ssh-ldn-map/1.0",
           "-H",
           "Accept: application/json",
           "--max-time",

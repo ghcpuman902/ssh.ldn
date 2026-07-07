@@ -69,7 +69,7 @@ export const buildGeocodeFromTestPoint = (testPointId: string): GeocodeResult =>
     coordinatePrecision: "building",
     geocoderName: "seeded-test-point",
     geocoderConfidence: "high",
-    source: "ssh.ldn demo seed",
+    source: "ssh-ldn demo seed",
     sourceEndpoint: "client://test-point",
     retrievedAt: new Date().toISOString(),
     sourceLicence: "internal demo data",

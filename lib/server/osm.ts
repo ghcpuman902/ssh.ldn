@@ -55,7 +55,7 @@ const fetchOverpass = async (query: string) => {
           "--data-urlencode",
           `data=${query}`,
           "-H",
-          "User-Agent: ssh.ldn-discovery/1.0 (B1 endpoint testing)",
+          "User-Agent: ssh-ldn-discovery/1.0 (B1 endpoint testing)",
           "-H",
           "Accept: application/json",
           "--max-time",

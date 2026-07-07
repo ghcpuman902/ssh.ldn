@@ -1,18 +1,18 @@
-# ssh.ldn
+# ssh-ldn
 
-**Understand London's soundscape before you sign the lease.**
+**London Noise Map for renting, buying, and visiting.**
 
-[Live demo → https://sshldn.vercel.app](https://sshldn.vercel.app) · [GitHub](https://github.com/ghcpuman902/ssh.ldn)
+[Live demo → https://ssh-ldn.app](https://ssh-ldn.app) · [GitHub](https://github.com/ghcpuman902/ssh.ldn)
 
 Built in one day at [Londonmaxxing 003](https://londonmaxxing.com) (4 July 2026) — *Live London* track.
 
-![ssh.ldn map — London noise layers with local sources](./public/readme-screenshot.png)
+![ssh-ldn map — London noise layers with local sources](./public/readme-screenshot.png)
 
 ## The problem
 
 People can estimate commute times, crime rates, and rent — but they have almost no tools for knowing whether a flat will actually *sound* comfortable to live in. Train vibration, pub gardens, aircraft paths, and weekend nightlife often only show up after move-in day.
 
-**ssh.ldn** makes invisible sound risks legible: search an address, see what's contributing to noise, and ask follow-up questions by voice.
+**ssh-ldn** makes invisible sound risks legible: search an address, see what's contributing to noise, and ask follow-up questions by voice.
 
 ## What it does
 
@@ -89,7 +89,7 @@ The map is visual-first, but the product is designed so **sound environments can
 From our planning notes — before presenting, make sure these are visible:
 
 - [ ] GitHub repository
-- [ ] Live demo URL — **https://sshldn.vercel.app**
+- [ ] Live demo URL — **https://ssh-ldn.app**
 - [ ] QR code (repo or demo)
 - [ ] LinkedIn QR
 - [ ] Team information

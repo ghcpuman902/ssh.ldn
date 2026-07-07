@@ -32,8 +32,8 @@ const openrouter = createOpenAICompatible({
   includeUsage: true,
   headers: {
     "HTTP-Referer":
-      process.env.OPENROUTER_SITE_URL ?? "https://sshldn.vercel.app",
-    "X-Title": "ssh.ldn",
+      process.env.OPENROUTER_SITE_URL ?? "https://ssh-ldn.app",
+    "X-Title": "ssh-ldn",
   },
 })
 
@@ -96,7 +96,7 @@ const buildVoiceAnswerParams = (
   const system = context
     ? buildLocationContextPrompt(enrichLocationContext(context))
     : [
-        "You are ssh.ldn, a concise London noise analyst.",
+        "You are ssh-ldn, a concise London noise analyst.",
         "The user has not bound a location yet.",
         "Ask them to search for and analyse an address before asking location-specific questions.",
         "Keep spoken answers to one short sentence.",

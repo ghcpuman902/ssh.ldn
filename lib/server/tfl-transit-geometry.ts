@@ -99,7 +99,7 @@ const TRANSIT_MODE_CONFIG: Record<TransitMode, TransitModeConfig> = {
 
 const fetchJson = async <T>(url: string): Promise<T> => {
   const response = await fetch(url, {
-    headers: { "User-Agent": "ssh.ldn-map/1.0" },
+    headers: { "User-Agent": "ssh-ldn-map/1.0" },
     signal: AbortSignal.timeout(15_000),
   });
 

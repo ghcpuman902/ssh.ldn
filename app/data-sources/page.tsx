@@ -11,9 +11,9 @@ import {
 import { DEFRA_TIME_SLOT_NOTE } from "@/lib/map/noise-time"
 
 export const metadata = {
-  title: "Data sources — ssh.ldn",
+  title: "Data sources — ssh-ldn",
   description:
-    "Dataset attributions, licences, and trademark declarations for the London noise map.",
+    "Dataset attributions, licences, and trademark declarations for the ssh-ldn London noise map.",
 }
 
 const CreditCard = ({ credit }: { credit: DataCredit }) => (
@@ -106,7 +106,7 @@ export default function DataSourcesPage() {
               Data sources &amp; attributions
             </h1>
             <p className="mt-2 text-sm text-muted-foreground md:text-base">
-              Full dataset declarations for the ssh.ldn London noise map. Map
+              Full dataset declarations for the ssh-ldn London noise map. Map
               tooltips show layer names only; this page holds the detailed
               source information.
             </p>
