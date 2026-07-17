@@ -1,0 +1,12 @@
+Title: Central Line Noise Between Stratford and Leyton — FOI response tables
+Provider: Transport for London FOI Case Management
+Canonical URL: https://tfl.gov.uk/corporate/transparency/freedom-of-information/foi-request-detail?referenceId=FOI-3133-2526
+FOI: FOI-3133-2526
+Published: 09 December 2025
+Format: HTML tables + PDF attachments
+Rights status: unknown — Not open data / permission required
+Methodology: In-cab LAeq measurements Stratford–Leyton eastbound with grind dates (2020–2025); comparative station-to-station cab LAeq for many Central sections on 1 September 2025.
+Position: Cab (occupational proxy)
+Caveats: Cab vs passenger; TSR periods annotated; copyright/re-use per TfL FOI information sheet.
+Local assets: page.html, tables.json
+Retrieved: 2026-07-15

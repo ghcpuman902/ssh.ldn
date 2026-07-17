@@ -1,0 +1,1730 @@
+                            EXECUTIVE SUMMARY
+
+INTRODUCTION
+Regular assessment of Train Operators exposure to noise have been conducted since
+2018. Noise measurements were made in the driving cab of Northern Line rail vehicles
+during normal travel. The measured data were assessed with respect to the Control
+of Noise at Work Regulations 2005 (CNAWR).
+
+MEASUREMENT AND ANALYSIS
+Measurements were made in the driving cabs of four vehicles during normal travel
+between terminals (Morden, Edgware and High Barnet). Repeat measures were
+conducted over three days: 24 November to 26 November 2020.
+Noise measurements were made from a microphone located about 20 cm from the
+Train Operators left ear. Time Histories of sound pressure were measured using a
+Class 1 integrating Sound Level Meter (SLM) that was configured to log A-weighted
+broadband equivalent continuous sound pressure level (LAeq), C-weighted peak sound
+pressure level and one-third octave band equivalent continuous sound pressure level
+(Leq). The time histories were analysed to determine these values for the end-to- end
+journey and the separate interstation sections of the route.
+The noise data were analysed with respect to The Control of Noise at Work
+Regulations(2005), specifically: the ‘lower exposure action value’ (corresponding to a
+daily personal noise exposure level of 80 dB(A)); the ‘upper exposure action value’
+(corresponding to a daily personal noise exposure level of 85 dB(A)); and the ‘exposure
+limit value’ corresponding to a daily personal noise exposure level of 87 dB(A)). The
+CNAWR specify that the equivalent continuous sound pressure level normalised to an
+8-hour working day be used in the assessment of occupational noise exposure.
+Durations of exposure required to reach the action and limit values have been
+estimated. Exposure points have been determined for travel and are used to assess
+against the action and limit values.
+
+RESULTS AND DISCUSSION
+There were 11 end-to-end journeys conducted during the survey. The LAeq measured
+ranged from 78 dB(A) to 82 dB(A). Analysis of interstation noise indicated 11 stations
+where the noise median levels were above 85 dB(A). Exposure points calculated for
+the 11 end-to end journeys ranged from 3 points to 7 points. Using exposure points to
+estimate the daily personal noise exposure level indicate that the ‘lower exposure
+action value’ is unlikely to be reached for most duties. Some variation was observed
+between measurement runs but this is not thought to change the overall assessment
+of risk. For some duties the ‘lower exposure action value’ could be reached, if applying
+a more conservative value to all end-to end journeys during a duty (i.e. the highest
+value measured during the survey). The ‘upper exposure action value’ and the
+‘exposure limit value’ is not expected to be reached during normal duty. The data
+appears consistent with the findings in previous assessments and supports the current
+provision of hearing protection for all Train Operators. Other recommendations have
+been made.
+
+
+
+
+Report No: N&V – R2900                                               Page 2 of 50
+                            CONTENTS
+
+
+INTRODUCTION                                  4
+EQUIPMENT AND PROCEDURE                       4
+RESULTS                                       6
+DISCUSSION                                    10
+CONCLUSIONS                                   15
+RECOMMENDATIONS                               16
+ACKNOWLEDGEMENTS                              16
+REFERENCES                                    17
+DISTRIBUTION                                  18
+APPENDIX A: STANDARDS AND CRITERIA            20
+APPENDIX B: ANALYSIS OF NOISE DATA            22
+APPENDIX D: EXPOSURE POINTS SYSTEM            45
+APPENDIX E: HEARING PROTECTION                49
+APPENDIX F: STATION CODES                     50
+
+
+
+
+Report No: N&V – R2900                 Page 3 of 50
+INTRODUCTION
+
+1.            TfL Technical Services were tasked to assess Train Operators exposure
+to noise during normal travel in the Northern Line rail vehicles. Noise measurements
+were made over the period 24 - 26 November 2020. The measurements were
+assessed with respect to current standards and guidelines concerned with human
+exposure to noise.
+
+
+2.           The effects of exposure to high levels of noise on hearing are widely
+published and continued exposure to high levels is known to cause hearing damage.
+The Control of Noise at Work Regulations 2005 (CNAWR) implement the European
+Commission’s Physical Agents Directive on Noise (PA(N)D, 2003). The CNAWR
+defines several exposure action values at which employers are required to initiate
+steps to reduce the harmful effects of noise on hearing. The action values are
+expressed both as an A-weighted daily personal noise exposure level (LEP,d or weekly,
+LEP,w) and a C-weighted peak sound pressure level (LCpk). The ‘daily personal noise
+exposure’ is standardised to an 8-hour period and the ‘weekly personal noise
+exposure’ is standardised to a 40-hour working week. In certain circumstances, the
+CNAWR allow the personal noise exposure to be calculated to a working week: “Where
+the exposure of an employee to noise varies markedly from day to day, an employer
+may use weekly personal noise exposure in place of daily personal noise exposure for
+the purpose of compliance with these Regulations”. The action values are as follows:
+
+The lower exposure action values (LEAV) are:
+            LEP,d or LEP,w of 80 dB(A); and
+            LCpk of 135 dB(C).
+The upper exposure action values (UEAV) are:
+            LEP,d or LEP,w of 85 dB(A); and
+            LCpk of 137 dB(C).
+The exposure limit values (ELV) are:
+            LEP,d or LEP,w level of 87 dB (A-weighted); and
+            LCpk of 140 dB(C).
+
+The exposure limit value takes into account the attenuation afforded by any personal
+hearing protection (PHP). A summary of the standards and guidelines used to assess
+occupational noise exposure are included in Appendix A.
+
+
+EQUIPMENT AND PROCEDURE
+
+The vehicle
+
+3.            The London Underground 1995 Stock is the type of rolling stock in
+service on the Northern Line. The rail vehicles were manufactured by GEC Alsthom-
+Metro Cammell and were first brought into service in 1998. Normal formation for 1995
+Stock comprises six cars with a maximum full load standing capacity of 662 people.
+This vehicle is equipped with Thales Transmission Based Train Control (T.B.T.C) for
+automatic train operation and can be operated manually if required. Automatic train
+operation is utilised across most of the Northern Line network.
+
+
+
+Report No: N&V – R2900                                            Page 4 of 50
+Figure 1.         An example driving cab (51618) used during the survey.
+
+
+Noise measurements
+
+4.            The noise survey was conducted over the period 24 - 26 November 2020.
+Noise measurements were made in the driving cab of the rail vehicle using a Class 1
+integrating Sound Level Meter (01dB Fusion FW 2.49 serial number 12501) with
+combined ½” condenser microphone (Type 40CD serial number 292570). The
+microphone was positioned approximately 20 cm from the Train Operator’s left ear and
+any reflecting surfaces using a bespoke mounting that was fixed to a solid panel in the
+vehicle. Data were acquired for the duration of an end-to-end journey, that is transit
+from Morden (MOR) terminal to either Edgware (EDG) or High Barnet (HIB) terminals
+and vice-versa. Measurements were made for a combination of routes via Bank (BAN)
+and Charing Cross (CAC). Further details of each journey are presented in Table 1;
+the station codes used throughout the report are listed in the Appendix. The Train
+Operator controlling the rail vehicle was the same for all surveys. The same rail vehicle
+was used for the return leg of a journey; a total of four vehicles were used. The TO
+adjusted the seat according to their normal driving posture and the microphone could
+be repositioned to ensure it did not restrict movement of the TO. The TO also adjusted
+the volume control of the radio to a suitable level at the start of each journey.
+
+5.           Calibration of the SLM was carried out using an acoustic calibrator (Rion
+Co. Ltd type NC24 serial number 35236395) which gave a sinusoidal calibration tone
+of 94 dB at a frequency of 1000 Hz. The field calibration was carried out before and
+after each survey; the measurements remained stable throughout.
+
+6.             The time histories were analysed using 01 dBTrait software (version
+6.3.1 build 1) and the following parameters were determined for the end-to-end journey
+and for interstation transit: the A-weighted equivalent continuous sound pressure level
+(LAeq,T), the C-weighted peak sound pressure level (Lcpeak); and one-third octave band
+equivalent continuous sound pressure level (LeqT for centre band frequencies 31.5 Hz
+to 16,000 Hz).
+
+
+
+
+Report No: N&V – R2900                                               Page 5 of 50
+Table 1.     Details of noise survey on the Northern Line 24-26 November 2020 (* via
+             Kennington Loop)
+           Date   Journey     Train         Cab          Start     End   Route     Duration
+                                                                                    (mins)
+                      1        017        51574          MOR       EDG   BAN          66
+                      2        017        51712          EDG       MOR   BAN          66
+        24 Nov
+                      3        102        51618          MOR       HIB   BAN          69
+                      4        102        51617          HIB       MOR   CHC          65
+                      5        144        51653          MOR       HIB   BAN          68
+        25 Nov       6*        144        51652          HIB       HIB   CHC          87
+                      7        144        51653          HIB       MOR   BAN          68
+                      8        026        51699          MOR       EDG   BAN          68
+                      9        026        51668          EDG       MOR   BAN          65
+        26 Nov
+                     10        026        51699          MOR       EDG   BAN          65
+                     11        026        51699          EDG       MO    BAN          65
+
+
+Analysis
+
+7.           Full details about the analysis procedures on the measurement of sound
+pressure levels and sound exposure levels are shown in Appendix B. The equivalent
+continuous sound pressure level (Leq) is the steady sound pressure level, over a
+specified period of time, which would produce the same energy equivalent to the actual
+fluctuating sound. It is described in equation 1 where tm is the specified period of time,
+P1 is the instantaneous sound pressure and P0 is the reference sound pressure of 20
+μPa.
+
+                                                 1 tm  P 2 
+                            Leq (dB) = 10 log10    1  dt                                 (1)
+                                                 tm 0  P0  
+
+8.            The A-weighted equivalent continuous sound pressure level (LAeq) can be
+used to calculate the exposure period required for the noise to reach the ‘exposure
+limit value’ (ELV) as specified in CNAWR.
+
+                                     T = 8  10( 0.1(AL − Leq ))                                (2)
+
+where T is the time (in hours) required to reach the ELV; AL is ELV of 87 dB(A), and
+Leq is the measured equivalent continuous sound pressure level. The variable AL in
+the equation can be replaced by the LEAV or the UEAV to determine the periods
+required for the noise to reach the different values.
+
+
+RESULTS
+
+9.           All noise data are presented in Appendix C. The A-weighed equivalent
+continuous sound pressure levels (LAeq) and the C-weighted peak sound pressure level
+(LCpeak) obtained for each journey are shown in Table 2. The data presented include
+
+
+
+Report No: N&V – R2900                                                           Page 6 of 50
+all noise events, such as radio communications, announcements, alarms and whistles,
+that occurred during the measurement period. The TO reported that the frequency of
+communications during travel were typical of normal operation.
+
+
+Table 2     Noise data (LAeqT) measured at the Train Operator position of a 1995
+            Rolling Stock during normal operations on the Northern Line 24-26
+            November 2020 (* via Kennington Loop).
+                  Date     Journey     Duration      LAeq   LCPeak
+                                        (mins)      dB(A) dB(C)
+                               1          66          80     115
+                               2          66          79     115
+                24 Nov
+                               3          69          82     114
+                               4          65          78     114
+                               5          68          80     127
+                25 Nov        *6          87          81     116
+                               7          68          79     115
+                               8          68          80     112
+                               9          65          79     117
+                26 Nov
+                              10          65          80     113
+                              11          65          79     114
+
+
+10.          Noise values (LAeq) obtained for all journeys range from 78 dB(A) (HIB to
+MOR via CHC, Journey 4) to 82 dB(A) (HIB to MOR via BAN, Journey 3); for LCpeak
+value, a range of 112 dB(C) (MOR to EDG via BAN, Journey 8) to 127 dB(C) (MOR to
+HIB via BAN, Journey 5) were measured. The high LCpeak value obtained during
+Journey 5 was due to the slamming of the door between the driving cab and the main
+saloon; this is a rare occurrence, and therefore the LCpeak values obtained during the
+other journeys are deemed to be representative of normal conditions.
+
+11.         The LAeq measured during transit between stations for north and
+southbound routes are shown in Figures 2 to 7; the corresponding measurement
+durations are detailed in Tables C2 to C7 of Appendix C. An indication of the spread
+between measurements can be seen in Figures C1 to C10 (Appendix C) where the
+data have been represented with the median LAeq values for interstation sections.
+Some interstation noise levels show a notable difference in LAeq; this is particularly
+evident in surface sections where noise from other sources such as alarms and radio
+communications have occurred (for example EDG to BUO in Figure 3 and HIB to TOW
+in Figures 5 to 7). A difference is also observed in Figures C1 and C2 (Appendix C)
+where the LAeqs for Journey 3 are higher across nearly all interstation sections; except
+during travel through FIC to WEF (Figure C5) where Journey 5 was higher due to
+alarms and communications that were recorded during the measurement run.
+
+12           There are 11 interstation sections where the median LAeq was equal to or
+greater than 85 dB(A). The highest median LAeq (88 dB(A)) was measured between
+CAT to EUS on the southbound road; other intersections included KET and CAT, and
+SOW to MOR. On the northbound road, the highest median LAeq (90 dB(A)) was
+
+
+
+Report No: N&V – R2900                                               Page 7 of 50
+measured between TOBr and TOBe; median LAeq above 85 dB(A) were recorded at
+five other northbound intersections (CLN to STO, EUS to CAT WAT to EMB, WAS to
+EUS, and CAT to KET).
+
+
+
+
+Figure 2   Interstation noise levels (LAeq in dB(A)) measured on the northbound road
+           between Morden and Edgeware via Bank (Journeys 1, 8 and 10).
+
+
+
+
+Figure 3   Interstation noise levels (LAeq in dB(A)) measured on the southbound
+           road between Edgware and Morden via Bank (Journeys 2, 8 and 11).
+
+
+
+
+Report No: N&V – R2900                                           Page 8 of 50
+Figure 4   Interstation noise levels (LAeq in dB(A)) measured on the northbound road
+           between Morden and High Barnet via Bank (Journeys 3 and 5).
+
+
+
+
+Figure 5   Interstation noise levels (LAeq in dB(A)) measured on the southbound
+           road between High Barnet to Morden via Bank (Journey 7).
+
+
+
+
+Report No: N&V – R2900                                           Page 9 of 50
+Figure 6   Interstation noise levels (LAeq in dB(A)) measured between High Barnet to
+           High Barnet via Charing Cross and Kennington Loop (Journey 6).
+
+
+
+
+Figure 7   Interstation noise levels (LAeq in dB(A)) measured on the northbound road
+           between High Barnet to Morden via Charing Cross (Journey 4).
+
+
+
+DISCUSSION
+
+13.           The following subsections cover the estimation of daily exposure using
+a points-based system and the implications in relation to the regulations. Repeat
+measures for the tunnel route via Charing Cross station (two in southbound direction
+and one in northbound direction) were limited, however the values obtained appear to
+
+
+
+Report No: N&V – R2900                                          Page 10 of 50
+be consistent with those measured in previous studies. No data were acquired
+between Mill Hill East and Finchley Central; the previous assessment (Barros, J. 2019)
+recorded an LAeq of 68 dB(A) between these stations.
+
+
+Exposure Points System
+
+14.           A method of assessment of exposure that is supported by the HSE is by
+means of an Exposure Points System (EPS). The EPS can be used to determine
+whether the LEP,d or LEP,w is likely to be reached or exceeded. The method assigns
+exposure points corresponding to a sound level (LAeq) for a particular exposure period;
+the HSE EPS is shown in Appendix D. The EP and the exposure duration are linearly
+correlated therefore halving the exposure duration will halve the number of EP. This
+method can be used to compare against the exposure action values; the exposure
+points corresponding to these values are:
+                       LEAV                32 points (LEP,d) or 160 points (LEP,w)
+                       UEAV                100 points (LEP,d) or 500 points (LEP,w)
+                       ELV                 160 points (LEP,d) or 800 points (LEP,w)
+
+15.           Exposure points have been calculated for the different journeys and are
+presented in Table 3; durations required to reach the various action and limit values
+have also been calculated using the overall LAeq values (to 1 decimal place), for
+completeness. For example, for Journey 6 the rail vehicle commenced and terminated
+at High Barnet, travelling via the Kennington Loop and Bank branch stations (in both
+directions). Based on the total journey time (87 minutes) and the noise level
+(LAeq 80.7 dB(A)) the exposure for this journey would be equivalent to 7 points, and the
+time required to reach the LEAV would be about 6.75 hours. Similarly, for the separate
+survey days, the total exposure points for Journeys 1 to 4 (24 Nov), Journeys 5 to 7
+(25 Nov) and Journeys 8 to 11 (26 Nov) would be 17 points (4+3+7+3), 15 points
+(4+7+4), and 14 points (4+3+4+3), respectively. Further examples are shown in
+Appendix D (Tables D2 to D4) where the EPs corresponding to the noise levels and
+durations obtained during interstation transit have been calculated for Journeys 3, 4
+and 6. It can be seen that the total EPs calculated using the intersection noise levels
+and the durations are comparable with those calculated in Table 3 (i.e. using the overall
+LAeq and duration for the end-to-end journey).
+
+16.           A reasonable estimate for the total EPs for a single end-to-end journey,
+irrespective of the route taken (i.e. via Bank or Charing Cross) would be between
+3 points and 7 points. For Journeys 3 and 5 (Morden to High Barnet via Bank Branch)
+the EP were 7 points and 4 points, respectively, which indicates some variability
+between runs, however, it is unlikely the variability would alter the overall assessment.
+Based on the routes with the highest EP (Journeys 3 and 6) it is estimated that journeys
+could be undertaken around 5 times per day (total EP 35 points) before reaching the
+LEAV (LEP,d 80 dB(A) or 32 points). However, actual values determined for the three
+survey days (see paragraph 15) show that a further two end-to end journeys could be
+completed without reaching the LEAV.
+
+17.         Train Operator schedules are detailed in the Temporary Working
+Timetable 224 (TWT 224, Establishment Planning, 2020). Actual daily schedules
+
+
+
+Report No: N&V – R2900                                              Page 11 of 50
+could comprise a combination of different routes equivalent to four end-to-end journeys
+and sometimes up to six end-to-end journeys. The LEP,d for some example duties have
+been estimated using the values presented in Table 3; these are shown in Table 4.
+The estimated LEPd indicate daily exposures that are below the LEAV, however it is
+generally accepted that a more stringent value could be applied to all end-to end
+journeys and therefore the LEAV could be reached. The LEPd for other duties have
+been estimated in previous assessments (Barros, J. 2019 and 2018) and are
+consistent with the findings presented in this report.
+
+Table 3   Exposure durations required to reach the action and limit value, and the
+          total exposure points for end-to-end journey (1 indicates route via Bank
+          and 2 via Charing Cross, *route via Kennington Loop)
+Journey      Route       Dur       LAeq           Time required to reach           EP
+                        (mins) dB(A)          LEAV              UEAV         ELV
+   1      MOR-EDG1        66        80      7 h 38 min       24 h 9 min      >24h 4
+   2      EDG-MOR    1    66        79     11 h 2 min       >24h             >24h 3
+   3       MOR-HIB  1     69        82      5 h 17 min       16 h 42 min >24h 7
+   4       HIB-MOR  2     65        78     12 h 40 min >24h                  >24h 3
+   5       MOR-HIB  1     68        80      7 h 27 min       23 h 36 min >24h 4
+  *6       HIB-HIB 2      87        81      6 h 48 min       21 h 31 min >24h 7
+   7       HIB-MOR  1     68        79     10 h 4 min       >24h             >24h 4
+   8      MOR-EDG1        68        80      8 h 34 min >24h                  >24h 4
+   9      EDG-MOR    1    65        79      9 h 37 min >24h                  >24h 3
+  10      MOR-EDG    1    65        80      8 h 34 min >24h                  >24h 4
+  11      EDG-MOR    1    65        79      9 h 37 min >24h                  >24h 3
+
+
+Table 4    Estimated LEP,d for example Train Operator duties detailed in the Temporary
+           Working Timetable 224 (6 July 2020).
+                                     LEPd in dB(A) (EP)
+                 Duty Mon-Thur           Fri       Sat        Sun
+                 612        78 (18)    78 (18) 79 (26) 79 (25)
+                 649        80 (29)    79 (24) 79 (26) 78 (21)
+                 665        80 (29)    79 (26) 79 (26) 79 (26)
+                 680        79 (23)    79 (26) 79 (26)        N/A
+
+
+18.            This study includes all sources of noise (including radio communications,
+announcements, and alarms) which occurred during the surveys which would
+contribute to the TO’s exposure during normal travel. These exposures should be
+considered estimates since a working day may comprise other working procedures
+involving different exposure to other noise sources that have not been assessed as
+part of this study.
+
+19.         It is acknowledged that most duties are unlikely to reach the LEAV.
+Nevertheless TfL, as a precaution, have implemented measures based on a likelihood
+of the LEAV being reached or exceeded. This allows for any variability that could be
+
+
+
+
+Report No: N&V – R2900                                             Page 12 of 50
+expected during assessment. Table 5 summarises the assessment against the action
+and limit values stipulated in the CNAWR.
+
+
+Table 5       Assessment of TO daily personal noise exposure against the CNAWR.
+              Could the action or limit values be reached or exceeded?
+                    LEPd                                    LCPeak
+      LEAV         UEAV           ELV           LEAV        UEAV       ELV
+     80 dB(A)    85 dB(A)      87 dB(A)      135 dB(C) 137 dB(C) 140 dB(C)
+       Yes           No             No           No           No        No
+
+
+20.            According to guidance produced by the Health and Safety Executive
+(HSE, 2005), under Regulation 6 (Elimination or control of exposure to noise at the
+workplace), there is a duty placed on employers “to take action to eliminate risks from
+noise exposure completely wherever it is reasonably practicable to do so..” and “if it is
+not reasonably practicable to eliminate the risks completely, to reduce them to as low
+a level as is reasonably practicable [ALARP]”. Where exposure may reach the UEAV,
+the control measures “cannot include the provision of personal hearing protection….”.
+Importantly, the guidance states that “This general duty applies whenever there is a
+risk from noise and irrespective of whether any exposure action values are exceeded”
+(HSE, 2005).
+
+21.          Noise in cab interiors is largely influenced by the vehicle dynamics. The
+primary source is the rolling contact noise with other noise exposure arising from radio
+communications and alarms. There is an ongoing programme of monitoring and
+maintenance for track and rail vehicles across the underground network which
+supports continuous measures to minimise noise and vibration both within rail vehicles
+and within neighbouring commercial and residential buildings.
+
+Hearing Protection
+
+22.          In relation to hearing protection, under Regulation 7 (Hearing Protection),
+HSE guidance states that where exposure falls between the LEAV and the UEAV, the
+employer has “to provide protectors to employees who ask for them but the Noise
+Regulations do not make their use compulsory”.
+
+23.          Hearing protection is available for use by all Train Operators. There are
+several types of hearing protection devices (HPD) available in the form of earplug and
+earmuff style HPDs; these can be requested through the Personal Protective
+Equipment (PPE) catalogue. The HPD used by the TO during the survey is shown in
+Figure 8.
+
+
+
+
+Report No: N&V – R2900                                              Page 13 of 50
+Figure 8          The Alpha Solway SONA L1 HPD used by the TO during the survey.
+
+
+24.           There are several methods for estimating the LAeq at the ear when
+different HPDs are worn. The method used would be dependent on the nature of the
+noise (e.g. frequency content, continuous or impulsive noise) and the type of HPD
+(e.g. passive, level-dependant, communication). Further guidance on selection of
+HPD may be found in HSE publication L108 (2005) and BS EN 458 (2016). One of
+the methods used to estimate attenuation provided by passive HPDs is presented in
+Appendix E. The interstation sections with median LAeq greater than 85 dB(A) (see
+paragraph 12) have been used to estimate the LAeq ‘at the ear’ of the TO whilst using
+two example HPDs: Alpha Solway SOTA L1 and 3M E.A.R Earplugs EC-01-000 (see
+Table 6). As attenuation data for the HPD shown in Figure 8 were not available; data
+for the replacement model (Alpha Solway SONA L1) have been used.
+
+25.           HSE guidance states that HPDs “should aim to provide protection that
+at least reduces the A-weighted sound pressure level at the wearer’s ear to below
+85 dB” and avoid protectors “that reduce the level at the ear to below 70 dB” as ‘over-
+protection’ could interfere with the TO’s ability to hear radio communication and safety
+announcements. Table 6 shows that the two HPDs used in the assessment would
+provide adequate protection for use through interstation sections where high noise
+values have been recorded. It is important to ensure that TOs adjust the volume
+control for radio communications to a comfortable level at the start and during each
+journey.
+
+26.            As the attenuation performance of HPDs is often less in the field than
+the values obtained in the laboratory, it is important to ensure that TO are trained in
+the correct use of hearing protection and how to maintain and identify impaired
+performance and any compatibility issues. Information should incorporate more
+general noise awareness training which covers their daily personal noise exposure
+level, ways to reduce the risk of damage to hearing and the relevant obligations
+specified in the CNAWR.
+
+
+
+
+Report No: N&V – R2900                                              Page 14 of 50
+Table 6       Estimated LAeq in dB(A) at the ear of the TO for travel through
+              11 interstation sections where the LAeq greater than 85 dB(A).
+     Direction Journey       Interstation        SOTA L1         3M E-A-R Caps
+                3            TOBr - TOBe            80                 77
+                3            CLN - CLC              73                 67
+                7            WAT - EMB              76                 75
+     North      3            WAS - EUS              80                 77
+                3            EUS - CAT              78                 76
+                3            CAT - KET              78                 75
+                3            KET - TUP              80                 78
+                6            KET - CAT              80                 77
+     South      6            CAT - EUS              77                 73
+                11           SOW - MOR              80                 77
+
+
+27,           With regard to Regulation 9 (Health Surveillance), HSE guidance states
+“There is strong evidence to show that frequent exposure above the upper exposure
+action values can pose a risk to health”, therefore employees who are exposed to
+noise regularly above the UEAV (LEP,d 85 dB(A) or LCPeak 137 dB(C)) should have their
+hearing tested as part of the health surveillance program. Where the exposure falls
+between the LEAV and the UEAV, employers “should provide health surveillance if
+you find out that and individual may be particularly sensitive to noise.”
+
+
+CONCLUSIONS
+
+It is concluded that:
+1         Higher noise levels were measured during travel through tunnel sections
+          compared to surface sections.
+2         Noise levels greater than 85 dB(A) (Median LAeq) were measured at
+          11 interstation sections.
+3         The LEAV (LEPd 80 dB(A)) could be reached or (marginally) exceeded for some
+          duties.
+4         Noise exposure for all TO duties are unlikely to reach the UEAV
+          (LEP,d 85 dB(A)) or the ELV (LEP,d 87 dB(A)).
+5         No peak action or limit would be exceeded during normal operations.
+
+
+
+
+Report No: N&V – R2900                                            Page 15 of 50
+RECOMMENDATIONS
+
+It is recommended that:
+1      TfL continue to implement measures for all Train Operators based on the
+       likelihood that the LEAV could be reached or exceeded.
+2      Train Operators are informed of the correct fitting and use of any hearing
+       protection devices supplied and that a programme of maintenance should be
+       implemented.
+3      General noise awareness training should be provided to Train Operators which
+       includes information regarding their daily personal noise exposure with respect
+       to the CNAWR, their obligations under the regulations and ways to minimise
+       risk of hearing loss.
+4      Train Operators who may be particularly sensitive to noise (as described in
+       HSE publication L108) should receive regular hearing tests as part of a health
+       surveillance programme.
+5      Train Operators have access to a quiet recreational room for meal and rest
+       breaks.
+
+
+
+ACKNOWLEDGEMENTS
+
+The author gratefully acknowledges the Northern Line Team at the Morden Office for
+accommodating the noise surveys, particularly the Train Operator for his support over
+the three days.
+
+
+
+
+Report No: N&V – R2900                                            Page 16 of 50
+REFERENCES
+
+Alpha Solway (2017) Alpha SOTA L1 – low attenuation ear defender. ALPHA-DATA-
+L1-0617_1. Alpha Solway Ltd, 2017.
+
+Barros, J. (2019) Noise at work assessment for Northern Line Train Operators. TFL
+Report RP-R2591. TfL Technical Services, 09 May 2019.
+
+Barros, J. (2018) Noise at work assessment for Northern Line Train Operators. TFL
+Report RP-R2311. TfL Technical Services, 25 May 2018.
+
+British Standards Institution (2016) Hearing Protectors - Recommendations for
+selection, use, care and maintenance - Guidance document. BS EN 458:2016. BSI
+Publications 2016
+
+British Standards Institution (2018) Acoustics – Hearing protectors Part 1: Subjective
+method for the measurement of sound attenuation (ISO 4869-1:2018). BS EN ISO
+4869-1:2018. BSI Publications 2018
+
+British Standards Institution (2018) Acoustics – Hearing protectors Part 2: Estimation
+of effective A-weighted sound pressure levels when hearing protectors are worn (ISO
+4869-1:2018). BS EN ISO 4869-2:2018. BSI Publications 2018
+
+British Standards Institution (2020) Hearing Protectors - General requirements BS EN
+352 (Parts 1 to 3):2020. BSI Publications 2020
+
+British Standards Institution (2020) Hearing Protectors - Safety requirements BS EN
+352 (Parts 4 to 10):2020. BSI Publications 2020
+
+Health and Safety Executive (2005). Controlling noise at work. The Control of Noise at
+Work Regulations 2005 – Guidance on Regulations. HSE Books. Crown copyright
+2005. ISBN 0 71766164 4
+
+Health and Safety Executive (2008). Sound Advice. Control of noise at work in music
+and entertainment. HSE Books. Crown copyright 2008. ISBN 978 0 71769307 1
+
+Occupational Health Group (2009) Technical Datasheet E-A-RTM E-A-RCapsTM
+Earplugs EC-01-000. CHCAPSDS Iss 1, 3M United Kingdom plc
+
+Temporary Working Timetable 224 (2020) Morden Duty Book.               Establishment
+Planning, 06 July 2020.
+
+The Control of Noise at Work Regulations 2005. Statutory Instrument 2005 No 1643.
+HMSO, London. ISBN 0 11 072984 6.
+
+
+
+
+Report No: N&V – R2900                                            Page 17 of 50
+DISTRIBUTION
+
+
+
+Ricky Bailey             Line Operations TU Engagement Lead
+
+Emma Burton              Senior Safety, Health and Environment Manager
+
+Louise Dearman           Occupational Hygiene Manager
+
+Nick Wilson              Occupational Hygiene Manager
+
+Claude Snowdon           Noise, Vibration and Air Quality Lead
+
+
+
+
+Report No: N&V – R2900                                           Page 18 of 50
+                         INTENTIONALLY BLANK
+
+
+
+
+Report No: N&V – R2900                         Page 19 of 50
+                  APPENDIX A: STANDARDS AND CRITERIA
+
+
+A1       The Control of Noise at Work Regulations (CNAWR, 2005), define several
+exposure action values at which employers are required to initiate steps to reduce the
+harmful effects of noise on hearing. The Regulations stipulate a ‘lower exposure action
+value’ (LEAV), an ‘upper exposure action value’ (UEAV) and an ‘exposure limit value’
+(ELV). The action and limit values are expressed as daily (or weekly) personal noise
+exposure levels and as peak sound pressure levels. The personal noise exposure
+levels, LEP,d, refer to an average noise exposure level that is normalised to an 8-hour
+period. The peak sound pressure levels, LCpeak, correspond to C-weighted values.
+
+A2   The LEAV corresponds to an LEP,d of 80 dB(A) and LCpeak of 135 dB(C). The
+CNAWR state that:
+
+“An employer who carries out work which is liable to expose any employees to noise
+at or above a lower exposure action value shall make a suitable and sufficient
+assessment of the risk from that noise to the health and safety of those employees ...”.
+
+At this level or above, the employer “… shall make personal hearing protectors
+available upon request to any employee who is so exposed” and provide information,
+instruction and training on the harmful effects of noise and that mitigation measures
+are to be given.
+
+A3     The UEAV corresponds to an LEP,d of 85 dB(A) and LCpeak of 137 dB(C); the
+Regulations state that:
+
+“If any employee is likely to be exposed to noise at or above an upper exposure action
+value, the employer shall reduce exposure to as low a level as is reasonably
+practicable by establishing and implementing a programme of organisational and
+technical measures, excluding the provision of personal hearing protectors, which is
+appropriate to the activity.”
+
+In addition
+
+“If in any area of the workplace under the control of the employer an employee is likely
+to be exposed to noise at or above an upper exposure action value for any reason …
+the area is designated a Hearing Protection Zone; the area is demarcated and
+identified by means of a sign specified for the purpose of indicating that ear protection
+must be worn … so far as is reasonably practicable that no employee enters that area
+unless that employee is wearing personal hearing protectors.”
+
+A4      The ELV is set at an LEP,d of 87 dB(A) and LCpeak of 140 dB(C). No personnel
+are to be exposed above this value; however, the exposure limit value takes into
+account the attenuation afforded by any personal hearing protection (PHP). In certain
+circumstances, the CNAWR allow the personal noise exposure to be calculated to a
+working week:
+
+“Where the exposure of an employee to noise varies markedly from day to day, an
+employer may use weekly personal noise exposure in place of daily personal noise
+
+
+
+Report No: N&V – R2900                                              Page 20 of 50
+exposure for the purpose of compliance with these Regulations”.
+
+A5       The CNAWR 2005 also requires the employer to provide an appropriate health
+surveillance programme to identify early signs and symptoms of hearing loss. The
+Regulations state that:
+
+“If the risk assessment indicates that there is a risk to the health of his employees who
+are, or are liable to be, exposed to noise, the employer shall ensure that such
+employees are placed under suitable health surveillance, which shall include testing
+of their hearing”.
+
+A6      There are a number of Standards applicable to hearing protectors. British
+Standard BS EN 352 (2020) covers selection and use of hearing protectors. The
+Standard applies to both earmuffs and earplugs. BS EN 352 (2020) states that the
+attenuation provided by hearing protectors can be measured according to BS EN ISO
+4869-1 (2018). BS EN 458 (2016) also provides recommendations for the selection,
+use, care and maintenance of the devices.
+
+
+
+
+Report No: N&V – R2900                                              Page 21 of 50
+                         APPENDIX B: ANALYSIS OF NOISE DATA
+
+
+       This Appendix shows A-weighted broadband equivalent continuous sound pressure
+       levels and one-third octave band equivalent continuous sound pressure levels (centre
+       frequencies 31.5 Hz to 16,000 Hz). measured in the driving cab of Northern Line rail
+       vehicles (1995 Rolling Stock) during normal operations over the period 24 to
+       26 November 2020. All measurements were made at head location, near to the Train
+       Operator’s left ear.
+
+
+       Table C1     Analysed data for the different end-to-end journeys.
+Date                     Train                                              LAeq
+             Journey              Cab        Start    End      Route       dB(A)    Table   Pages
+                 1        017      51574      MOR      EDG      BAN         80.2    C2, C8  21, 27
+                 2        017      51712      EDG      MOR      BAN         78.6    C3, C9  22, 28
+ 24 Nov
+                 3        102      51618      MOR      HIB      BAN         81.8    C4, C10 23, 29
+                 4        102      51617       HIB     MOR      CHC         78.0    C7, C11 26, 30
+                 5        144      51653      MOR      HIB      BAN         80.3    C4, C12 23, 31
+ 25 Nov         6*        144      51652       HIB     HIB      CHC         80.7    C6, C13 25, 31
+                 7        144      51653       HIB     MOR      BAN         79.0    C5, C14 24, 32
+                 8        026      51699      MOR      EDG      BAN         79.7    C2, C15 21, 33
+                 9        026      51668      EDG      MOR      BAN         79.2    C3, C16 22, 34
+ 26 Nov
+                10        026      51699      MOR      EDG      BAN         79.7    C2, C17 21, 35
+                11        026      51668      EDG      MOR      BAN         79.2    C3, C18 22, 36
+
+
+
+
+       Report No: N&V – R2900                                              Page 22 of 50
+   Table C2    Interstation LAeq for Morden to Edgware via Bank.
+                       Journey 1                  Journey 8             Journey 10
+                Duration         LAeq     Duration         LAeq    Duration      LAeq
+Interstation
+                   (s)         dB(A)          (s)         dB(A)      (s)        dB(A)
+MOR - SOU          118          80.6         129           79.7      123         80.0
+SOU - COW           90          80.8          91           80.9       91         80.2
+COW - TOBr          95          79.3          96           79.1       97         78.8
+TOBr - TOBe         89          87.2          89           87.2       90         87.4
+TOBe - BAL          81          75.3          81           75.8       81         75.6
+BAL - CLS           90          79.5          91           80.5       94         79.9
+CLS - CLC          105          75.9         106           76.6      106         76.0
+CLC - CLN           68          76.0          66           76.6       66         76.0
+CLN - STO           67          86.5          66           86.1       66         86.5
+STO - OVA          111          82.3         111           83.1      112         82.3
+OVA - KEN           79          76.3          80           75.7       83         74.8
+KEN - ELC           91          78.7          91           77.5       91         77.8
+ELC - BOR           88          80.0          89           80.0       89         79.7
+BOR - LOB           72          78.8          72           78.1       72         78.0
+LOB - BAN           73          79.2          73           78.9       73         78.8
+BAN - MOR           96          77.0          96           76.9       96         77.1
+MOR - OLS           59          83.2          58           84.1       58         83.4
+OLS - ANG          117          78.9         116           79.0      116         78.5
+ANG - KIC          119          77.7         119           76.8      119         77.8
+KIC - EUS           64          79.2          63           80.5       65         79.8
+EUS - CAT          156          89.1         156           88.1      155         88.1
+CAT - CHF           71          78.2          71           78.3       70         77.9
+CHF - BEP           89          76.2          90           76.7       89         76.8
+BEP - HAM          109          75.9         108           75.9      109         75.5
+HAM - GOG          216          82.2         217           82.2      218         82.1
+GOG - BRC          137          65.9         124           66.8      138         65.0
+BRC - HEC           89          66.7          89           65.6       89         65.9
+HEC - COL          149          80.0         150           78.4      153         79.1
+COL - BUO          103          65.3         103           65.0      103         64.3
+BUO - EDG          139          65.3         136           64.8      136         63.7
+
+
+
+
+   Report No: N&V – R2900                                          Page 23 of 50
+   Table C3    Interstation LAeq for Edgware to Morden via Bank.
+                       Journey 2                  Journey 9             Journey 11
+                Duration         LAeq     Duration         LAeq    Duration      LAeq
+Interstation
+                   (s)         dB(A)          (s)         dB(A)      (s)        dB(A)
+EDG - BUO          150          66.8         144           65.1      145         68.7
+BUO - COL          115          64.0         115           63.7      115         63.6
+COL - HEC          153          77.1         147           76.3      146         76.7
+HEC - BRC           92          65.3          91           64.3       93         64.7
+BRC - GOG          128          68.2         127           69.7      127         69.0
+GOG - HAM          177          80.0         177           81.3      176         81.1
+HAM - BEP          100          76.9          99           77.6       99         77.4
+BEP - CHF           87          77.7          86           78.1       86         78.7
+CHF - CAT           76          79.9          76           79.8       73         79.8
+CAT - EUS          167          87.3         166           88.4      166         90.0
+EUS - KIC           63          73.1          62           72.3       63         73.0
+KIC - ANG          117          76.7         117           77.0      116         77.1
+ANG - OLS          129          81.4         130           80.9      128         81.2
+OLS - MOO           75          74.7          76           73.9       75         74.9
+MOO - BAN           96          75.9          97           76.6       97         76.7
+BAN - LOB           73          80.1          73           80.8       73         81.3
+LOB - BOR           70          79.7          71           80.1       71         79.8
+BOR - ELC           97          77.4          99           76.9       99         76.5
+ELC - KEN           76          85.2          75           84.6       75         83.6
+KEN - OVA           67          76.2          65           77.3       66         77.4
+OVA - STO          111          76.1         111           76.7      111         77.3
+STO - CLN           67          78.2          68           79.0       67         79.9
+CLN - CLC           70          74.5          70           76.7       69         77.3
+CLC - CLS          106          73.7         106           74.7      106         74.9
+CLS - BAL           93          76.6          93           77.6       93         78.1
+BAL - TOBe          83          76.3          81           77.3       82         77.4
+TOBe - TOBr         93          75.6          92           76.2       92         76.5
+TOBr - COW          98          77.2          98           76.7       98         77.2
+COW - SOW          104          74.7         105           75.6      105         76.8
+SOW - MOR          131          84.6         148           85.4      148         85.6
+
+
+
+
+   Report No: N&V – R2900                                          Page 24 of 50
+Table C4     Interstation LAeq for Morden to High Barnet via Bank.
+                                     Journey 3               Journey 5
+                             Duration         LAeq    Duration        LAeq
+        Interstation
+                                 (s)         dB(A)       (s)         dB(A)
+        MOR - SOU               118           81.8       118          80.2
+        SOU - COW                90           83.2        90          80.4
+        COW - TOBr               96           81.1        97          78.9
+        TOBr - TOBe              89           89.8        89          88.6
+        TOBe - BAL               81           77.0        82          74.8
+        BAL - CLS                91           82.0        90          79.5
+        CLS - CLC               107           77.5       106          77.2
+        CLC - CLN                66           79.0        65          75.4
+        CLN - STO                68           88.3        66          86.8
+        STO - OVA               111           85.3       111          83.9
+        OVA - KEN                79           77.3        81          75.9
+        KEN - ELC                92           81.2        91          77.6
+        ELC - BOR                90           81.9        90          80.9
+        BOR - LOB                72           80.3        73          78.6
+        LOB - BAN                73           82.1        73          79.9
+        BAN - MOR                96           79.1        96          78.5
+        MOR - OLS                59           86.2        59          82.6
+        OLS - ANG               127           80.1       117          79.3
+        ANG - KIC               120           79.2       120          77.1
+        KIC - EUS                64           81.4        65          79.6
+        EUS - CAT               170           89.2       169          87.6
+        CAT - KET                93           87.7        92          85.0
+        KET - TUP                70           89.0        71          87.6
+        TUP - ARC                77           83.0        77          81.7
+        ARC - HIG               129           76.2       129          75.3
+        HIG - EAF               115           80.2       114          78.2
+        EAF - FIC               204           64.3       204          63.4
+        FIC - WEF               131           65.6       135          71.0
+        WEF - WOP                83           65.4        83          63.0
+        WOP - TOW               110           66.6       108          65.6
+        TOW - HIB               260           66.3       213          64.5
+
+
+
+
+Report No: N&V – R2900                                           Page 25 of 50
+Table C5    Interstation LAeq for High Barnet to Morden via Bank.
+                                                Journey 7
+                                         Duration        LAeq
+                    Interstation
+                                            (s)         dB(A)
+                    HIB - TOW              183           79.0
+                    TOW - WOP              114           66.0
+                    WOP - WEF               98           64.3
+                    WEF - FIC              137           67.1
+                    FIC - EAF              221           66.8
+                    EAF - HIG              132           75.0
+                    HIG - ARC              136           78.6
+                    ARC - TUP               73           79.7
+                    TUP - KET               67           77.9
+                    KET - CAT              104           85.7
+                    CAT - EUS              166           88.0
+                    EUS - KIC               64           71.0
+                    KIC - ANG              118           76.5
+                    ANG - OLS              130           81.1
+                    OLS - MOO               76           74.8
+                    MOO - BAN               97           78.1
+                    BAN - LOB               73           81.4
+                    LOB - BOR               71           79.5
+                    BOR - ELC               98           77.5
+                    ELC - KEN               76           83.7
+                    KEN - OVA               66           76.7
+                    OVA - STO              109           77.1
+                    STO - CLN               67           79.3
+                    CLN - CLC               71           77.1
+                    CLC - CLS              106           74.7
+                    CLS - BAL               93           77.6
+                    BAL - TOBe              83           76.2
+                    TOBe - TOBr             92           76.6
+                    TOBr - COW              99           76.2
+                    COW - SOW              100           77.2
+                    SOW - MOR              139           84.7
+
+
+
+
+Report No: N&V – R2900                                              Page 26 of 50
+Table C6    Interstation LAeq for HIB to HIB via CHC and Kennington Loop.
+                                                 Journey 6
+                                          Duration        LAeq
+                     Interstation
+                                             (s)         dB(A)
+                     HIB - TOW              206           66.3
+                     TOW - WOP              110           67.3
+                     WOP - WEF               86           65.2
+                     WEF - FIC              108           70.5
+                     FIC - EAF              203           67.6
+                     EAF - HIG              133           77.3
+                     HIG - ARC              136           81.6
+                     ARC - TUP               73           81.6
+                     TUP - KET               67           78.8
+                     KET - CAT              103           90.6
+                     CAT - MOC               84           78.2
+                     MOC - EUS               76           85.0
+                     EUS - WAS               57           82.9
+                     WAS - GOS               46           79.0
+                     GOS - TCR               57           78.6
+                     TCR - LES               42           77.1
+                     LES - CAC               53           80.2
+                     CAC - EMB               37           78.4
+                     EMB - WAT               57           80.2
+                     WAT - KEN              138           84.9
+                     KEN Loop               298           78.5
+                     KEN - WAT              128           83.5
+                     WAT - EMB               67           86.1
+                     EMB - CHC               38           79.1
+                     CHC - LES               57           84.0
+                     LES - TCR               45           76.5
+                     TCR - GOS               55           84.2
+                     GOS - WAS               47           79.7
+                     WAS - EUS               58           85.7
+                     EUS - MOC               86           80.5
+                     MOC - CAT               82           78.7
+                     CAT - KET               93           89.1
+                     KET - TUP               70           90.0
+                     TUP - ARC               77           84.0
+                     ARC - HIG              129           77.9
+                     HIG - EAF              115           81.1
+                     EAF - FIC              206           66.7
+                     FIC - WEF              133           67.7
+                     WEF - WOP               83           65.6
+                     WOP - TOW              109           68.2
+                     TOW - HIB              247           67.4
+
+
+
+Report No: N&V – R2900                                         Page 27 of 50
+Table C7    Interstation LAeq for High Barnet to Morden via Charing Cross.
+                                                Journey 4
+                                         Duration        LAeq
+                    Interstation
+                                            (s)         dB(A)
+                    HIB - TOW              203           68.7
+                    TOW - WOP              110           67.5
+                    WOP - WEF               86           64.5
+                    WEF - FIC              104           67.6
+                    FIC - EAF              203           66.7
+                    EAF - HIG              133           74.6
+                    HIG - ARC              136           78.9
+                    ARC - TUP               73           79.6
+                    TUP - KET               66           77.9
+                    KET - CAT              103           87.8
+                    CAT - MOC               84           77.4
+                    MOC - EUS              111           82.0
+                    EUS - WAS               56           81.0
+                    WAS - GOS               45           76.0
+                    GOS - TCR               57           76.5
+                    TCR - LES               42           75.1
+                    LES - CAC               52           79.3
+                    CAC - EMB               36           77.6
+                    EMB - WAT               58           78.9
+                    WAT - KEN              139           82.3
+                    KEN - OVA               92           74.2
+                    OVA - STO              109           77.3
+                    STO - CLN               67           79.3
+                    CLN - CLC               69           77.0
+                    CLC - CLS              106           77.5
+                    CLS - BAL               93           77.6
+                    BAL - TOBe              82           76.3
+                    TOBe - TOBr             97           75.5
+                    TOBr - COW              98           75.8
+                    COW - SOW              105           75.9
+                    SOW - MOR              144           85.2
+
+
+
+
+Report No: N&V – R2900                                          Page 28 of 50
+Table C8          Noise data for Journey 1 (MOR to EDG via BAN) on 24 November 2020.
+Interstation One third octave band centre frequency (Hz)
+              31.5      40      50     63      80     100    125    160    200    250    315    400    500    630    800 1000 1250    1600   2000 2500 3150 4000 5000 6300 8000 10000 12500 16000
+MOR - SOU     78.2     73.0    79.4   75.9    77.4    77.5   78.1   72.7   67.3   70.2   74.4   79.2   77.0   73.7   73.1 69.6 66.0   62.2   61.3 60.5 57.8 54.3 53.3 50.9 50.6 49.6 50.8 47.3
+SOU - COW     74.7     69.5    78.6   73.4    74.9    75.1   76.4   76.8   71.6   73.9   76.9   80.2   76.2   72.8   72.4 69.9 65.8   61.5   58.9 57.1 53.2 48.4 44.4 41.5 39.7 38.7 39.5 32.2
+COW - TOBr 75.0        70.3    79.4   76.4    78.9    78.3   78.0   78.9   73.7   75.1   77.3   78.1   72.7   71.9   69.6 66.8 65.7   61.3   59.2 57.6 53.2 48.1 45.3 41.4 39.5 37.5 40.0 31.0
+TOBr - TOBe 73.0       67.8    78.1   70.9    71.0    70.6   70.1   69.0   65.7   69.7   83.7   88.8   75.3   76.6   82.6 72.3 70.0   64.0   61.6 59.2 54.6 49.5 49.7 48.1 43.5 41.4 40.9 34.3
+TOBe - BAL    73.4     69.2    78.2   74.3    75.1    74.9   75.8   74.2   67.9   69.3   72.9   73.5   68.2   68.3   66.0 63.9 63.3   58.2   56.3 55.1 50.7 45.4 43.8 40.2 40.3 34.8 32.8 27.6
+BAL - CLS     74.5     69.5    78.7   75.7    78.3    79.0   80.5   76.6   70.3   72.6   75.5   78.0   74.9   72.9   70.1 68.2 65.3   61.3   59.5 58.0 54.3 49.3 45.3 41.6 38.2 33.9 32.6 27.3
+CLS - CLC     71.4     67.0    77.7   77.1    76.4    75.5   75.8   74.9   68.9   70.8   73.8   73.6   69.5   69.3   66.9 63.8 62.4   58.1   56.2 54.8 50.6 45.7 44.0 42.6 42.3 37.9 37.0 30.4
+CLC - CLN     72.4     68.9    76.2   71.2    71.8    71.4   69.3   68.2   64.5   67.4   72.6   75.6   72.8   68.0   67.5 63.1 59.1   55.2   54.9 53.9 48.4 43.1 40.1 35.5 31.1 29.3 29.1 25.4
+CLN - STO     71.7     68.9    77.6   71.9    73.1    73.5   73.1   73.9   68.8   71.4   78.7   86.9   79.2   74.8   82.7 73.4 71.2   66.0   65.6 63.0 56.6 50.0 46.9 43.7 39.0 36.2 35.1 30.1
+STO - OVA     73.6     69.1    77.9   73.6    74.4    74.1   74.3   73.2   66.6   69.2   73.3   83.2   76.9   73.9   76.2 69.7 65.5   59.8   57.9 56.6 51.1 45.5 42.2 38.2 34.2 32.0 30.9 27.4
+OVA - KEN     74.4     72.0    79.1   77.8    77.8    76.0   76.8   75.1   69.3   70.9   72.2   73.5   70.3   70.0   68.3 64.7 63.3   59.9   57.6 56.1 51.2 45.2 42.2 37.5 33.1 30.2 29.5 26.4
+KEN - ELC     68.5     65.3    77.6   78.2    74.2    72.6   74.3   71.7   69.1   69.5   75.6   79.3   75.5   70.7   67.3 63.9 61.1   57.4   55.8 54.1 49.2 44.0 42.6 40.1 35.2 33.8 32.6 25.9
+ELC - BOR     69.7     69.8    78.6   75.4    75.0    74.0   73.5   72.3   67.3   68.6   75.4   82.2   73.3   70.1   71.2 64.6 62.0   58.1   56.8 55.7 51.3 47.1 46.8 44.3 39.7 36.9 37.0 32.1
+BOR - LOB     69.9     66.8    76.2   73.4    74.8    72.4   71.3   71.8   65.3   67.6   71.5   81.1   72.8   67.5   70.0 63.5 61.8   56.7   55.6 53.6 49.0 42.9 41.0 37.2 32.7 30.9 29.9 26.3
+LOB - BAN     70.9     69.9    78.0   76.6    77.4    78.3   78.6   79.6   72.7   73.4   76.0   77.5   73.8   72.5   70.1 66.7 65.0   61.8   60.2 59.0 55.4 50.5 48.5 47.2 45.2 42.5 44.2 38.6
+BAN - MOO     69.0     70.7    82.6   75.6    74.8    75.2   75.3   75.5   69.0   70.4   71.5   76.3   72.4   67.9   67.7 63.6 61.9   59.0   57.8 64.8 51.3 47.1 47.7 43.9 38.7 36.8 36.9 31.6
+MOO - OLS     69.9     67.0    76.4   70.9    71.8    72.3   71.1   70.5   66.5   68.5   77.9   84.9   77.1   74.9   75.8 68.6 65.5   59.6   58.6 56.5 51.1 46.3 45.0 39.9 36.1 34.7 32.0 27.8
+OLS - ANG     73.2     69.8    77.2   76.4    76.8    75.6   75.7   75.5   70.5   71.4   74.4   76.9   75.6   72.4   69.5 66.1 65.6   61.0   58.5 62.0 52.8 47.9 45.4 42.1 37.9 35.5 32.7 28.7
+ANG - KIC     71.6     69.6    77.4   73.5    75.9    75.8   75.8   73.3   68.2   69.7   72.7   74.5   73.7   70.7   71.5 68.0 63.2   58.5   56.6 55.8 50.9 45.9 42.8 38.9 35.1 31.8 31.2 26.2
+KIC - EUS     73.0     70.1    77.3   76.2    80.1    77.0   76.7   77.3   71.5   72.2   74.2   77.9   76.7   72.4   68.9 65.4 62.4   58.6   57.0 55.0 50.5 45.4 44.0 40.2 36.3 34.3 34.7 29.1
+EUS - CAT     72.7     68.7    77.1   77.1    77.0    75.8   74.7   73.5   70.2   70.8   79.2   88.6   83.8   80.4   83.6 78.9 75.8   71.6   68.8 66.4 59.9 56.3 52.6 48.4 44.7 42.6 42.1 36.4
+CAT - CHF     74.2     71.2    76.5   77.0    80.8    79.1   78.3   76.6   70.4   71.7   74.0   75.4   72.3   71.9   70.4 67.1 65.4   61.5   59.3 58.1 54.1 48.9 46.4 43.4 41.1 37.6 36.3 30.1
+CHF - BEP     73.9     68.7    74.7   72.9    75.4    75.3   74.8   74.9   68.8   70.1   72.4   73.8   71.2   70.0   67.3 64.2 63.8   58.6   56.7 56.1 52.1 47.4 47.2 45.3 42.9 37.9 37.3 31.5
+BEP - HAM     73.6     69.0    75.4   75.7    77.4    76.2   75.8   73.9   68.6   70.1   72.3   73.1   70.0   69.4   67.4 64.1 63.5   58.7   56.7 57.1 54.9 51.8 49.6 46.0 42.3 38.8 38.2 31.5
+HAM - GOG     74.3     71.1    76.9   77.4    80.5    81.6   82.4   78.2   73.8   73.8   75.9   81.6   76.1   73.9   73.7 69.5 67.9   72.1   63.2 59.1 55.2 50.0 47.3 44.0 40.0 37.6 37.4 33.4
+GOG - BRC     66.8     64.8    72.0   67.8    66.4    67.2   67.3   65.7   58.5   58.8   65.4   62.2   60.4   59.5   55.9 51.8 52.1   47.1   46.4 46.9 40.9 36.5 33.4 30.0 26.1 24.4 25.2 20.8
+BRC - HEC     67.7     65.4    72.8   69.1    67.2    68.1   67.9   64.4   57.0   59.2   61.6   62.7   60.9   60.2   59.6 55.9 54.4   53.9   48.8 47.2 42.1 37.7 34.7 31.5 27.0 25.7 25.5 21.8
+HEC - COL     71.6     71.5    75.9   70.5    74.4    77.1   77.0   71.5   66.0   66.5   69.0   72.5   72.1   73.5   73.3 68.3 65.2   74.4   62.6 54.3 51.6 46.5 44.5 43.4 39.8 37.4 37.6 34.4
+COL - BUO     67.0     64.9    72.4   66.5    66.6    67.2   67.2   63.8   58.2   58.7   61.0   62.6   60.0   58.1   57.0 53.2 52.6   50.8   46.1 45.4 40.8 35.8 33.7 30.3 25.9 25.2 26.2 22.3
+BUO - EDG     69.1     67.0    72.6   68.3    67.3    67.7   67.7   62.7   57.0   57.0   60.4   61.0   59.9   58.1   57.9 55.1 52.5   52.5   47.3 45.5 41.2 36.4 33.9 30.7 26.2 24.7 25.0 21.6
+
+
+
+
+                                                                                                                                                                                   Page 29 of 50
+Table C9          Noise data for Journey 2 (EDG to MOR via BAN) on 24 November 2020.
+Interstation One third octave band centre frequency (Hz)
+              31.5      40      50     63      80     100    125    160    200    250    315    400    500    630    800 1000 1250    1600   2000 2500 3150 4000 5000 6300 8000 10000 12500 16000
+EDG - BUO     72.4     70.1    71.8   69.6    69.5    70.2   68.2   67.6   62.8   64.1   62.9   61.0   58.7   57.8   57.2 56.3 54.5   53.3   50.9 50.2 48.5 47.7 44.9 41.1 38.8 32.8 32.6 29.3
+BUO - COL     68.7     68.0    70.9   65.6    66.8    66.0   65.7   63.0   57.8   58.5   60.6   60.4   57.7   57.9   54.9 52.1 52.1   47.2   44.8 44.7 39.9 37.0 38.9 38.3 43.2 32.9 31.2 24.4
+COL - HEC     73.8     71.7    74.3   72.5    74.3    72.3   70.9   70.8   68.9   69.8   73.1   74.7   71.5   68.0   68.7 66.3 67.3   63.8   63.2 56.1 51.3 46.7 44.4 42.3 38.5 35.9 38.4 32.3
+HEC - BRC     70.8     69.2    71.2   69.1    68.2    67.7   65.7   63.7   59.1   58.9   61.1   61.5   56.3   56.6   56.6 57.7 53.4   53.7   47.0 46.1 42.0 36.6 35.0 31.2 26.3 23.3 23.4 20.6
+BRC - GOG     71.8     69.7    72.1   69.0    70.5    69.7   68.3   67.9   67.3   63.8   65.1   65.3   60.9   60.3   57.9 58.2 55.4   53.3   48.1 47.9 44.5 40.3 40.4 36.2 32.8 29.3 29.1 25.2
+GOG - HAM     76.9     74.9    77.0   80.8    81.5    78.8   78.6   78.6   76.7   75.7   79.1   78.6   73.3   71.0   69.4 67.9 67.0   63.1   60.4 59.5 55.2 50.1 48.2 44.1 40.0 35.2 34.8 30.2
+HAM - BEP     75.3     74.3    75.6   75.2    76.8    74.4   74.7   75.1   73.2   72.7   74.8   75.5   69.9   68.2   66.8 65.3 64.2   61.7   57.8 58.9 54.9 50.4 51.5 46.9 46.8 38.3 38.0 30.7
+BEP - CHF     75.0     72.2    73.8   73.1    74.5    73.4   73.7   74.8   73.1   72.7   75.5   76.5   70.3   70.3   68.2 66.0 65.3   61.3   57.9 58.5 53.8 48.9 48.7 45.2 43.6 37.6 38.4 31.4
+CHF - CAT     76.3     72.8    76.1   83.5    83.3    81.5   80.5   79.0   75.8   75.2   78.1   77.9   74.4   70.2   70.4 68.9 65.5   60.8   60.3 59.4 55.4 50.8 52.2 48.5 44.6 38.5 39.2 32.1
+CAT - EUS     73.4     70.3    74.0   77.0    77.1    77.7   79.0   76.3   78.5   75.6   83.0   88.4   80.5   75.6   79.4 76.9 73.1   68.1   64.6 61.6 55.8 50.5 49.8 44.6 40.0 35.5 34.1 30.0
+EUS - KIC     72.4     71.9    74.7   75.1    75.0    71.5   70.0   69.8   67.5   68.6   71.4   71.0   67.7   64.5   61.8 61.6 58.7   56.0   55.4 57.2 54.6 50.9 49.7 45.6 41.1 36.0 35.9 28.5
+KIC - ANG     73.0     72.6    74.6   76.7    77.0    73.9   73.2   74.5   72.1   71.5   74.4   76.6   69.7   68.3   66.2 64.2 62.7   58.6   56.6 56.7 51.4 45.6 42.5 37.8 32.3 28.4 26.5 23.4
+ANG - OLS     71.2     69.3    73.1   75.1    81.5    75.7   74.1   75.7   71.9   70.6   76.1   83.5   73.8   67.9   74.3 66.7 63.8   59.3   57.9 57.2 52.2 47.5 46.2 41.7 35.8 31.5 32.0 26.3
+OLS - MOO     73.2     73.6    76.1   77.6    76.5    73.5   72.6   74.4   71.9   71.0   73.1   72.4   68.5   67.6   64.2 62.4 59.8   56.0   55.6 55.0 49.9 44.9 45.1 41.5 38.0 34.3 35.6 28.2
+MOO - BAN     71.3     71.8    74.7   78.2    77.9    73.6   73.4   74.2   69.8   69.5   71.8   78.1   68.4   63.2   64.6 61.3 58.1   55.0   54.8 54.8 49.1 43.3 42.6 37.2 32.1 29.6 29.2 27.5
+BAN - LOB     72.4     72.7    78.1   83.7    84.1    80.8   79.9   79.2   77.8   76.0   78.6   79.3   72.7   69.9   69.2 67.2 65.7   62.4   60.8 60.6 55.9 51.6 51.6 46.3 40.3 36.8 35.9 31.5
+LOB - BOR     69.3     68.8    75.9   80.2    79.5    79.5   75.5   74.3   75.8   71.7   78.0   81.4   69.8   69.3   70.4 65.8 61.6   57.8   57.0 56.0 51.8 47.0 47.6 41.9 35.8 33.2 34.6 25.3
+BOR - ELC     69.0     68.6    71.9   73.2    73.3    71.3   69.5   70.4   68.3   68.3   71.4   80.2   71.7   64.0   66.0 60.8 57.5   53.4   53.5 55.8 48.0 43.3 45.1 38.2 33.2 30.8 30.0 25.9
+ELC - KEN     73.0     72.5    75.3   75.5    74.4    71.5   70.5   73.3   72.9   71.6   84.4   88.6   73.8   72.0   71.1 66.7 63.9   59.4   57.7 56.6 51.2 46.2 44.8 39.4 34.1 30.3 30.5 26.4
+KEN - OVA     76.9     75.6    76.4   77.8    77.5    75.8   75.1   76.2   73.6   72.8   74.6   74.5   68.8   67.6   65.6 64.4 63.2   60.1   56.7 56.5 52.4 46.5 44.6 40.1 34.8 30.8 28.9 26.3
+OVA - STO     75.3     72.4    74.7   76.3    76.8    75.1   74.7   76.1   71.9   72.3   77.2   74.2   67.7   67.1   64.2 63.2 62.1   56.1   54.6 54.5 49.6 44.3 42.7 38.3 34.4 29.8 28.6 25.1
+STO - CLN     72.6     70.7    72.2   72.8    76.5    81.6   79.0   74.3   72.3   70.8   73.9   76.2   72.3   70.5   72.3 66.8 63.0   58.3   56.5 56.7 51.4 45.8 44.3 39.5 33.7 30.0 29.4 25.5
+CLN - CLC     71.9     74.3    77.7   78.1    77.5    74.5   72.3   74.3   71.8   71.0   74.0   72.7   68.4   65.8   63.3 61.6 59.9   56.0   53.9 54.5 49.4 44.4 42.7 38.1 33.4 29.5 29.3 24.5
+CLC - CLS     75.3     71.2    73.3   74.6    75.1    73.4   71.9   71.8   69.3   69.4   72.2   72.2   66.4   66.0   63.0 61.9 61.0   55.4   53.7 54.6 50.3 45.8 45.1 39.8 38.2 30.7 29.1 26.1
+CLS - BAL     75.9     72.0    74.0   75.4    75.2    73.2   73.6   74.6   71.7   73.2   75.9   75.8   69.3   68.3   65.9 63.9 62.4   58.3   58.5 56.1 52.3 47.1 45.9 42.4 38.7 33.3 32.2 26.7
+BAL - TOBe    76.1     74.2    76.8   77.6    76.6    75.5   75.0   76.0   72.9   72.1   74.8   74.3   69.0   68.0   65.7 65.3 63.8   59.4   57.6 57.2 52.9 48.2 49.6 44.9 41.8 35.9 34.8 28.6
+TOBe - TOBr 76.1       72.5    75.1   75.7    75.6    74.0   74.2   75.3   73.0   71.9   74.6   74.3   68.2   66.9   64.6 63.3 62.5   57.9   56.3 55.9 51.4 46.6 45.6 41.9 39.3 33.7 34.3 28.1
+TOBr - COW 77.0        73.5    75.7   76.7    76.5    73.9   74.0   75.8   73.8   73.4   76.5   75.7   70.0   69.7   66.5 65.2 63.7   59.2   57.2 56.6 52.6 47.2 44.0 39.7 35.4 31.1 29.3 25.4
+COW - SOW 72.4         71.7    73.7   75.7    74.1    72.4   73.0   74.5   72.6   71.8   73.6   72.4   67.6   67.3   63.5 62.7 61.0   57.2   55.5 54.8 51.3 45.3 43.8 39.8 36.1 32.3 31.1 26.8
+SOW - MOR 73.7         71.0    73.9   73.5    73.0    72.3   71.7   74.8   74.5   74.3   79.4   86.3   78.1   71.5   77.1 72.0 70.1   66.3   63.3 59.0 53.8 49.0 47.8 44.2 40.0 38.1 38.6 35.7
+
+
+
+
+Report No: N&V – R2900                                                                    Page 30 of 50
+Table C10         Noise data for Journey 3 (MOR to HIB via BAN) on 24 November 2020.
+Interstation One third octave band centre frequency (Hz)
+              31.5      40      50     63      80     100    125    160    200    250    315    400    500    630    800 1000 1250    1600   2000 2500 3150 4000 5000 6300 8000 10000 12500 16000
+MOR - SOU     78.4     74.9    76.9   76.5    78.1    78.0   77.6   74.6   74.0   74.8   77.6   82.8   79.2   74.4   73.1 70.2 67.8   63.1   63.0 61.0 56.9 51.6 47.9 43.0 37.6 33.7 31.7 28.8
+SOU - COW     80.5     75.7    76.5   74.6    76.5    76.7   76.7   78.6   78.0   79.1   81.5   82.6   78.5   74.0   72.7 71.1 67.5   63.4   61.0 59.6 56.4 50.7 48.0 43.9 40.2 37.5 35.7 30.1
+COW - TOBr 79.0        74.9    76.5   76.6    79.1    79.7   77.8   79.6   79.2   79.4   81.7   78.9   72.8   71.3   69.0 68.6 67.1   63.8   62.1 60.0 55.9 49.7 45.6 40.5 35.5 32.1 29.9 27.4
+TOBr - TOBe 79.4       72.9    76.2   71.9    73.4    71.3   71.9   71.7   72.0   74.9   89.0   92.1   78.6   78.7   81.6 74.4 71.2   65.9   63.7 61.5 58.1 51.7 48.5 42.9 38.0 36.5 34.4 29.8
+TOBe - BAL    78.2     74.5    75.8   75.1    75.9    75.4   76.0   75.4   74.7   74.1   76.2   75.3   69.0   68.3   65.9 64.9 63.9   59.2   57.1 56.8 53.8 48.8 48.0 44.4 40.8 37.7 37.2 31.3
+BAL - CLS     80.0     75.1    75.7   77.1    78.8    81.9   81.5   78.7   77.0   77.5   79.5   80.3   76.9   74.7   71.3 71.0 67.5   63.8   62.0 60.8 58.5 53.6 49.4 44.6 39.5 35.7 34.2 29.4
+CLS - CLC     76.2     72.5    75.5   77.4    77.1    76.1   76.0   76.0   74.9   75.5   76.6   75.7   70.3   69.3   66.6 64.6 63.9   59.0   56.9 56.6 53.5 48.6 45.5 40.0 34.5 32.1 31.7 27.2
+CLC - CLN     76.3     73.2    74.6   73.4    73.3    71.4   71.2   70.4   71.1   71.1   77.3   79.3   76.0   67.8   67.9 64.8 61.0   56.7   57.6 56.9 52.2 46.5 43.4 36.9 31.6 28.4 26.0 21.9
+CLN - STO     75.7     74.1    75.6   72.4    73.9    73.1   73.1   76.0   75.1   76.4   84.6   88.8   81.3   75.8   83.0 76.1 73.5   69.6   69.5 65.3 61.1 55.0 51.3 46.6 38.9 35.4 34.3 30.8
+STO - OVA     78.9     74.9    76.3   74.5    76.8    76.2   75.5   75.2   72.7   73.7   77.4   87.3   80.1   74.7   76.7 71.3 66.7   60.9   59.2 58.8 54.4 48.4 45.8 40.2 35.1 32.7 31.0 28.1
+OVA - KEN     79.3     77.1    79.1   77.4    78.3    77.3   76.6   75.8   74.4   74.5   76.1   75.0   69.6   69.4   67.3 65.3 63.9   60.1   58.4 57.8 53.5 47.5 44.6 38.7 33.4 31.0 30.0 27.6
+KEN - ELC     72.8     70.4    75.5   77.3    74.8    72.9   74.0   72.9   75.1   74.4   78.8   82.1   77.9   72.1   67.6 66.1 62.9   58.4   58.0 56.8 52.8 47.2 45.8 41.1 34.7 34.3 33.5 29.1
+ELC - BOR     75.4     75.9    78.4   76.0    76.1    75.4   73.8   73.5   73.0   73.3   79.3   83.6   75.3   72.2   72.9 66.0 63.0   58.9   58.9 57.0 53.4 47.4 45.8 41.7 35.0 34.1 35.5 30.2
+BOR - LOB     74.3     72.6    73.9   74.6    75.2    73.2   71.7   72.2   70.9   71.1   75.8   82.6   73.9   68.2   71.7 64.0 61.9   57.7   56.9 55.9 52.1 45.5 47.2 41.5 32.0 31.1 30.7 26.3
+LOB - BAN     75.7     74.4    77.6   76.1    78.4    79.6   79.5   80.5   78.3   77.8   80.1   81.1   76.5   74.6   71.4 69.2 67.2   64.5   63.7 61.9 58.9 52.6 49.8 44.0 39.1 36.3 36.4 32.0
+BAN - MOR     73.8     76.5    83.7   75.2    75.3    76.6   75.2   76.4   74.8   74.8   76.4   79.1   74.6   68.8   67.8 65.0 62.9   60.0   59.5 58.3 54.3 49.1 47.2 42.3 36.2 35.3 35.7 31.1
+MOO - OLS     75.6     72.5    73.2   72.2    73.9    72.9   72.3   72.5   71.7   73.7   82.0   88.3   80.7   75.4   77.0 70.3 66.4   61.8   61.4 59.3 54.4 49.3 47.9 39.4 35.7 35.4 31.8 27.6
+OLS - ANG     75.0     72.9    74.6   76.4    76.0    75.0   74.9   75.8   75.7   75.3   77.8   78.2   77.1   72.7   67.5 67.8 64.7   61.2   60.5 58.4 55.0 50.0 48.4 43.7 37.5 35.1 32.4 28.9
+ANG - KIC     76.7     74.1    75.9   74.5    76.7    76.9   76.0   75.3   73.9   74.2   76.3   77.3   76.3   70.0   68.9 68.7 63.9   59.9   58.4 57.8 54.4 48.8 45.4 39.8 34.7 31.0 29.6 25.5
+KIC - EUS     77.4     74.2    76.4   76.4    79.1    78.6   77.4   79.2   76.7   76.3   78.7   80.4   78.3   73.5   69.5 69.0 64.6   61.4   60.5 58.1 54.2 48.4 46.5 41.3 35.1 34.7 34.7 29.3
+EUS - CAT     77.1     73.1    76.7   76.7    78.3    76.5   75.9   75.3   76.5   77.3   81.6   88.7   84.4   79.5   82.7 79.3 76.1   72.6   70.9 68.0 61.5 55.1 51.3 46.1 39.7 38.1 38.4 34.1
+CAT - KET     77.2     73.5    73.7   71.4    73.9    72.9   71.8   70.4   70.3   74.0   79.9   85.9   83.5   75.5   84.3 76.8 72.3   67.4   65.2 62.1 56.3 50.2 46.0 40.7 34.9 31.6 31.1 27.8
+KET - TUP     78.4     74.2    75.8   75.2    78.3    76.1   74.7   73.5   74.1   75.8   80.6   90.3   84.8   77.8   80.6 77.1 73.9   70.0   68.4 65.4 58.9 51.7 46.7 40.8 34.7 31.1 30.0 26.9
+TUP - ARC     77.9     74.8    78.5   79.6    84.1    82.6   78.8   77.3   76.0   76.6   78.6   81.7   80.8   72.8   72.3 72.4 68.5   63.7   62.9 61.0 57.3 51.7 47.6 42.3 35.9 32.2 31.6 28.4
+ARC - HIG     77.9     74.8    75.0   74.2    76.1    74.8   73.6   72.2   70.5   71.0   73.9   73.4   69.6   68.6   68.2 65.2 63.8   61.3   57.7 57.6 54.5 48.5 44.5 39.7 33.3 30.4 28.8 25.6
+HIG - EAF     78.1     77.2    75.9   75.1    76.4    74.8   74.9   73.3   71.9   73.4   76.4   75.3   71.5   75.3   71.6 68.3 69.0   70.2   64.8 59.8 57.0 53.5 51.3 49.8 45.1 45.7 44.5 42.5
+EAF - FIC     72.6     69.2    70.6   67.7    70.1    68.1   67.9   63.4   58.2   59.0   61.4   58.9   57.6   57.0   55.4 54.8 51.7   48.0   46.2 46.3 43.1 37.7 34.2 29.7 26.2 23.7 20.8 17.2
+FIC - WEF     73.0     68.7    69.6   69.8    71.6    71.0   70.7   65.3   60.8   60.2   61.6   61.4   60.9   59.5   54.1 53.2 50.0   47.5   45.9 46.6 42.6 37.7 35.3 30.3 26.5 24.9 24.8 21.4
+WEF - WOP     72.4     68.6    70.4   69.9    70.9    68.9   69.8   64.8   59.0   58.9   60.9   58.7   56.5   57.8   58.1 56.7 51.7   51.8   49.0 47.3 43.5 40.2 35.9 29.2 25.1 24.4 25.3 21.3
+WOP - TOW 73.4         70.5    71.1   71.2    73.1    70.5   72.0   66.4   61.0   60.3   62.7   60.5   58.6   58.8   57.4 57.4 53.8   52.9   50.4 47.8 44.8 39.6 36.4 31.5 26.7 25.9 25.7 22.2
+TOW - HIB     73.4     71.1    71.0   68.4    70.6    68.8   70.2   66.0   62.3   61.0   61.9   61.3   61.9   57.3   55.4 55.7 51.3   55.0   48.3 46.4 42.6 38.0 35.3 31.7 26.8 24.3 22.8 19.7
+
+
+
+
+Report No: N&V – R2900                                                                    Page 31 of 50
+Table C11         Noise data for Journey 4 (HIB to MOR via CHC) on 24 November 2020.
+Interstation One third octave band centre frequency (Hz)
+              31.5      40      50     63      80     100    125    160    200    250    315    400    500    630    800 1000 1250    1600   2000 2500 3150 4000 5000 6300 8000 10000 12500 16000
+HIB - TOW     70.0     69.5    77.5   71.0    72.6    72.2   70.9   71.2   67.8   64.7   64.8   63.5   60.4   61.0   59.1 57.7 55.4   52.6   51.7 51.2 49.8 49.1 47.1 41.9 35.7 32.3 29.4 25.0
+TOW - WOP 72.3         71.8    75.8   75.5    74.4    74.0   71.4   70.3   65.0   62.3   64.1   62.7   60.3   58.1   56.5 54.8 53.8   54.3   51.6 47.3 44.0 40.8 38.0 34.8 30.6 27.4 26.5 20.3
+WOP - WEF     69.1     67.9    74.9   71.7    71.0    70.2   68.3   68.1   61.5   57.6   61.0   59.1   57.0   55.4   55.7 52.8 51.4   51.3   46.2 44.9 41.0 37.5 36.1 32.3 27.2 23.9 26.6 20.4
+WEF - FIC     70.9     69.7    75.3   70.5    71.8    72.9   70.7   72.6   66.2   62.4   64.6   63.8   62.1   57.5   57.3 53.6 52.8   50.2   46.7 45.9 42.6 39.5 37.4 34.9 31.7 28.1 27.1 20.1
+FIC - EAF     70.9     70.4    75.5   73.8    71.8    71.3   69.0   68.5   63.7   60.3   62.2   60.4   58.3   57.0   57.5 56.9 52.7   53.5   51.6 51.4 49.1 47.3 47.6 43.2 40.0 35.0 32.2 26.5
+EAF - HIG     72.0     70.2    73.8   71.3    71.9    70.9   70.3   71.5   67.7   67.9   73.3   71.1   66.4   65.8   64.2 63.4 66.5   61.2   55.6 55.3 51.4 46.9 48.1 51.9 33.3 29.7 30.8 24.9
+HIG - ARC     73.6     73.5    76.4   77.1    76.3    75.3   75.5   77.7   74.8   73.6   77.9   77.8   73.2   69.5   67.8 66.9 64.1   63.5   61.2 58.5 54.6 49.9 47.4 42.9 36.7 32.2 30.4 26.7
+ARC - TUP     73.7     71.3    75.6   77.9    79.1    79.4   77.8   78.5   75.0   74.6   78.6   78.1   75.5   68.1   68.2 68.5 65.0   60.6   59.4 57.7 54.0 49.8 49.5 47.9 37.0 33.3 32.4 27.7
+TUP - KET     74.1     73.1    74.8   76.7    78.2    78.8   78.5   79.5   74.6   73.5   76.8   74.8   72.5   69.0   66.5 65.4 64.9   60.9   59.3 58.6 55.2 50.3 50.6 48.7 41.1 36.7 34.7 27.4
+KET - CAT     73.6     70.7    76.4   75.8    75.1    73.5   73.6   74.8   70.8   70.9   76.6   87.8   84.3   71.6   81.2 78.3 74.7   69.6   67.6 63.7 57.0 50.9 47.1 43.2 35.9 32.1 29.5 26.1
+CAT - MOC     72.5     71.0    77.3   82.4    78.3    77.4   77.4   75.9   75.5   74.1   75.8   77.2   72.7   66.5   63.7 63.0 60.7   57.2   55.9 55.3 51.6 46.4 46.2 41.4 35.1 31.4 29.4 25.1
+MOC - EUS     76.3     75.2    83.2   86.5    85.0    83.4   82.8   81.7   78.8   78.0   81.6   80.0   74.9   71.4   70.2 70.1 68.0   64.9   64.2 63.0 59.2 55.1 54.8 52.2 44.2 40.9 39.3 35.1
+EUS - WAS     73.9     72.8    77.2   83.3    85.1    83.5   79.6   79.2   76.1   74.7   79.0   78.1   79.2   71.6   68.6 67.5 65.2   61.0   60.6 59.5 56.1 52.6 54.7 50.1 43.5 40.7 38.5 33.8
+WAS - GOS     73.9     73.1    76.9   78.1    78.4    77.9   77.6   79.1   75.0   72.9   75.0   72.7   68.4   65.1   63.5 63.1 62.9   60.1   58.1 57.7 54.2 49.5 51.4 50.5 39.1 33.6 33.2 27.2
+GOS - TCR     73.7     71.9    75.6   76.0    79.2    79.8   79.5   79.1   75.5   73.0   76.3   73.1   68.8   64.7   64.4 63.3 63.5   59.0   56.7 56.0 51.9 47.2 49.0 51.1 35.4 31.9 32.8 26.6
+TCR - LES     71.4     69.8    75.7   75.1    78.5    79.6   80.0   79.0   73.4   70.2   73.3   70.8   67.2   63.3   65.1 64.0 62.8   57.2   55.3 55.9 51.3 46.1 44.3 39.7 32.9 29.2 29.3 25.5
+LES - CAC     73.5     70.3    72.9   77.2    76.8    75.3   74.8   78.0   76.0   73.8   78.0   78.0   76.7   68.1   66.6 65.1 61.5   58.3   58.2 57.5 53.1 49.3 50.7 49.9 40.4 37.4 37.1 33.6
+CAC - EMB     71.0     69.0    73.3   76.7    78.7    78.4   78.2   79.8   74.9   73.2   77.2   75.8   70.5   67.9   66.6 64.7 61.5   59.4   58.8 57.9 54.3 49.4 48.2 45.5 37.0 32.6 30.5 25.2
+EMB - WAT     73.1     71.7    74.8   75.3    76.5    76.2   74.7   76.7   75.0   73.6   76.7   78.8   73.2   69.4   68.3 65.6 63.8   62.1   58.6 57.8 54.7 49.5 48.3 45.8 40.0 37.9 37.5 29.9
+WAT - KEN     79.0     74.9    78.7   82.6    82.8    80.3   79.5   79.6   77.3   76.3   80.5   82.7   76.1   70.9   71.0 69.2 67.5   64.7   63.5 61.6 58.0 55.0 56.8 50.6 43.8 41.8 40.7 35.6
+KEN - OVA     74.6     72.7    75.7   77.0    76.0    76.1   75.0   76.4   72.7   71.2   74.0   70.9   67.7   63.3   61.2 60.7 59.9   58.0   54.6 53.8 49.8 44.3 49.0 48.2 34.0 29.9 30.1 23.4
+OVA - STO     75.0     72.9    76.1   77.3    77.9    78.1   77.3   78.7   73.9   73.6   79.1   73.9   68.8   66.1   63.9 63.4 63.8   60.5   57.1 55.5 51.2 46.2 45.2 41.2 35.9 31.5 31.3 27.3
+STO - CLN     71.8     68.2    74.0   72.2    75.2    83.8   82.7   76.7   75.3   73.3   76.1   76.6   75.9   70.6   69.7 67.4 64.5   60.0   57.4 55.9 52.1 47.6 46.2 41.2 34.7 30.8 29.7 25.9
+CLN - CLC     72.1     72.1    79.9   79.7    78.9    76.8   75.9   76.8   73.8   72.8   76.5   75.6   72.7   67.0   64.5 63.0 61.0   56.9   55.2 54.8 50.5 45.5 46.4 43.7 35.8 32.5 32.1 26.4
+CLC - CLS     73.5     70.0    74.3   74.5    75.0    75.1   74.0   74.1   71.0   70.6   74.5   76.6   75.1   66.3   64.5 66.7 63.2   58.5   56.9 55.7 51.6 45.8 44.6 38.8 33.9 30.3 28.4 25.5
+CLS - BAL     75.1     72.0    77.5   75.9    76.2    76.3   76.3   77.6   74.9   74.2   77.7   75.7   70.4   67.8   66.1 64.5 63.9   59.3   57.7 56.6 53.5 49.2 49.6 47.1 40.3 36.9 36.0 29.9
+BAL - TOBe    73.8     71.8    77.8   76.8    76.5    77.3   77.2   78.0   74.5   72.9   75.8   73.4   69.1   66.1   64.1 64.0 63.6   59.2   57.6 56.8 52.9 48.1 48.2 49.7 39.3 35.1 35.4 28.7
+TOBe - TOBr 73.7       70.8    75.0   75.3    75.9    76.9   76.6   77.3   74.8   72.9   75.6   72.8   68.2   64.6   62.6 62.0 61.1   57.2   56.0 55.6 51.5 46.6 44.9 40.3 35.7 31.4 28.5 24.2
+TOBr - COW 75.6        71.8    76.8   75.7    75.6    75.3   75.3   76.9   74.0   72.9   76.2   73.3   68.1   64.9   63.7 62.7 62.7   58.6   56.9 55.7 52.0 47.2 45.8 42.3 36.9 32.7 32.4 27.4
+COW - SOW 73.1         71.1    77.2   76.1    75.8    75.7   76.3   77.6   75.4   73.8   76.2   72.5   68.6   66.0   63.7 62.6 61.3   57.8   56.6 55.7 52.1 47.5 47.6 43.5 39.8 36.7 36.8 31.3
+SOW - MOR 72.7         69.8    74.2   73.6    73.8    74.6   74.2   77.0   76.1   75.3   80.6   85.6   80.6   71.5   78.5 72.9 70.3   67.8   65.0 61.4 55.8 51.2 49.2 45.8 41.3 38.9 38.8 35.1
+
+
+
+
+Report No: N&V – R2900                                                                    Page 32 of 50
+Table C12         Noise data for Journey 5 (MOR to HIB via BAN) on 25 November 2020.
+Interstation One third octave band centre frequency (Hz)
+              31.5      40      50     63      80     100    125    160    200    250    315    400    500    630    800 1000 1250    1600   2000 2500 3150 4000 5000 6300 8000 10000 12500 16000
+MOR - SOU     83.1     78.2    78.2   77.7    79.3    77.4   77.8   75.5   71.0   73.4   75.6   78.0   75.2   71.8   72.1 69.1 67.7   64.5   64.2 62.5 60.4 58.3 55.5 53.1 52.0 51.1 50.2 46.2
+SOU - COW     77.8     71.8    74.6   74.2    76.9    74.3   76.6   77.4   72.4   77.1   79.3   80.4   73.9   70.2   69.9 69.1 65.6   61.1   57.8 57.7 54.1 48.9 47.2 45.0 42.0 39.5 40.5 33.8
+COW - TOBr 76.7        73.0    74.8   77.4    79.4    77.1   77.9   79.3   74.6   78.2   79.2   77.9   70.4   68.8   65.5 64.4 64.4   59.1   56.4 57.2 53.6 48.8 47.4 45.7 43.7 39.1 37.7 33.7
+TOBr - TOBe 76.4       70.6    73.2   71.6    73.0    69.3   71.3   71.4   67.3   74.0   86.7   91.8   76.6   75.7   78.5 71.7 70.4   63.6   61.0 60.6 56.5 50.5 48.0 43.5 39.7 39.1 37.9 31.7
+TOBe - BAL    74.0     71.2    73.2   74.0    75.5    72.7   74.3   73.9   68.6   72.9   74.1   73.3   66.2   66.0   63.6 62.3 62.1   57.3   55.1 55.8 53.7 46.0 43.8 40.5 35.6 32.4 31.0 26.8
+BAL - CLS     76.7     71.8    74.5   77.1    78.8    80.0   81.6   77.9   71.6   75.8   78.0   78.4   73.5   71.1   67.4 67.9 65.4   61.3   58.7 59.2 56.6 51.7 50.3 48.5 43.7 40.4 39.8 33.3
+CLS - CLC     74.8     70.1    74.8   78.3    78.6    75.5   77.5   77.5   72.2   75.3   76.2   76.4   69.9   68.3   64.3 63.4 63.2   57.8   54.8 56.2 52.9 48.0 47.1 46.5 39.4 37.6 36.0 29.9
+CLC - CLN     72.3     70.0    72.1   72.5    72.2    68.4   69.6   69.9   65.8   68.8   74.6   76.5   70.7   64.1   62.4 61.1 58.1   53.4   53.1 54.0 49.5 44.5 43.7 39.1 31.1 29.1 28.2 25.4
+CLN - STO     81.2     78.1    78.5   75.1    76.3    72.8   73.4   76.5   75.9   75.7   80.8   88.6   79.5   73.6   79.4 74.7 72.2   68.2   67.7 64.1 60.4 56.2 52.5 51.2 48.8 46.6 47.0 43.2
+STO - OVA     76.5     73.2    75.6   75.5    78.3    74.7   76.5   76.9   72.9   73.6   77.1   86.2   77.8   72.1   75.3 70.7 66.4   59.5   57.9 58.5 53.4 49.8 46.8 42.7 38.3 35.6 34.7 30.5
+OVA - KEN     76.1     74.9    78.3   78.1    79.3    75.1   77.3   78.1   74.8   73.4   75.8   72.5   67.3   66.4   64.8 63.6 62.5   58.0   56.2 56.6 52.3 47.2 44.4 39.2 33.8 31.0 30.4 26.5
+KEN - ELC     69.6     68.4    75.4   77.8    76.3    71.4   74.9   75.6   74.9   72.0   77.4   77.6   72.9   67.1   63.7 62.7 60.2   54.7   55.1 56.6 52.8 49.9 51.9 45.2 37.9 37.4 36.9 32.7
+ELC - BOR     71.7     72.3    78.3   77.2    77.7    74.6   75.6   76.9   73.9   72.7   79.5   82.8   73.4   69.5   70.7 65.2 62.7   57.1   56.5 56.9 52.6 47.5 46.6 43.6 36.8 36.1 33.3 29.8
+BOR - LOB     71.9     70.5    73.5   75.2    76.8    70.9   72.4   74.7   70.8   69.3   76.1   80.6   71.7   65.5   69.2 62.7 61.5   55.7   55.2 56.3 53.9 47.9 47.5 42.9 37.4 36.1 36.7 30.5
+LOB - BAN     72.3     72.7    76.6   77.1    80.2    77.6   80.6   83.3   78.4   75.5   79.6   77.4   72.6   70.4   67.9 66.3 64.7   61.2   60.7 61.7 58.3 53.5 55.0 55.0 46.1 44.6 44.9 40.2
+BAN - MOR     70.7     74.7    83.1   79.2    80.9    76.9   77.8   79.4   76.4   74.1   77.3   77.8   73.8   67.8   65.9 64.0 62.6   57.8   57.8 58.2 55.9 50.0 49.5 44.9 39.5 38.6 38.0 34.1
+MOO - OLS     72.2     70.3    73.0   71.5    73.4    69.3   71.4   73.4   71.3   70.4   80.9   84.6   76.5   71.3   72.7 66.4 62.9   57.1   57.1 58.2 53.5 49.9 53.9 53.2 42.8 41.5 40.4 34.3
+OLS - ANG     74.9     73.5    75.6   78.3    79.6    74.3   76.6   79.1   77.6   74.3   78.1   77.7   74.6   70.3   67.7 65.8 65.0   60.1   59.4 59.8 56.1 51.9 53.3 48.6 42.0 40.5 39.6 34.3
+ANG - KIC     73.8     71.9    75.2   75.5    77.8    75.3   76.4   77.7   73.7   72.0   75.6   74.2   72.7   66.9   67.9 67.3 62.7   57.2   55.7 57.3 52.8 47.9 46.1 42.7 40.2 37.0 36.4 30.3
+KIC - EUS     72.2     72.0    75.9   77.0    80.8    76.5   77.8   81.2   77.0   73.9   78.3   78.1   75.2   70.5   67.0 66.4 62.9   58.2   58.7 59.3 55.4 51.8 55.2 52.4 42.0 41.5 40.1 34.2
+EUS - CAT     73.8     71.1    76.8   78.1    80.1    74.7   76.2   77.7   76.5   74.0   80.8   86.9   81.8   77.8   81.2 78.4 75.8   70.9   69.4 67.8 61.1 58.6 62.3 48.2 42.5 40.8 39.5 36.1
+CAT - KET     74.1     70.8    73.5   72.5    74.5    70.1   72.0   71.9   70.9   71.1   79.2   82.5   79.7   72.9   81.4 75.4 71.9   64.9   63.0 61.6 55.3 49.1 46.0 42.4 36.2 34.4 30.9 27.9
+KET - TUP     74.4     70.9    75.4   75.4    79.8    73.9   74.9   75.1   74.8   73.5   79.8   88.4   81.9   77.2   80.8 77.0 73.7   67.6   66.1 64.7 57.9 51.3 47.4 42.6 35.3 31.1 29.1 25.2
+TUP - ARC     75.9     73.5    78.3   80.8    85.9    81.3   79.0   79.0   77.0   74.5   78.5   79.5   77.8   71.1   72.5 72.9 67.7   61.9   60.9 60.7 56.4 51.4 48.3 43.8 36.7 32.5 30.6 26.2
+ARC - HIG     75.0     72.4    74.4   74.6    77.5    72.3   73.7   74.8   71.6   69.5   73.8   72.1   67.8   66.5   66.9 64.6 63.4   60.2   56.1 57.5 54.0 48.9 45.5 40.1 34.2 30.5 28.5 24.8
+HIG - EAF     75.3     74.7    75.3   75.1    77.4    72.9   74.1   74.7   71.2   71.5   75.9   73.1   69.4   71.7   70.2 67.6 67.7   65.9   63.2 59.2 56.1 52.0 48.4 45.1 42.4 41.2 43.0 39.6
+EAF - FIC     68.8     67.6    71.6   67.4    69.8    65.4   67.0   64.4   57.8   59.5   60.8   59.3   57.8   51.9   51.6 52.9 52.3   48.5   46.0 45.2 42.0 38.9 34.5 29.8 26.7 25.3 22.5 18.3
+FIC - WEF     68.6     66.2    72.3   71.4    73.2    69.2   71.0   65.5   61.4   62.0   63.2   62.8   67.6   65.7   61.3 61.2 58.6   57.3   55.1 51.3 50.1 49.4 46.6 43.5 38.6 34.1 33.0 30.4
+WEF - WOP     67.8     67.0    71.6   68.7    70.0    65.0   66.5   63.1   55.5   59.5   60.0   59.0   55.0   53.5   53.5 52.7 50.1   49.8   44.7 44.5 42.7 39.3 33.4 28.9 23.3 20.1 18.5 14.1
+WOP - TOW 71.1         70.3    71.9   71.5    73.2    68.2   68.9   65.3   58.4   61.8   62.8   61.5   57.9   57.5   54.7 54.6 53.0   52.1   50.3 46.9 43.5 40.7 37.2 32.6 29.0 26.1 24.8 19.8
+TOW - HIB     69.5     67.9    71.2   69.4    70.8    66.2   68.5   65.7   60.4   61.7   62.4   61.0   57.9   56.0   52.7 51.9 50.8   49.1   47.3 44.0 41.1 38.3 35.0 30.5 26.9 24.2 23.5 19.9
+
+
+
+
+Report No: N&V – R2900                                                                    Page 33 of 50
+Table C13          Noise data for Journey 6 (HIB to HIB via BAN and KEN Loop) on 25 November 2020.
+ Interstation One third octave band centre frequency (Hz)
+               31.5      40      50     63      80     100    125    160    200    250    315    400    500    630    800 1000 1250    1600   2000 2500 3150 4000 5000 6300 8000 10000 12500 16000
+HIB - TOW      73.0     70.4    69.8   71.8    72.5    70.8   70.3   64.6   61.1   62.9   63.1   60.5   60.8   58.2   56.0 54.1 54.9   51.5   47.3 48.6 45.1 41.3 40.8 38.3 32.0 28.6 28.7 22.9
+TOW - WOP      76.2     73.0    71.7   75.9    75.0    73.0   71.8   65.5   60.2   63.2   63.5   62.1   59.8   60.1   57.4 55.2 54.7   53.7   50.1 49.5 48.4 44.7 40.7 38.8 34.2 27.6 27.3 23.0
+WOP - WEF      73.0     70.5    69.7   71.5    72.9    70.6   68.3   62.4   56.6   59.6   61.3   59.1   57.3   57.6   57.0 54.2 54.2   51.3   47.6 48.1 46.1 41.7 38.3 37.0 29.1 25.2 25.8 21.8
+WEF - FIC      73.1     70.4    70.0   72.0    73.1    72.3   71.9   66.0   61.7   63.7   64.8   64.4   63.8   64.4   63.1 62.9 58.7   52.9   49.7 49.2 46.5 43.6 40.6 39.0 37.7 33.3 34.2 30.4
+FIC - EAF      73.4     71.9    70.7   74.0    73.1    71.5   70.0   64.0   58.0   62.3   62.7   60.4   59.3   59.5   59.3 56.9 55.4   58.5   51.4 50.8 48.4 43.5 40.1 41.9 36.9 30.4 31.2 28.0
+EAF - HIG      76.9     72.6    72.3   74.2    75.2    72.8   72.2   70.5   65.3   71.5   73.4   73.8   69.1   71.6   68.6 66.9 68.4   62.3   57.9 59.4 55.4 49.9 45.0 42.9 41.6 31.4 30.0 26.5
+HIG - ARC      78.1     74.2    75.4   78.1    77.8    75.5   75.8   76.6   71.4   76.6   78.5   80.6   74.9   74.5   72.5 70.2 69.4   66.4   62.5 61.8 58.7 53.5 49.2 45.1 40.0 35.8 34.4 29.5
+ARC - TUP      79.8     73.7    74.3   78.6    77.5    78.2   78.0   77.1   71.0   76.7   77.5   80.4   76.5   73.3   72.7 71.8 69.2   64.1   61.6 61.0 57.7 52.8 49.1 45.4 41.3 36.7 36.3 30.4
+TUP - KET      78.2     72.7    72.9   78.2    79.1    78.0   77.2   77.7   70.3   74.2   75.5   76.2   71.7   73.0   68.9 66.7 67.7   62.6   59.6 60.5 57.1 51.9 47.4 43.9 40.2 35.1 37.5 31.5
+KET - CAT      78.6     72.0    74.6   77.2    76.4    73.9   74.2   74.4   68.3   73.6   80.9   89.7   85.4   77.6   85.9 81.4 79.2   71.8   68.0 65.1 60.2 53.9 48.2 44.4 38.3 34.3 34.5 29.7
+CAT - MOC      75.0     73.0    76.3   82.4    79.1    77.2   78.2   75.6   72.4   75.6   74.8   77.0   72.0   70.6   67.1 65.3 65.7   61.5   59.0 58.9 56.1 51.3 47.9 45.0 40.7 38.3 36.4 30.3
+MOC - EUS      81.3     77.4    82.9   86.3    85.6    84.5   83.0   81.8   75.4   81.0   82.5   83.5   77.4   77.3   75.3 73.5 73.7   69.6   67.4 66.9 64.3 59.5 56.6 53.4 48.5 46.6 46.2 42.2
+EUS - WAS      76.7     72.3    75.2   83.4    86.1    83.6   79.5   77.9   72.4   77.5   79.9   80.2   78.0   75.3   73.8 72.1 71.0   66.8   64.6 63.3 60.6 56.3 54.1 51.7 48.8 44.8 45.4 40.3
+WAS - GOS      78.6     74.4    76.5   79.7    80.1    78.3   78.2   79.3   72.5   76.1   75.8   75.9   70.9   71.6   68.7 67.4 68.8   64.3   61.3 61.5 58.7 53.0 49.9 45.8 42.9 39.0 40.8 35.0
+GOS - TCR      78.8     73.5    74.5   78.0    80.2    79.8   79.0   79.3   72.2   75.1   75.5   76.0   70.7   70.6   69.1 66.8 68.4   62.3   59.0 59.2 56.0 51.0 47.3 43.5 38.5 34.9 35.4 30.1
+TCR - LES      75.3     71.4    74.3   77.7    79.7    79.5   79.2   79.4   70.6   72.9   73.4   73.3   68.7   69.6   68.6 66.8 66.4   60.4   57.6 58.2 54.5 49.2 48.1 42.0 35.3 33.1 34.6 28.9
+LES - CAC      75.7     72.5    72.6   76.3    77.4    75.5   77.0   78.2   73.2   75.4   77.2   80.2   74.0   72.1   70.5 66.9 65.0   61.2   59.4 60.2 56.8 52.2 51.4 48.3 43.5 41.0 43.0 39.4
+CAC - EMB      72.9     70.5    71.5   76.8    78.2    76.6   78.8   79.1   71.2   74.8   75.2   76.0   71.1   72.0   68.5 66.5 65.6   62.5   60.0 60.2 57.1 52.4 50.3 48.4 49.2 40.4 41.2 35.7
+EMB - WAT      76.5     72.8    74.4   76.1    77.0    75.4   74.7   76.0   70.5   75.0   75.8   79.6   73.5   73.6   71.6 67.3 68.0   63.6   59.4 60.2 58.0 53.6 52.5 51.9 50.7 46.6 45.7 39.2
+WAT - KEN      82.4     76.6    79.0   83.8    84.4    80.8   79.9   79.7   73.8   79.0   80.8   85.3   77.9   76.6   75.5 72.5 72.8   68.8   66.1 65.0 62.6 58.2 54.7 51.0 46.7 45.0 45.7 41.2
+KEN Loop       73.4     69.7    71.4   74.2    75.2    71.5   71.9   72.4   67.7   73.0   73.3   74.2   71.8   72.6   68.4 65.4 68.6   65.5   60.6 67.7 58.0 53.1 52.9 48.1 44.1 42.2 44.5 39.8
+KEN - WAT      80.0     76.9    77.8   79.5    79.7    78.0   77.8   80.1   73.6   78.7   80.6   82.9   76.6   76.4   73.4 71.5 71.4   67.9   64.5 63.0 60.7 55.3 50.7 47.4 42.2 38.5 37.2 32.6
+WAT - EMB      76.6     72.4    77.2   81.3    79.0    79.7   80.1   80.0   72.8   77.8   80.9   86.8   80.0   76.3   79.2 74.5 72.5   66.6   64.2 62.6 59.6 54.1 49.7 45.9 40.8 36.4 35.8 31.1
+EMB - CHC      74.6     73.2    78.7   82.4    82.0    79.6   78.5   76.7   70.6   76.4   76.5   76.9   71.6   71.0   70.4 67.6 66.7   62.6   60.3 61.5 57.3 52.5 50.5 48.0 43.3 37.7 38.0 33.5
+CHC - LES      76.3     74.7    80.7   81.6    80.2    79.8   80.4   82.0   77.5   81.5   81.9   82.4   77.0   76.4   73.9 72.3 71.7   67.8   65.5 65.4 62.5 58.6 56.6 53.2 48.3 45.8 44.9 41.1
+LES - TCR      75.8     71.1    72.9   77.6    79.2    74.0   73.5   73.9   67.5   72.7   73.3   76.4   69.9   67.8   65.8 63.7 64.6   58.2   56.5 57.7 53.6 48.3 44.5 40.1 34.1 30.7 29.8 25.4
+TCR - GOS      77.7     73.0    73.8   76.4    76.7    74.9   75.5   77.5   72.6   77.9   82.0   85.8   76.4   74.3   74.1 70.5 69.6   64.6   62.3 60.9 57.4 51.8 48.9 50.9 38.8 35.2 36.8 31.0
+GOS - WAS      76.9     72.8    75.7   81.1    81.8    80.6   77.7   76.7   69.7   74.6   76.6   77.7   75.3   72.1   70.3 68.2 67.7   62.3   59.0 59.3 56.2 50.7 47.1 42.2 36.6 32.6 31.5 26.9
+WAS - EUS      77.7     77.6    86.5   88.5    84.3    84.7   82.3   79.5   73.8   79.9   80.9   83.1   78.0   78.0   77.9 75.8 75.4   71.6   69.3 68.5 66.3 61.3 57.7 54.3 49.4 46.9 46.8 43.0
+EUS - MOC      75.7     71.5    75.4   77.9    78.7    75.4   74.8   75.0   76.4   76.0   76.9   80.5   75.9   73.0   69.5 67.2 65.3   60.9   59.7 58.7 55.2 50.2 47.0 43.4 39.2 38.7 39.5 37.4
+MOC - CAT      75.4     74.1    78.5   81.0    79.2    78.0   79.3   79.4   72.2   75.3   75.1   75.6   72.5   71.3   67.8 66.2 67.1   62.4   60.2 62.2 58.9 55.8 59.1 52.6 47.2 44.5 46.2 40.1
+CAT - KET      79.1     70.9    71.8   73.9    74.2    72.6   72.0   70.7   66.2   74.4   81.8   86.8   83.1   79.1   85.6 78.7 76.5   70.2   66.3 63.8 58.7 52.5 47.4 43.2 37.9 33.6 32.3 28.2
+KET - TUP      78.3     72.1    75.3   76.8    77.7    74.9   73.5   73.5   69.2   75.7   81.1   91.3   82.9   81.1   83.0 78.6 77.3   71.8   67.9 64.5 59.8 53.8 49.1 44.5 39.4 35.7 35.3 30.7
+TUP - ARC      79.4     74.1    78.7   81.6    84.7    82.2   79.5   78.3   71.8   77.0   77.5   82.9   80.1   75.5   75.0 74.5 72.2   66.9   64.4 62.9 60.2 55.2 51.4 49.6 42.2 39.1 39.3 33.9
+ARC - HIG      77.2     73.5    73.5   75.9    76.9    74.8   73.6   72.9   67.9   72.1   73.3   74.6   70.7   71.2   70.0 66.6 69.4   64.0   58.7 58.6 55.9 50.5 47.0 46.8 41.1 35.2 35.3 31.4
+HIG - EAF      77.8     76.1    75.1   77.3    76.7    75.4   73.9   72.9   67.0   73.8   74.6   74.8   71.5   76.2   72.6 68.8 71.6   72.4   68.7 59.8 58.1 53.9 49.0 45.5 41.6 39.6 39.9 36.3
+EAF - FIC      70.5     68.1    67.8   69.0    70.2    68.0   67.3   61.6   55.5   59.6   60.6   58.8   57.0   61.0   59.8 58.3 56.0   53.6   49.7 48.0 45.6 43.1 42.4 42.1 35.9 32.6 33.7 29.3
+FIC - WEF      71.1     67.0    67.7   72.7    72.5    69.9   71.7   63.6   57.7   61.7   61.2   60.8   61.6   63.0   59.3 58.2 55.1   50.4   47.2 47.5 44.5 40.7 38.6 36.5 32.5 31.3 31.6 28.1
+WEF - WOP      71.6     70.2    69.8   71.2    72.3    70.5   68.7   62.7   56.5   60.3   61.0   59.1   57.4   57.1   57.9 55.8 55.4   52.0   46.8 48.7 45.9 41.1 38.7 43.1 33.9 24.9 27.3 19.8
+WOP - TOW      73.1     71.4    70.7   75.8    73.8    72.2   70.7   64.2   58.7   62.5   62.9   62.0   64.0   60.2   58.9 57.7 56.8   55.3   51.3 49.6 47.1 43.0 39.1 39.7 32.0 26.9 27.1 20.3
+TOW - HIB      73.3     70.3    69.3   73.2    71.9    70.5   70.0   64.2   60.1   63.4   62.8   61.8   62.0   59.9   59.1 55.8 55.4   54.0   51.0 50.5 47.6 42.7 39.5 37.5 32.4 28.4 27.0 22.1
+
+
+Table C14          Noise data for Journey 7 (HIB to MOR via BAN) on 25 November 2020.
+
+Report No: N&V – R2900                                                                    Page 34 of 50
+Interstation One third octave band centre frequency (Hz)
+              31.5      40      50     63      80     100    125    160    200    250    315    400    500    630    800 1000 1250    1600   2000 2500 3150 4000 5000 6300 8000 10000 12500 16000
+HIB - TOW     73.1     69.9    73.8   75.2    76.9    74.6   75.4   72.9   68.4   72.2   76.1   79.1   73.0   70.0   71.2 66.5 64.6   60.8   56.9 55.9 53.2 48.7 47.6 41.8 38.3 36.4 36.1 32.6
+TOW - WOP 71.2         69.9    72.7   71.3    73.2    68.4   69.8   64.6   58.7   62.7   62.5   60.5   60.1   58.0   57.4 53.9 53.2   52.8   48.9 46.6 44.4 42.8 41.1 36.1 33.7 33.1 32.5 29.4
+WOP - WEF     68.9     66.4    71.1   66.3    68.6    65.3   66.6   61.4   56.3   60.9   60.6   59.2   59.2   56.9   56.2 52.6 53.0   48.6   46.7 45.6 42.1 41.7 40.4 36.0 33.3 32.8 32.5 29.7
+WEF - FIC     69.2     66.1    71.2   67.2    68.1    68.1   70.4   65.7   59.6   62.2   62.5   61.7   61.1   63.0   57.2 56.4 53.7   49.4   46.0 45.9 43.4 41.9 40.5 36.8 34.2 33.1 33.1 29.7
+FIC - EAF     69.8     67.9    71.7   68.6    70.6    67.2   69.5   62.8   57.3   61.4   61.5   59.5   58.9   62.5   58.5 57.8 54.9   50.9   47.9 47.0 44.5 43.1 41.2 40.5 39.9 33.2 33.4 30.2
+EAF - HIG     73.5     70.3    72.9   70.9    73.5    69.7   71.1   69.0   63.2   69.1   72.5   72.3   67.5   67.9   65.6 63.7 66.9   60.6   54.4 55.5 52.9 47.9 44.7 39.9 35.2 30.7 29.5 26.5
+HIG - ARC     74.0     72.6    75.1   75.7    77.1    73.7   75.4   74.8   69.2   73.9   76.9   78.2   72.5   71.4   68.5 65.4 63.6   62.0   58.5 57.5 55.2 50.1 47.2 42.3 36.4 31.6 29.1 25.5
+ARC - TUP     75.4     71.7    74.9   77.7    77.8    77.9   77.9   76.6   70.3   75.7   79.0   78.9   74.3   70.5   69.6 67.7 64.7   60.1   57.0 57.6 55.1 50.6 47.8 43.1 36.6 32.7 30.3 25.0
+TUP - KET     75.8     71.3    74.7   77.9    79.1    77.4   78.3   76.5   69.7   74.1   76.8   75.1   70.8   71.3   68.2 63.9 64.0   62.4   59.6 59.9 56.7 50.3 47.2 42.6 38.6 35.0 37.2 30.3
+KET - CAT     74.2     71.1    74.2   74.1    75.2    71.9   72.9   71.2   65.3   70.9   78.5   85.9   81.7   73.7   79.8 74.8 70.9   64.9   61.6 59.5 54.6 48.8 45.5 40.5 34.1 31.1 33.9 27.1
+CAT - EUS     73.9     69.4    75.8   80.8    79.6    79.1   83.2   77.6   76.3   78.4   83.8   88.6   81.6   79.0   80.5 76.5 73.6   68.8   65.4 63.6 59.9 56.1 58.0 48.0 43.0 41.1 39.9 37.3
+EUS - KIC     70.8     69.5    72.2   72.6    73.7    69.7   70.0   67.8   62.1   68.3   69.6   69.5   64.5   64.0   60.5 57.7 56.9   53.0   51.4 53.4 50.1 45.3 42.9 40.3 31.1 27.8 28.1 24.2
+KIC - ANG     73.5     71.3    74.6   75.2    77.5    74.8   75.2   74.1   68.5   73.3   75.9   76.1   69.2   68.0   65.3 62.4 62.8   58.4   54.4 55.2 52.6 47.6 45.0 40.7 34.4 31.3 28.9 25.4
+ANG - OLS     71.9     68.7    72.1   75.7    84.5    77.7   77.4   76.7   70.1   73.9   77.5   82.3   75.7   70.7   72.5 66.4 64.6   60.0   58.3 57.1 54.2 49.3 46.3 41.6 36.4 33.3 30.5 26.2
+OLS - MOO     74.4     73.2    78.6   78.2    77.3    73.7   74.5   72.8   67.5   71.5   74.0   73.4   68.0   68.1   63.9 60.7 60.2   56.1   54.1 54.5 51.1 46.1 43.3 36.6 31.7 28.1 25.3 21.9
+MOO - BAN     72.1     70.6    75.6   78.1    76.5    72.4   75.1   74.2   67.1   71.1   74.1   81.0   70.0   65.9   65.6 60.5 58.9   54.8   53.4 55.2 52.0 47.2 47.2 40.6 35.4 34.0 33.1 31.5
+BAN - LOB     73.0     71.4    79.0   83.3    85.8    82.3   81.1   78.4   76.2   77.7   79.2   80.7   75.9   73.3   71.1 67.3 66.4   62.4   60.2 59.4 57.2 53.8 53.5 49.7 44.5 44.0 41.9 38.1
+LOB - BOR     70.1     68.3    75.3   78.8    80.5    81.7   79.2   73.6   71.8   72.8   78.6   79.8   71.6   70.8   71.0 64.1 61.6   57.2   55.1 55.4 59.0 50.9 46.8 41.4 34.9 33.2 32.3 28.5
+BOR - ELC     69.9     67.8    72.4   73.7    76.3    72.7   73.1   70.6   65.7   69.9   72.7   80.0   72.6   65.5   65.5 60.2 57.4   53.0   51.3 52.1 48.9 43.3 42.5 35.7 31.6 29.5 30.0 28.4
+ELC - KEN     74.0     71.8    75.7   75.4    76.2    72.0   72.7   73.5   69.2   74.5   84.4   83.7   77.1   75.8   74.4 68.5 66.9   62.7   59.5 58.3 55.2 49.7 46.8 41.5 36.4 33.7 32.6 28.9
+KEN - OVA     78.1     76.0    78.1   78.0    79.2    76.8   77.3   76.8   70.8   75.0   76.8   74.6   68.9   68.7   65.3 62.6 62.3   59.8   55.6 55.3 53.1 48.2 45.8 41.6 36.2 33.6 31.7 28.2
+OVA - STO     76.5     73.3    75.7   77.1    78.8    76.4   77.7   76.7   69.6   74.9   78.2   74.9   69.1   68.7   65.0 62.9 63.1   59.1   54.5 55.0 52.1 46.8 44.1 40.2 35.8 34.0 31.3 28.4
+STO - CLN     73.8     69.0    73.1   72.6    76.5    82.8   82.8   74.5   69.3   73.8   76.5   77.9   74.5   72.6   70.0 66.4 63.4   58.9   55.3 55.7 53.3 48.2 44.0 39.0 33.2 30.7 29.6 25.7
+CLN - CLC     72.5     73.4    79.7   79.4    79.3    75.6   75.6   75.1   69.5   73.8   76.4   76.0   72.3   69.8   64.6 61.6 60.8   56.8   53.4 54.3 51.6 46.1 43.2 38.0 34.3 32.1 28.9 24.5
+CLC - CLS     75.5     70.0    73.6   74.8    76.1    73.5   73.6   71.5   65.6   71.2   73.3   73.3   67.7   67.2   64.5 61.0 61.5   59.1   54.9 57.3 53.9 46.8 42.5 36.8 32.2 28.7 26.5 26.8
+CLS - BAL     76.1     71.5    74.7   74.9    77.2    74.4   75.5   74.9   68.7   75.0   77.3   76.6   70.5   69.9   67.1 63.5 63.5   59.5   56.2 55.7 54.3 49.1 45.0 40.2 35.4 31.5 28.1 24.3
+BAL - TOBe    75.4     72.6    77.2   76.6    77.4    76.0   76.6   75.7   69.2   73.7   75.2   74.2   68.8   68.2   65.6 63.5 63.4   59.5   55.9 55.8 53.8 48.5 45.3 40.6 36.1 32.8 30.6 25.7
+TOBe - TOBr 76.2       72.3    75.9   76.0    77.9    75.8   76.5   75.8   70.0   74.2   76.0   74.8   69.2   68.4   65.4 62.8 64.0   59.6   56.4 56.0 54.1 49.1 45.1 40.4 35.3 31.3 28.2 24.2
+TOBr - COW 77.1        72.4    75.2   75.5    77.0    74.0   75.0   74.4   68.8   74.0   75.9   74.7   68.6   67.9   65.1 62.5 63.0   58.9   55.5 55.1 53.4 48.2 44.3 39.5 35.8 32.6 30.4 27.2
+COW - SOW 76.3         72.4    76.5   77.4    77.6    75.1   76.8   76.6   71.3   75.3   76.3   75.5   70.2   69.8   66.5 63.7 63.6   59.9   56.3 56.1 53.9 48.7 45.3 40.3 36.8 33.6 32.0 27.2
+SOW - MOR 74.3         70.7    73.6   73.2    75.0    73.2   74.1   74.4   70.8   75.7   80.0   85.2   78.4   73.4   79.0 71.6 71.2   69.6   62.9 60.6 56.4 51.1 48.1 44.3 42.4 40.8 42.1 39.4
+
+
+
+
+Report No: N&V – R2900                                                                    Page 35 of 50
+Table C15         Noise data for Journey 8 (MOR to EDG via BAN) on 26 November 2020.
+Interstation One third octave band centre frequency (Hz)
+              31.5      40      50     63      80     100    125    160    200    250    315    400    500    630    800 1000 1250    1600   2000 2500 3150 4000 5000 6300 8000 10000 12500 16000
+MOR - SOU     73.2     71.9    74.9   74.6    73.8    74.9   75.5   74.6   69.6   72.1   76.2   79.7   74.5   70.2   72.3 67.0 65.0   61.6   59.4 56.8 52.3 46.5 45.3 41.0 36.1 33.1 32.8 29.6
+SOU - COW     77.8     74.0    77.0   74.9    74.4    75.3   76.2   78.4   73.0   76.7   79.3   80.4   76.4   71.4   71.2 67.8 65.3   60.9   58.0 57.2 53.3 47.3 46.4 42.1 37.2 33.5 32.6 28.2
+COW - TOBr 77.0        73.5    76.4   77.4    76.5    77.8   76.8   79.7   75.1   77.7   79.3   77.6   72.4   69.7   67.0 63.8 63.4   58.9   56.4 55.8 52.0 45.5 43.7 38.6 33.1 29.6 28.5 25.7
+TOBr - TOBe 76.3       71.3    75.0   71.3    71.6    70.4   70.1   71.2   66.6   72.4   86.5   89.2   76.8   76.2   80.1 71.3 69.5   64.0   60.8 59.1 54.8 46.9 45.7 40.2 34.1 31.9 29.3 25.7
+TOBe - BAL    76.1     72.8    76.8   76.2    74.5    74.5   75.1   75.6   70.5   72.6   75.2   74.6   68.9   66.9   64.7 62.3 62.2   57.3   54.5 54.7 51.0 45.1 44.3 40.1 35.4 31.3 30.3 26.4
+BAL - CLS     76.5     73.3    76.4   77.1    77.3    80.4   81.7   78.3   72.6   75.9   78.7   78.7   76.5   72.8   70.0 67.9 65.3   61.6   59.5 59.1 55.7 49.7 47.9 43.6 38.5 34.5 33.7 29.6
+CLS - CLC     75.3     70.9    77.4   78.8    75.8    75.4   75.7   76.8   71.4   74.4   75.8   74.6   70.5   68.9   65.7 62.3 61.8   57.5   55.1 55.3 51.6 46.1 44.9 40.3 35.2 31.7 30.3 26.8
+CLC - CLN     73.5     71.3    75.7   73.1    71.7    70.0   69.7   69.8   66.1   69.5   75.3   76.5   74.3   65.5   65.7 60.8 57.5   53.7   52.9 53.9 49.9 44.9 46.0 40.4 33.7 30.4 30.1 26.3
+CLN - STO     73.2     72.0    75.3   72.7    72.7    72.7   72.8   75.5   70.8   74.8   81.5   87.3   79.9   74.4   80.4 72.1 70.6   67.0   65.2 62.4 56.3 49.1 47.0 43.0 35.6 32.4 30.8 28.0
+STO - OVA     76.0     73.5    76.3   74.2    74.5    75.0   74.2   74.4   68.5   72.5   75.7   84.6   78.0   73.7   76.0 69.0 64.8   59.3   56.8 56.2 51.3 44.7 43.3 38.2 32.3 29.6 28.4 26.3
+OVA - KEN     75.7     76.3    77.9   77.5    75.8    75.6   75.2   75.4   70.1   72.5   74.1   73.1   68.8   67.4   68.0 63.1 61.4   58.1   56.8 56.0 52.1 43.9 42.3 36.4 31.5 29.2 28.8 26.1
+KEN - ELC     69.5     68.5    75.4   78.4    72.7    71.8   73.6   72.8   69.6   71.7   76.5   77.3   74.7   68.6   64.4 61.0 59.5   55.3   55.0 56.1 51.1 46.1 46.6 41.5 34.9 31.7 31.4 26.9
+ELC - BOR     73.0     73.8    77.5   77.0    73.3    74.4   72.7   73.5   68.7   72.1   77.9   81.8   73.3   70.2   70.7 63.2 61.4   57.0   55.3 54.6 50.3 43.7 43.0 38.1 31.1 28.8 27.5 24.3
+BOR - LOB     72.7     71.3    75.3   74.9    74.0    71.9   71.2   72.2   66.7   70.0   74.2   80.0   72.5   65.4   70.0 61.6 61.1   55.9   54.3 54.8 49.6 43.1 42.5 36.8 30.9 27.2 25.8 22.3
+LOB - BAN     72.0     74.1    76.9   76.7    76.2    77.9   78.1   80.0   73.5   75.7   77.5   76.9   73.4   71.2   68.1 65.1 64.1   61.1   59.4 59.0 55.2 49.2 48.8 44.5 40.0 35.7 35.1 29.8
+BAN - MOO     72.3     75.2    81.1   75.2    72.9    74.3   74.3   76.2   70.4   73.5   75.0   76.4   71.9   67.1   65.6 62.5 62.0   58.6   56.9 56.0 52.0 46.6 45.7 40.4 33.8 32.5 31.1 26.8
+MOO - OLS     72.3     71.2    74.0   72.1    72.0    71.2   70.9   72.6   67.6   72.1   81.7   85.9   78.2   73.1   75.8 67.9 65.0   60.1   58.9 57.5 52.7 48.9 50.4 44.2 38.2 35.1 34.1 29.4
+OLS - ANG     73.7     73.2    76.5   77.9    77.2    75.7   75.4   76.8   72.4   74.3   76.6   77.2   76.1   70.9   68.2 64.6 64.1   59.9   57.6 57.6 54.1 48.8 48.8 44.1 37.5 33.8 32.4 29.3
+ANG - KIC     73.9     72.6    75.5   74.5    74.5    75.4   75.1   74.9   69.2   72.4   74.4   74.6   73.9   68.0   66.9 65.1 61.4   57.0   54.8 55.0 51.1 45.2 44.0 40.2 36.6 31.9 31.5 27.4
+KIC - EUS     74.7     74.2    77.4   78.4    79.0    78.2   77.0   79.6   73.5   75.4   77.8   79.3   77.8   72.6   68.5 65.5 63.7   59.3   58.4 58.7 55.3 50.4 52.5 48.1 41.9 37.7 38.2 32.9
+EUS - CAT     73.9     71.3    76.7   77.5    75.7    75.1   74.4   75.1   71.5   73.7   79.4   87.4   83.6   78.1   82.2 77.7 75.6   71.6   69.0 65.8 59.5 52.3 49.4 44.4 37.4 34.1 33.1 29.5
+CAT - CHF     76.0     75.1    76.8   79.2    79.2    78.8   77.9   78.5   72.6   74.9   76.3   76.1   72.3   70.5   68.7 65.8 64.5   60.3   58.2 58.2 55.0 49.3 49.1 45.9 42.5 36.7 35.8 31.3
+CHF - BEP     75.0     72.3    75.4   73.6    74.1    74.6   75.0   76.9   71.7   73.0   75.0   74.9   71.5   69.5   66.7 63.4 62.6   58.0   55.3 55.9 52.3 46.3 47.0 42.5 38.7 34.2 33.0 28.7
+BEP - HAM     75.6     73.6    75.8   76.7    76.1    75.7   76.0   76.0   70.9   73.0   74.4   73.8   70.1   68.4   66.1 62.1 62.1   57.3   54.8 55.6 52.1 45.6 44.9 41.2 38.1 34.3 33.2 29.0
+HAM - GOG     75.0     74.9    76.4   77.5    77.7    81.6   83.6   80.2   75.8   76.9   78.2   81.9   76.7   72.8   73.2 68.0 67.9   66.8   64.1 59.1 55.5 49.6 48.0 43.9 38.4 36.6 37.0 34.5
+GOG - BRC     70.6     71.7    73.4   72.2    71.3    69.8   69.2   66.2   60.2   61.5   62.1   62.4   61.1   59.8   60.0 53.9 52.7   53.1   47.9 47.4 43.5 36.7 34.5 30.9 25.9 23.3 23.9 20.6
+BRC - HEC     70.4     71.3    72.7   71.7    69.8    69.1   69.4   64.7   58.8   60.0   61.0   61.1   60.0   58.5   57.9 54.3 52.0   50.5   45.9 45.0 41.2 36.2 34.4 30.5 25.6 22.5 22.1 19.0
+HEC - COL     72.2     71.3    74.0   71.3    74.0    77.9   77.9   73.1   68.2   69.7   71.7   72.9   73.3   72.5   73.9 67.0 63.9   63.3   60.0 53.6 50.0 44.2 41.8 38.3 34.1 32.7 34.0 32.2
+COL - BUO     68.7     70.0    72.8   68.1    70.4    68.4   67.8   64.6   59.1   60.1   60.4   61.2   62.0   56.8   55.6 51.9 49.9   47.8   43.7 43.8 39.3 34.5 32.7 30.6 25.8 24.3 23.8 21.0
+BUO - EDG     70.5     71.9    73.6   69.5    69.9    68.7   68.2   63.7   59.3   61.2   60.4   60.3   60.0   57.7   55.5 52.9 51.1   50.3   45.9 43.8 40.6 36.2 34.1 31.4 27.7 24.4 24.2 21.6
+
+
+
+
+Report No: N&V – R2900                                                                    Page 36 of 50
+Table C16         Noise data for Journey 9 (EDG to MOR via BAN) on 26 November 2020.
+Interstation One third octave band centre frequency (Hz)
+              31.5      40      50     63      80     100    125    160    200    250    315    400    500    630    800 1000 1250    1600   2000 2500 3150 4000 5000 6300 8000 10000 12500 16000
+EDG - BUO     68.7     66.9    73.1   66.4    64.9    64.8   66.4   63.0   58.4   65.6   63.2   59.5   61.8   55.5   54.6 51.3 50.9   48.7   44.6 43.8 39.4 36.3 36.2 31.4 28.2 25.3 24.5 21.0
+BUO - COL     67.9     68.3    71.9   65.1    64.4    63.8   65.7   61.9   55.6   59.0   61.4   58.4   61.4   54.8   54.3 49.9 51.3   46.0   43.9 44.6 38.2 34.9 35.0 30.1 26.1 22.7 21.2 17.7
+COL - HEC     73.4     71.0    75.9   73.2    73.2    72.7   72.1   69.7   66.1   70.3   74.3   72.8   72.0   66.8   67.5 65.6 64.2   64.1   61.4 53.9 52.6 48.2 46.1 42.1 38.6 36.5 36.3 33.2
+HEC - BRC     67.9     67.9    73.1   65.8    65.0    64.4   64.0   61.1   55.6   59.1   62.8   59.0   57.8   56.1   55.4 55.8 51.7   50.1   46.2 45.8 41.3 37.8 36.5 32.2 28.8 27.1 27.5 27.5
+BRC - GOG     70.6     69.7    75.1   68.2    68.4    67.8   68.5   67.0   66.7   65.9   67.2   65.1   63.6   61.5   60.4 58.8 55.1   57.6   56.5 51.0 48.0 41.3 37.9 33.5 29.4 27.0 27.1 23.4
+GOG - HAM     77.8     75.2    77.7   80.0    82.0    81.2   81.0   78.9   75.3   77.7   82.0   77.8   76.0   71.6   69.7 68.5 68.9   65.0   62.1 59.8 55.4 51.9 51.2 47.5 43.1 40.2 40.2 34.5
+HAM - BEP     75.2     73.5    78.0   75.7    76.9    75.2   75.8   76.3   71.5   74.8   77.1   74.6   71.4   68.4   67.0 65.0 65.8   62.3   58.5 58.7 54.2 52.8 55.1 50.0 47.2 44.0 44.2 36.9
+BEP - CHF     76.8     73.0    78.2   73.7    75.0    74.8   74.9   76.1   71.7   74.2   78.3   75.3   71.8   69.3   67.5 65.5 66.3   62.1   58.7 58.3 53.9 50.2 49.7 45.9 43.4 41.4 41.6 35.7
+CHF - CAT     75.1     71.4    77.8   80.7    82.5    81.9   80.8   78.0   73.8   76.1   79.3   76.3   75.0   69.7   69.7 67.9 66.5   62.3   60.2 58.3 54.1 50.0 49.0 45.4 40.7 39.6 40.0 34.1
+CAT - EUS     74.7     69.3    79.4   77.4    76.6    78.6   81.1   77.4   78.2   78.0   85.2   87.6   83.4   77.0   80.5 78.1 77.5   71.6   68.3 63.9 57.8 53.5 52.3 47.9 41.1 39.2 39.0 34.5
+EUS - KIC     71.3     70.2    78.3   74.1    73.6    71.3   70.1   68.7   64.5   68.8   72.5   68.9   67.4   63.3   61.1 60.0 58.5   55.1   54.4 54.5 48.1 44.2 44.2 41.1 34.3 30.7 31.7 26.4
+KIC - ANG     74.6     71.6    78.5   77.1    76.9    75.3   74.7   75.2   71.0   73.9   76.8   75.2   71.5   67.2   65.6 63.6 64.4   60.3   57.6 56.7 51.2 47.3 48.4 42.4 37.8 39.7 36.5 32.6
+ANG - OLS     71.5     67.6    78.4   75.6    82.6    77.5   76.2   76.2   71.0   72.8   77.5   80.7   76.2   68.3   75.1 66.5 65.7   61.2   59.7 57.8 52.5 50.3 50.0 45.0 40.7 38.1 38.1 32.6
+OLS - MOO     73.7     71.2    79.4   77.3    75.4    73.3   72.4   71.6   68.6   71.3   73.6   71.1   68.5   65.7   62.8 60.6 59.7   56.0   55.0 54.4 47.8 43.0 43.5 37.4 31.5 29.2 29.7 24.6
+MOO - BAN     71.4     70.6    79.8   79.2    77.8    74.6   73.8   74.1   68.5   71.1   73.9   77.6   71.7   64.7   65.6 61.3 61.6   57.5   55.5 55.6 49.1 45.8 49.0 41.8 36.6 36.7 36.0 33.3
+BAN - LOB     73.2     71.8    80.1   84.9    84.6    81.5   80.2   78.4   76.9   77.6   79.6   77.9   75.9   71.1   70.3 67.9 68.2   64.6   62.4 59.9 55.9 53.6 54.9 50.8 45.8 45.2 45.3 41.2
+LOB - BOR     70.0     68.8    79.2   82.2    79.3    81.7   78.3   74.7   75.5   73.8   79.9   79.1   74.3   70.3   71.3 66.7 64.7   60.7   59.9 57.7 52.8 49.1 49.8 43.3 38.2 36.1 36.4 32.0
+BOR - ELC     71.2     67.8    78.1   75.1    74.7    72.1   71.3   70.0   67.0   69.7   72.8   78.2   73.6   64.0   66.8 60.8 59.0   54.6   53.7 53.0 46.8 42.4 43.7 36.9 33.3 32.3 34.2 31.4
+ELC - KEN     73.9     72.3    78.4   76.2    74.6    72.2   71.5   73.1   72.2   74.0   87.1   84.5   77.2   73.9   74.0 68.5 67.2   63.5   60.9 57.7 52.3 48.1 47.2 41.8 36.3 33.4 32.8 28.2
+KEN - OVA     78.1     76.3    78.5   78.7    78.0    77.5   76.4   77.1   72.6   75.4   77.6   74.1   70.7   67.4   65.4 63.9 64.9   61.7   57.6 56.6 52.2 47.9 47.2 42.0 36.1 32.6 31.4 27.1
+OVA - STO     75.1     71.2    78.1   76.8    76.7    75.4   75.6   76.2   70.2   74.3   79.4   72.8   68.7   66.1   63.7 62.0 62.3   57.2   54.9 54.7 48.7 44.7 44.1 39.0 33.8 30.2 29.9 26.0
+STO - CLN     73.6     68.2    77.7   73.1    75.6    83.4   81.6   74.4   71.4   73.2   76.6   76.0   75.0   71.3   70.4 67.1 64.6   60.3   57.6 56.2 50.8 46.9 45.9 41.4 36.4 34.3 32.8 27.8
+CLN - CLC     73.1     73.0    80.8   80.1    78.7    76.0   74.3   75.4   71.3   73.8   77.1   73.0   73.1   67.8   64.2 62.1 61.7   57.7   55.2 55.2 49.6 46.4 45.9 40.5 36.8 34.2 34.3 29.3
+CLC - CLS     77.4     70.3    77.9   75.9    75.4    74.6   72.9   72.6   68.2   71.4   75.1   72.2   68.7   65.1   63.4 61.5 62.1   57.2   54.3 55.2 49.7 45.7 44.6 39.4 36.6 39.3 34.6 29.5
+CLS - BAL     76.2     71.9    77.5   76.1    75.8    74.3   74.2   75.5   70.9   75.1   78.5   75.4   71.1   68.6   66.4 64.0 64.0   59.7   57.0 56.4 51.7 48.1 46.5 42.1 37.7 34.5 33.5 28.2
+BAL - TOBe    76.9     73.7    79.9   78.6    77.2    76.9   76.2   77.0   72.2   74.3   77.5   73.5   70.8   68.0   65.9 65.2 65.4   61.5   58.5 57.3 52.8 48.8 47.9 44.3 41.1 34.6 33.4 27.7
+TOBe - TOBr 77.1       71.8    78.1   76.2    76.0    75.6   75.2   76.1   71.9   74.0   77.0   73.1   69.4   66.5   63.9 62.7 63.8   59.6   57.0 55.6 50.8 47.2 45.8 40.6 36.4 32.3 31.0 26.4
+TOBr - COW 77.6        73.0    77.7   76.4    75.9    74.2   73.8   75.2   71.3   74.1   78.0   73.4   69.7   66.9   64.8 63.7 64.1   59.9   56.9 55.5 51.3 47.5 45.5 40.8 36.6 33.1 32.6 27.9
+COW - SOW 73.2         71.7    78.3   76.3    75.3    73.6   73.9   75.2   71.8   74.0   75.8   71.9   69.1   66.7   63.9 62.9 62.7   58.8   56.6 54.8 50.4 46.2 44.8 39.4 35.0 31.4 30.8 26.6
+SOW - MOR 74.6         70.4    78.1   73.3    72.5    72.3   72.8   74.8   72.6   75.7   80.9   84.2   79.9   72.1   81.3 72.7 71.7   69.4   66.3 60.8 55.8 51.2 49.5 45.4 39.7 37.8 37.8 34.3
+
+
+
+
+Report No: N&V – R2900                                                                    Page 37 of 50
+Table C17         Noise data for Journey 10 (MOR to EDG via BAN) on 26 November 2020.
+Interstation One third octave band centre frequency (Hz)
+              31.5      40      50     63      80     100    125    160    200    250    315    400    500    630    800 1000 1250    1600   2000 2500 3150 4000 5000 6300 8000 10000 12500 16000
+MOR - SOU     75.3     71.7    76.9   76.5    75.6    76.0   77.4   72.3   69.0   71.4   76.1   79.2   77.5   70.9   71.2 67.1 63.0   59.6   58.5 56.7 52.6 46.9 44.8 40.4 35.5 33.5 33.6 31.2
+SOU - COW     79.1     73.3    77.9   74.8    75.0    75.0   75.8   77.0   73.9   76.0   79.3   79.0   75.8   70.8   71.4 67.2 63.6   60.3   57.3 56.0 52.2 46.6 45.3 40.4 35.0 31.3 30.2 26.9
+COW - TOBr 77.2        73.0    77.8   77.4    77.1    77.5   76.7   78.5   76.0   77.2   79.6   76.6   72.4   69.2   67.8 63.9 62.7   59.0   56.1 55.1 51.4 45.9 44.2 38.8 32.9 29.5 28.9 26.6
+TOBr - TOBe 78.3       71.4    76.6   72.0    72.3    70.3   70.6   70.4   68.4   72.9   87.1   88.6   77.4   76.5   81.6 71.6 69.0   64.4   60.9 58.6 54.4 47.5 46.1 40.4 33.9 31.4 29.1 25.7
+TOBe - BAL    76.3     72.2    77.3   76.5    75.2    74.3   74.9   74.5   71.8   72.8   75.7   73.6   69.0   66.6   65.2 62.5 61.5   57.3   54.3 54.1 50.8 45.4 45.0 40.0 35.4 30.9 29.7 25.9
+BAL - CLS     77.7     72.5    75.9   77.0    77.3    80.0   81.0   76.8   73.0   75.2   78.7   77.5   75.9   72.1   70.3 67.6 63.7   61.1   58.8 57.9 55.1 49.7 47.9 43.7 38.6 34.0 33.2 28.9
+CLS - CLC     76.0     70.0    77.0   78.9    76.0    75.2   75.2   75.0   72.1   73.4   75.7   73.6   69.7   67.8   66.4 61.9 60.4   56.9   54.8 54.1 50.9 45.5 44.1 39.8 33.6 29.5 28.0 25.2
+CLC - CLN     75.0     70.7    76.0   73.2    72.0    69.4   69.2   68.9   67.0   69.2   75.4   75.7   73.5   64.3   65.6 60.3 55.7   53.1   52.1 52.2 48.4 42.3 41.9 36.5 31.4 27.5 26.6 24.0
+CLN - STO     73.7     71.5    77.5   72.9    72.7    72.3   72.6   74.8   72.3   74.6   82.3   86.8   80.1   74.5   82.1 72.4 69.1   66.8   65.7 61.5 56.0 49.4 47.2 42.9 34.9 31.1 29.6 26.9
+STO - OVA     75.7     72.3    76.7   73.7    74.1    74.0   73.1   72.8   68.9   72.0   75.4   83.6   78.2   72.2   75.2 68.7 62.9   58.6   56.1 55.0 50.2 44.1 42.8 37.4 31.6 28.5 27.5 25.7
+OVA - KEN     75.1     75.0    79.1   77.6    76.1    75.1   75.4   74.3   70.8   72.5   74.3   72.0   68.6   66.8   64.7 61.8 59.8   56.9   54.6 53.4 49.5 43.7 42.4 37.1 31.3 28.5 28.1 25.6
+KEN - ELC     70.8     67.9    76.5   78.6    73.5    71.7   73.7   72.0   71.6   72.2   77.4   77.2   75.0   68.5   65.7 61.5 58.4   55.3   54.2 53.8 49.5 44.3 44.8 39.8 33.1 29.5 28.6 24.8
+ELC - BOR     72.7     74.3    78.4   76.9    74.0    74.2   72.6   72.4   70.0   71.4   77.7   80.9   73.7   68.8   72.0 63.6 59.9   56.9   54.8 53.5 49.6 43.8 42.9 37.8 31.4 28.3 27.1 24.4
+BOR - LOB     73.5     70.7    76.8   75.2    74.4    71.6   71.4   71.3   68.1   69.9   74.5   79.3   73.0   64.8   70.6 62.3 59.4   55.8   54.4 53.9 49.1 43.6 43.2 37.8 31.6 27.3 26.9 23.4
+LOB - BAN     72.4     73.3    78.5   77.0    76.7    77.5   78.0   78.9   74.9   75.5   77.7   76.3   73.6   70.6   68.8 65.2 62.9   61.0   59.3 58.8 54.7 49.0 49.1 43.9 39.0 34.0 33.5 27.9
+BAN - MOO     73.3     76.3    83.1   76.1    74.2    74.6   74.4   75.7   72.1   73.4   75.6   76.3   72.5   66.7   66.9 63.1 61.1   58.7   57.1 55.8 51.8 46.8 46.3 40.7 33.6 31.6 30.2 26.6
+MOO - OLS     73.3     69.7    76.2   72.2    72.1    70.6   70.3   70.8   68.1   71.3   81.6   84.7   77.8   72.2   75.5 67.7 62.9   59.2   57.8 56.2 51.5 47.7 49.2 41.6 35.5 32.8 31.3 27.6
+OLS - ANG     73.7     71.5    77.1   77.3    76.5    74.2   74.4   75.0   73.1   73.8   76.4   76.3   75.9   70.4   68.7 64.7 62.4   59.6   57.4 57.0 53.5 48.2 47.4 43.0 36.1 32.5 31.0 28.0
+ANG - KIC     75.6     72.2    77.9   75.5    76.0    76.0   75.8   74.7   71.2   73.1   75.8   75.2   75.2   68.3   68.6 66.4 61.3   57.8   55.3 54.8 51.4 45.5 44.1 40.0 35.3 30.6 30.0 26.2
+KIC - EUS     75.4     72.9    78.0   77.3    78.3    76.8   75.9   77.8   74.1   74.4   77.2   78.2   77.7   71.5   68.3 65.4 61.5   58.3   56.8 55.4 51.9 46.4 47.1 43.7 36.1 32.6 32.9 29.3
+EUS - CAT     74.8     70.9    78.2   77.8    76.1    74.8   74.1   73.9   72.7   74.0   80.4   87.1   83.8   78.0   82.6 78.3 74.4   71.6   68.7 65.5 59.0 52.1 49.3 43.5 35.2 31.8 30.0 27.4
+CAT - CHF     76.8     74.4    77.9   79.2    79.7    78.4   77.7   77.0   73.4   74.2   76.4   75.0   72.4   69.9   69.3 65.9 63.0   59.9   58.0 57.3 54.6 49.2 48.2 44.3 39.1 34.3 33.7 29.3
+CHF - BEP     76.3     71.9    76.0   73.8    74.8    74.5   74.8   75.8   72.8   73.1   75.5   74.3   71.7   69.2   67.4 63.7 61.9   58.0   55.4 55.7 52.1 46.4 45.8 41.0 36.2 31.9 30.9 26.9
+BEP - HAM     75.6     72.7    76.5   76.4    76.2    75.1   75.6   74.6   71.4   72.7   74.6   72.9   69.7   67.6   66.3 62.1 60.6   56.9   54.2 54.8 51.4 46.1 44.5 40.1 35.6 31.4 30.9 27.0
+HAM - GOG     76.4     74.6    79.0   78.2    78.8    81.7   83.6   79.4   76.7   77.0   78.8   81.3   77.1   72.7   73.8 68.5 67.4   65.5   64.1 58.9 55.3 49.9 47.7 44.0 38.7 37.3 37.8 36.1
+GOG - BRC     68.7     68.2    76.0   68.6    70.5    67.3   68.7   64.3   59.5   60.2   63.6   60.7   59.9   57.6   54.8 51.4 51.0   46.4   44.5 46.0 41.5 36.1 34.3 29.9 26.1 22.4 21.4 18.3
+BRC - HEC     69.2     70.1    74.7   73.0    71.8    70.0   69.7   63.6   59.0   60.3   61.7   61.6   60.8   57.5   57.5 55.7 53.0   51.6   46.2 44.6 41.0 36.5 34.6 30.8 26.1 23.5 23.0 20.9
+HEC - COL     72.0     70.4    75.9   71.6    74.5    78.3   78.5   72.3   69.2   70.1   72.5   72.3   73.3   72.9   74.2 68.6 65.6   66.6   63.9 53.9 50.8 46.2 44.4 42.2 38.7 38.2 39.8 38.4
+COL - BUO     67.9     68.7    74.8   67.6    70.4    68.1   68.1   63.1   59.2   60.2   60.6   60.9   59.9   55.4   55.1 52.3 49.6   47.3   43.4 43.2 39.3 34.4 33.0 30.2 24.3 22.8 22.1 18.6
+BUO - EDG     69.0     69.4    75.0   68.3    69.5    67.7   67.6   61.7   56.9   58.5   60.1   59.2   58.9   55.1   54.2 53.0 49.9   50.9   45.1 43.0 39.7 35.1 33.4 31.2 27.0 23.7 23.0 20.4
+
+
+
+
+Report No: N&V – R2900                                                                    Page 38 of 50
+Table C18         Noise data for Journey 11 (EDG to MOR via BAN) on 26 November 2020.
+Interstation One third octave band centre frequency (Hz)
+              31.5      40      50     63      80     100    125    160    200    250    315    400    500    630    800 1000 1250    1600   2000 2500 3150 4000 5000 6300 8000 10000 12500 16000
+EDG - BUO     69.7     68.9    75.2   67.1    66.3    65.7   66.2   62.2   58.4   66.1   63.9   59.1   62.9   60.5   57.5 56.8 57.4   56.1   53.0 53.6 55.9 55.4 51.7 50.6 47.6 47.5 48.7 43.9
+BUO - COL     67.5     67.8    73.9   64.4    64.5    64.1   65.4   60.7   54.7   59.2   60.9   57.4   61.2   55.4   54.7 49.9 50.6   46.7   44.5 44.9 38.8 36.9 38.2 37.0 34.6 30.4 26.9 22.7
+COL - HEC     73.8     71.6    78.0   72.5    73.4    73.2   72.2   69.1   65.3   71.5   75.4   72.3   72.9   66.9   69.3 65.6 63.4   63.1   59.4 54.8 50.7 47.3 46.3 41.5 37.7 35.6 35.0 32.6
+HEC - BRC     69.0     68.6    74.4   66.6    66.3    65.9   64.5   61.0   55.5   60.8   63.7   57.9   58.0   54.6   56.5 56.3 52.3   51.3   46.6 46.2 41.4 38.0 36.4 31.9 27.8 25.5 24.9 21.6
+BRC - GOG     71.7     71.2    75.7   69.5    69.4    69.1   68.8   66.9   67.1   66.1   68.1   64.5   64.1   60.9   59.2 55.5 55.0   53.3   49.2 48.0 43.7 39.9 38.2 33.6 29.1 26.2 25.2 21.0
+GOG - HAM     77.8     76.0    77.4   80.3    81.9    81.3   80.9   77.2   73.7   78.3   82.0   76.3   76.1   71.2   70.9 68.0 68.0   65.1   62.0 60.0 55.1 51.3 50.1 45.9 40.6 37.8 36.5 31.4
+HAM - BEP     75.8     74.8    78.5   75.3    76.8    75.3   75.8   74.7   70.2   75.4   77.5   73.3   71.5   67.9   68.3 64.6 64.8   62.3   58.2 58.4 52.6 48.3 46.6 41.8 39.3 35.6 34.9 29.8
+BEP - CHF     77.7     73.6    76.8   73.7    75.3    75.4   75.5   75.2   71.1   75.4   79.2   74.8   72.6   69.6   69.6 65.8 66.2   63.1   59.3 59.2 54.1 50.3 49.7 44.7 41.3 38.7 38.4 32.9
+CHF - CAT     76.3     72.5    78.1   81.3    83.0    82.6   81.2   76.5   72.5   76.8   79.3   75.2   75.1   69.5   71.4 67.9 66.2   62.9   60.5 59.0 54.1 50.3 50.0 46.8 41.6 40.2 39.1 32.9
+CAT - EUS     76.1     70.4    77.9   76.8    76.6    78.9   82.6   77.9   78.7   80.1   87.2   88.6   85.1   79.0   83.3 79.3 78.1   73.6   69.7 66.1 59.1 54.7 52.8 48.5 42.0 38.6 37.4 32.8
+EUS - KIC     72.9     71.5    78.9   74.9    74.9    72.4   70.8   68.1   64.4   70.3   72.9   68.9   68.5   63.9   63.4 60.3 58.5   56.1   54.4 55.7 48.1 43.9 43.3 41.3 33.1 27.9 29.6 24.4
+KIC - ANG     74.5     72.7    78.9   77.2    77.3    75.7   74.8   73.9   69.9   74.8   77.2   74.0   71.3   67.2   67.5 63.7 63.9   60.7   57.7 57.5 51.0 46.8 45.2 40.6 34.7 31.4 30.8 26.3
+ANG - OLS     71.7     68.6    78.7   75.7    83.5    78.4   76.7   75.1   70.1   73.8   78.1   79.5   76.8   68.8   76.7 67.3 65.7   62.0   59.8 58.6 52.0 48.1 46.7 41.3 36.9 33.9 33.0 28.5
+OLS - MOO     74.4     73.0    80.1   78.4    76.4    74.4   73.3   71.3   68.5   72.7   74.9   70.6   69.6   66.4   65.9 61.3 60.6   57.4   55.5 56.0 48.4 43.7 43.1 35.5 30.5 27.0 25.5 22.0
+MOO - BAN     72.3     72.1    80.1   77.4    75.3    73.0   73.8   73.1   67.7   72.2   74.5   76.8   72.2   65.3   67.6 61.5 60.2   57.1   55.6 56.8 49.2 45.9 46.8 41.0 34.2 32.7 31.3 27.6
+BAN - LOB     73.8     73.5    80.9   85.3    85.5    82.6   80.8   77.5   76.3   78.7   80.4   77.3   77.0   71.6   72.0 68.1 67.8   65.3   62.6 60.6 55.7 53.5 53.8 49.2 44.0 42.8 42.3 38.1
+LOB - BOR     70.0     69.1    79.6   80.5    78.7    80.8   77.5   72.6   73.1   73.5   80.0   77.8   73.3   70.3   73.4 65.6 63.0   60.1   58.2 57.2 51.4 47.6 47.6 42.2 37.3 34.2 33.6 29.2
+BOR - ELC     70.2     68.6    79.9   74.0    74.7    72.7   71.5   69.0   66.5   71.0   73.2   76.8   73.4   64.0   68.2 60.9 58.7   55.0   53.6 53.7 46.5 41.8 42.6 37.0 31.0 28.9 30.0 27.0
+ELC - KEN     73.3     72.9    79.0   75.4    74.2    72.0   70.9   71.4   70.5   73.9   86.4   81.8   76.5   73.3   75.2 67.7 66.1   62.8   59.9 57.9 51.5 47.6 46.3 41.0 35.2 31.5 30.9 26.5
+KEN - OVA     78.5     77.8    79.9   79.6    78.6    77.6   76.7   75.8   71.8   76.6   78.1   73.1   71.0   67.3   67.1 63.4 64.3   61.7   57.8 57.2 51.9 48.0 46.9 41.4 35.5 31.9 30.4 26.6
+OVA - STO     77.6     73.1    79.2   77.2    77.7    76.4   75.9   75.6   69.8   75.4   80.1   72.0   69.7   66.7   65.6 62.4 62.4   58.2   55.5 56.0 49.4 45.9 44.7 39.5 34.7 31.7 30.9 27.0
+STO - CLN     74.7     69.5    80.0   73.2    76.5    84.1   82.1   74.1   71.1   74.6   77.7   75.6   76.3   72.0   72.5 67.8 64.7   61.0   58.2 57.3 51.2 47.1 45.8 40.4 35.1 33.2 31.8 27.3
+CLN - CLC     73.6     74.4    81.4   80.0    78.7    76.1   74.1   74.1   70.3   75.7   77.8   72.2   72.6   68.0   67.0 64.1 61.7   61.8   58.4 60.2 52.4 46.0 43.9 38.3 33.7 31.2 30.9 26.3
+CLC - CLS     77.1     70.9    79.6   75.4    75.6    74.9   72.9   71.3   67.2   72.1   76.1   70.9   69.0   65.0   64.9 61.4 61.6   57.5   54.3 56.0 49.5 45.8 44.7 40.0 37.3 33.0 32.9 28.3
+CLS - BAL     76.7     73.1    78.8   75.7    76.3    74.7   74.4   74.4   70.2   76.2   79.0   74.3   71.5   69.1   68.9 64.8 64.2   61.3   58.4 58.7 53.7 49.4 48.0 43.0 40.3 35.7 34.9 28.9
+BAL - TOBe    76.8     74.3    80.3   78.4    77.5    77.1   76.2   75.9   71.3   75.3   77.8   72.6   71.0   67.7   67.4 64.9 65.1   62.0   58.8 58.1 52.8 48.7 47.6 43.6 39.0 34.0 32.7 26.7
+TOBe - TOBr 77.4       73.0    78.6   76.5    76.9    76.0   75.5   75.2   71.2   74.8   77.5   72.2   70.1   66.4   66.2 63.2 63.5   60.1   57.3 56.7 51.1 48.2 47.8 43.9 41.8 36.3 35.9 29.7
+TOBr - COW 77.5        74.0    78.7   76.7    76.7    74.9   74.4   74.6   71.1   75.4   78.4   72.9   70.4   67.3   67.1 63.7 64.0   60.8   57.6 56.9 51.5 47.7 45.9 41.4 39.0 34.3 33.2 28.0
+COW - SOW 74.5         73.6    80.0   77.2    76.5    75.0   75.3   75.2   72.1   75.9   77.5   72.2   70.6   67.7   66.8 63.4 63.2   60.3   57.7 56.7 51.7 48.2 49.0 43.7 40.3 36.0 35.4 29.1
+SOW - MOR 74.2         71.0    78.9   73.4    73.1    72.8   72.8   73.8   71.8   76.7   81.5   83.5   80.0   72.8   82.2 72.5 71.4   69.4   65.8 61.6 56.5 52.4 51.6 49.7 44.1 41.3 39.7 37.5
+
+
+
+
+Report No: N&V – R2900                                                                    Page 39 of 50
+Figure C1   Median LAeq Morden to Kennington (Northbound).
+
+
+
+
+Figure C2   Median LAeq Kennington to Camden Town via Bank (Northbound).
+
+
+
+
+                                                                           Page 40 of 50
+Figure C3   LAeq Kennington to Camden Town via Charing Cross (Northbound).
+
+
+
+
+Figure C4   Median LAeq Camden Town to Edgware (Northbound)
+
+
+
+
+Report No: N&V – R2900                                      Page 41 of 50
+Figure C5   Median LAeq Camden Town to High Barnet (Northbound)
+
+
+
+
+Figure C6   Median LAeq High Barnet to Camden Town (Southbound)
+
+
+
+
+Report No: N&V – R2900                                     Page 42 of 50
+Figure C7   Median LAeq Edgware to Camden Town (Southbound)
+
+
+
+
+Figure C8   Median LAeq Camden Town to Kennington via Bank (Southbound)
+
+
+
+
+Report No: N&V – R2900                                     Page 43 of 50
+Figure C9    Median LAeq Camden Town to Kennington via Charing Cross (Southbound)
+
+
+
+
+Figure C10   Median LAeq Kennington to Morden (Southbound).
+
+
+
+
+Report No: N&V – R2900                                        Page 44 of 50
+                    APPENDIX D: EXPOSURE POINTS SYSTEM
+
+
+
+
+Figure D1   The Exposure Points System as shown in HSE publication HSG260
+
+
+
+
+Report No: N&V – R2900                                     Page 45 of 50
+Table D2   Estimated exposure points (EP) for Morden to High Barnet via Bank Branch
+           (Journey 3) based on the interstation LAeq and exposure durations; EP for a 1-hour
+           duration are presented for comparison.
+        Interstation               LAeq dB(A) Duration (s)       EP       EP (1-hr)
+        MOR - SOU                     81.8           118         0.2          6
+        SOU - COW                     83.2            90         0.2          8
+        COW - TOBr                    81.1            96         0.1          5
+        TOBr - TOBe                   89.8            89         0.9          38
+        TOBe - BAL                    77.0            81         0.0          2
+        BAL - CLS                     82.0            91         0.2          6
+        CLS - CLC                     77.5           107         0.1          2
+        CLC - CLN                     79.0            66         0.1          3
+        CLN - STO                     88.3            68         0.5          27
+        STO - OVA                     85.3           111         0.4          13
+        OVA - KEN                     77.3            79         0.0          2
+        KEN - ELC                     81.2            92         0.1          5
+        ELC - BOR                     81.9            90         0.2          6
+        BOR - LOB                     80.3            72         0.1          4
+        LOB - BAN                     82.1            73         0.1          6
+        BAN - MOR                     79.1            96         0.1          3
+        MOR - OLS                     86.2            59         0.3          16
+        OLS - ANG                     80.1           127         0.1          4
+        ANG - KIC                     79.2           120         0.1          3
+        KIC - EUS                     81.4            64         0.1          5
+        EUS - CAT                     89.2           170         1.6          33
+        CAT - KET                     87.7            93         0.6          23
+        KET - TUP                     89.0            70         0.6          31
+        TUP - ARC                     83.0            77         0.2          8
+        ARC - HIG                     76.2           129         0.1          2
+        HIG - EAF                     80.2           115         0.1          4
+        EAF - FIC                     64.3           204         0.0          0
+        FIC - WEF                     65.6           131         0.0          0
+        WEF - WOP                     65.4            83         0.0          0
+        WOP - TOW                     66.6           110         0.0          0
+        TOW - HIB                     66.3           260         0.0          0
+        Total EP for MOR - HIB                                   7.1
+
+
+
+
+Report No: N&V – R2900                                           Page 46 of 50
+Table D3    Estimated exposure points (EP) for High Barnet to Morden via Charing Cross
+            (Journey 4) based on the interstation LAeq and exposure durations; EP for a 1-hour
+            duration are presented for comparison.
+        Interstation                LAeq dB(A) Duration (s)       EP       EP (1-hr)
+        HIB - TOW                      78.0           203         0.1           2
+        TOW - WOP                      67.5           110         0.0           0
+        WOP - WEF                      64.5            86         0.0           0
+        WEF - FIC                      67.6           104         0.0           0
+        FIC - EAF                      66.7           203         0.0           0
+        EAF - HIG                      74.6           133         0.0           1
+        HIG - ARC                      78.9           136         0.1           3
+        ARC - TUP                      79.6            73         0.1           4
+        TUP - KET                      77.9            66         0.0           2
+        KET - CAT                      87.8           103         0.7          24
+        CAT - MOC                      77.4            84         0.1           2
+        MOC - EUS                      82.0           111         0.2           6
+        EUS - WAS                      81.0            56         0.1           5
+        WAS - GOS                      76.0            45         0.0           2
+        GOS - TCR                      76.5            57         0.0           2
+        TCR - LES                      75.1            42         0.0           1
+        LES - CAC                      79.3            52         0.0           3
+        CAC - EMB                      77.6            36         0.0           2
+        EMB - WAT                      78.9            58         0.0           3
+        WAT - KEN                      82.3           139         0.3           7
+        KEN - OVA                      74.2            92         0.0           1
+        OVA - STO                      77.3           109         0.1           2
+        STO - CLN                      79.3            67         0.1           3
+        CLN - CLC                      77.0            69         0.0           2
+        CLC - CLS                      77.5           106         0.1           2
+        CLS - BAL                      77.6            93         0.1           2
+        BAL - TOBe                     76.3            82         0.0           2
+        TOBe - TOBr                    75.5            97         0.0           1
+        TOBr - COW                     75.8            98         0.0           2
+        COW - SOW                      75.9           105         0.0           2
+        SOW - MOR                      85.2           144         0.5          13
+        Total EP for HIB - MOR                                    2.9
+
+
+
+
+Report No: N&V – R2900                                            Page 47 of 50
+Table D5    Estimated exposure points (EP) for High Barnet to High Barnet via Charing Cross
+            Branch and Kennington Loop (Journey 6). based on the interstation LAeq and
+            exposure durations; EP for a 1-hour duration are presented for comparison.
+        Interstation               LAeq dB(A) Duration (s)        EP       EP (1-hr)
+
+        HIB - TOW                    66.3          206          0.0         0
+        TOW - WOP                    67.3          110          0.0         0
+        WOP - WEF                    65.2           86          0.0         0
+        WEF - FIC                    70.5          108          0.0         0
+        FIC - EAF                    67.6          203          0.0         0
+        EAF - HIG                    77.3          133          0.1         2
+        HIG - ARC                    81.6          136          0.2         6
+        ARC - TUP                    81.6           73          0.1         6
+        TUP - KET                    78.8           67          0.1         3
+        KET - CAT                    90.6          103          1.3         45
+        CAT - MOC                    78.2           84          0.1         3
+        MOC - EUS                    85.0           76          0.3         13
+        EUS - WAS                    82.9           57          0.1         8
+        WAS - GOS                    79.0           46          0.0         3
+        GOS - TCR                    78.6           57          0.0         3
+        TCR - LES                    77.1           42          0.0         2
+        LES - CAC                    80.2           53          0.1         4
+        CAC - EMB                    78.4           37          0.0         3
+        EMB - WAT                    80.2           57          0.1         4
+        WAT - KEN                    84.9          138          0.5         12
+        KEN Loop                     78.5          298          0.2         3
+        KEN - WAT                    83.5          128          0.3         9
+        WAT - EMB                    86.1           67          0.3         16
+        EMB - CHC                    79.1           38          0.0         3
+        CHC - LES                    84.0           57          0.2         10
+        LES - TCR                    76.5           45          0.0         2
+        TCR - GOS                    84.2           55          0.2         10
+        GOS - WAS                    79.7           47          0.0         4
+        WAS - EUS                    85.7           58          0.2         15
+        EUS - MOC                    80.5           86          0.1         4
+        MOC - CAT                    78.7           82          0.1         3
+        CAT - KET                    89.1           93          0.8         32
+        KET - TUP                    90.0           70          0.8         40
+        TUP - ARC                    84.0           77          0.2         10
+        ARC - HIG                    77.9          129          0.1         2
+        HIG - EAF                    81.1          115          0.2         5
+        EAF - FIC                    66.7          206          0.0         0
+        FIC - WEF                    67.7          133          0.0         0
+        WEF - WOP                    65.6           83          0.0         0
+        WOP - TOW                    68.2          109          0.0         0
+        TOW - HIB                    67.4          247          0.0         0
+        Total EP for HIB to HIB                                 6.8
+
+Report No: N&V – R2900                                         Page 48 of 50
+                         APPENDIX E: HEARING PROTECTION
+
+
+E1.    The HSE recommends three methods for estimating sound pressure levels using
+BS EN 4869-2 (1995): Octave band, HML and SNR. All three will provide similar predictions,
+however the “HML and SNR methods become less accurate when compared with the octave
+band method where the noise is dominated by single frequencies, particularly where these are
+at low frequencies”. Further information is given in BS EN 458 (2016).
+
+E2.    The octave band method for estimating the attenuation provided by passive hearing
+protection devices involves the following procedure (HSE 2005):
+
+      1. convert the measured Leq from one-third octave band vales to one-octave band
+         values;
+      2. determine the assumed protection value for the hearing protection device (subtract
+         standard deviation from the mean attenuation level);
+      3. subtract the assumed protection values from the measure one-octave Leq values;
+      4. apply A-weighting to value (3) above;
+      5. calculate total Leq;
+      6. add 4 dB for the real-world factor to Leq (5) above.
+
+
+Table F1    Attenuation data (dB) for Alpha Solway SOTA L1
+ Frequency (Hz)               63      125    250    500  1000        2000    4000    8000
+ Mean attenuation value      19.6 10.7        7     16.4   22        31.6    33.5    36.3
+ Standard deviation           4.7     3.1    2.6    2.3    3.1        3.9      4      2.7
+ Assumed protection value    14.9     7.6    4.4    14.1  18.9       27.7    29.5    33.6
+
+
+Table F2    Attenuation data (dB) for 3M E.A.R Earplugs EC-01-000
+ Frequency Hz                63      125    250    500    1000    2000       4000    8000
+ Mean attenuation value        21     20.2 19.8 19.1       23.2   33.4        41     40.7
+ Standard deviation           4.1     4.4    4.2    4.3    3.7     4.5        2.9     5.4
+ Assumed protection value     16.9 15.8 15.6 14.8          19.5   28.9       38.1    35.3
+
+
+
+
+Report No: N&V – R2900                                          Page 49 of 50
+                            APPENDIX F: STATION CODES
+
+
+Table F1       Station codes used in the report.
+  Interstation                                   Code   Interstation             Code
+  Morden                                         MOR    High Barnet              HIB
+  South Wimbledon                                SOU    Edgware                  EDG
+  Colliers Wood                                  SOW    Burnt Oak                BUO
+  Tooting Broadway                               TOBr   Collindale               COL
+  Tooting Bec                                    TOBe   Hendon Central           HEC
+  Balham                                          BAL   Brent Cross              BRC
+  Clapham South                                   CLS   Golders Green            GOG
+  Clapham Common                                 CLC    Hampstead                HAM
+  Clapham North                                  CLN    Belsize Park             BEP
+  Stockwell                                      STO    Chalk Farm               CHF
+  Oval                                           OVA    Warren Street            WAS
+  Kennington                                     KEN    Goodge Street            GOS
+  Elephant & Castle                               ELC   Tottenham Court Road     TCR
+  Borough                                        BOR    Leicester Square         LES
+  London Bridge                                  LOB    Charing Cross            CHC
+  Bank                                           BAN    Embankment               EMB
+  Moorgate                                       MOO    Waterloo                 WAT
+  Old Street
+  Angel
+  King's Cross St. Pancras
+  Euston
+  Camden Town
+  Kentish Town
+  Tufnell Park
+  Archway
+  Highgate
+  East Finchley
+  Finchley Central
+  West Finchley
+  Woodside Park
+  Totteridge and Whetstone
+
+
+
+
+Report No: N&V – R2900                                           Page 50 of 50
+

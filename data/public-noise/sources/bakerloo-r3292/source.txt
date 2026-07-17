@@ -1,0 +1,14 @@
+Title: ACOUSTIC SURVEY IN PASSENGER CAR OF 1972 TUBE STOCK — Bakerloo (R3292 v1.1)
+Provider: Transport for London — Technical Services / Noise & Vibration
+Canonical URL: https://foi.tfl.gov.uk/FOI-3780-2324/R3292_72TS_Passenger%20car%20acoustic%20survey_Bakerloo%20Line_Redacted.pdf
+FOI: FOI-3780-2324
+Document date: 15 September 2023
+Measurement date: 16 July 2023
+Format: PDF (redacted)
+Rights status: unknown — Not open data / permission required
+Methodology: Class 1 SLM at standing 1.6 m in 72TS passenger car; LAeq,T etc. station-to-station.
+Stock: 72TS train 745/1385711
+Coverage: Bakerloo southbound/northbound Queens Park–Elephant & Castle; outer NR junction sections partially blank in released table.
+Caveats: Single survey; standing only; unknown open-data reuse clearance.
+Local assets: R3292-Bakerloo-Passenger-Car-Acoustic-Survey.pdf, extracted.txt
+Retrieved: 2026-07-15

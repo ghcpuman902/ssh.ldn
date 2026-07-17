@@ -1,0 +1,7 @@
+Title: OpenStreetMap London Underground route geometry
+Provider: OpenStreetMap contributors
+Canonical URL: https://www.openstreetmap.org/copyright
+Licence: ODbL 1.0
+Use: Track-following polylines for geographic section map (via project Overpass cache)
+Local: copied from data/osm-cache/tube-geometry/
+Retrieved: 2026-07-15

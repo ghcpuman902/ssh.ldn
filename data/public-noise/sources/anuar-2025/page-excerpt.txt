@@ -1,0 +1,10 @@
+Source: Anuar et al. 2025
+Title: Identification and Correlation of Noise Hotspots in Metro Underground with Physical Track Characteristics for Sustainable Transport Planning
+URL: https://www.mdpi.com/2071-1050/17/5/1880
+DOI: 10.3390/su17051880
+Licence: CC BY 4.0
+Coverage: Northern line corridor Camden Town to South Wimbledon
+Method: iPhone 14 + MOTIV app; one-minute FFT classification into impact/rolling/flanging/squeal
+Key finding: impact noise up to 95.98 dB at 353 m radius / 79 mm cant
+Map readiness: corridor-level summaries; dense chainage tables are figure/table images in HTML — catalogue as Tier A academic context; use as validation of Northern corridor hotspots rather than exhaustive station-pair table extraction until PDF tables can be OCR'd.
+Retrieved: 2026-07-15

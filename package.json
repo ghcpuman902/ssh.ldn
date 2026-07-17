@@ -13,7 +13,8 @@
     "download-noise-tiles": "node scripts/download-noise-tiles.mjs",
     "generate-poi-density": "node scripts/generate-poi-density-tiles.mjs",
     "create-speech-engine": "node scripts/create-speech-engine.mjs",
-    "update-speech-engine": "node scripts/update-speech-engine.mjs"
+    "update-speech-engine": "node scripts/update-speech-engine.mjs",
+    "build-public-noise": "node scripts/public-noise/build-public-noise-data.mjs"
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^3.0.5",

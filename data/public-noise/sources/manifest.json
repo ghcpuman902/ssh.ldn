@@ -1,0 +1,295 @@
+{
+  "version": 1,
+  "generatedAt": "2026-07-15T08:45:00.000Z",
+  "description": "Catalogue of public Tube interior / in-cab noise sources digitized for /maps/public-noise-data. Unknown-rights FOI materials are retained for evaluation and marked not open data.",
+  "sources": [
+    {
+      "id": "central-r3291",
+      "title": "Central line 92TS passenger-car acoustic survey R3291",
+      "provider": "Transport for London",
+      "url": "https://foi.tfl.gov.uk/FOI-2746-2324/2746-2324-Passenger%20Car%20Acoustic%20Survey_Redacted.pdf",
+      "foi": "FOI-2746-2324",
+      "documentDate": "2023-09-15",
+      "measurementDate": "2023-07-08",
+      "format": "PDF",
+      "rights": "unknown",
+      "rightsLabel": "Not open data / permission required",
+      "position": [
+        "standing",
+        "seated"
+      ],
+      "stock": "92TS",
+      "metric": [
+        "LAeq",
+        "LCeq",
+        "LCpeak"
+      ],
+      "coverage": "Central line Ruislip Gardens\u2013Hainault both directions",
+      "mapReady": true,
+      "confidenceTier": "A",
+      "localPath": "central-r3291/"
+    },
+    {
+      "id": "bakerloo-r3292",
+      "title": "Bakerloo line 72TS passenger-car acoustic survey R3292",
+      "provider": "Transport for London",
+      "url": "https://foi.tfl.gov.uk/FOI-3780-2324/R3292_72TS_Passenger%20car%20acoustic%20survey_Bakerloo%20Line_Redacted.pdf",
+      "foi": "FOI-3780-2324",
+      "documentDate": "2023-09-15",
+      "measurementDate": "2023-07-16",
+      "format": "PDF",
+      "rights": "unknown",
+      "rightsLabel": "Not open data / permission required",
+      "position": [
+        "standing"
+      ],
+      "stock": "72TS",
+      "metric": [
+        "LAeq",
+        "LCeq",
+        "LCpeak"
+      ],
+      "coverage": "Bakerloo Queens Park\u2013Elephant & Castle both directions (outer sections partial)",
+      "mapReady": true,
+      "confidenceTier": "A",
+      "localPath": "bakerloo-r3292/"
+    },
+    {
+      "id": "central-r3451",
+      "title": "Central line test vehicle interior noise R3451",
+      "provider": "Transport for London",
+      "url": "https://foi.tfl.gov.uk/FOI-3133-2526/R3451%20-%20250416%20-%20CEN%20-%20Interior%20Noise%20of%20a%20Test%20Vehicle.pdf",
+      "foi": "FOI-3133-2526",
+      "documentDate": "2025-04-16",
+      "format": "PDF",
+      "rights": "unknown",
+      "rightsLabel": "Not open data / permission required",
+      "position": [
+        "test-vehicle"
+      ],
+      "stock": "test vehicle",
+      "metric": [
+        "LAeq",
+        "LCpeak",
+        "LEP,d",
+        "SEL"
+      ],
+      "coverage": "Central line inter-station + LCS track references",
+      "mapReady": true,
+      "confidenceTier": "A",
+      "localPath": "central-r3451/"
+    },
+    {
+      "id": "stratford-leyton-foi",
+      "title": "Central Line Noise Between Stratford and Leyton (FOI tables)",
+      "provider": "Transport for London",
+      "url": "https://tfl.gov.uk/corporate/transparency/freedom-of-information/foi-request-detail?referenceId=FOI-3133-2526",
+      "foi": "FOI-3133-2526",
+      "documentDate": "2025-12-09",
+      "format": "HTML tables + PDF attachments",
+      "rights": "unknown",
+      "rightsLabel": "Not open data / permission required",
+      "position": [
+        "cab"
+      ],
+      "stock": "Central line cab",
+      "metric": [
+        "LAeq"
+      ],
+      "coverage": "Stratford\u2013Leyton eastbound time series 2020\u20132025; comparative Central sections 2025-09-01",
+      "mapReady": true,
+      "confidenceTier": "A",
+      "localPath": "stratford-leyton-foi/"
+    },
+    {
+      "id": "northern-r2900",
+      "title": "Northern line train-operator noise exposure R2900",
+      "provider": "Transport for London",
+      "url": "https://foi.tfl.gov.uk/FOI-1719-2122/R2900%20Noise%20Exposure%20Northern%20Line%20Train%20Operators_Redacted.pdf",
+      "foi": "FOI-1719-2122",
+      "documentDate": "2020-11",
+      "measurementDate": "2020-11-24",
+      "format": "PDF",
+      "rights": "unknown",
+      "rightsLabel": "Not open data / permission required",
+      "position": [
+        "cab"
+      ],
+      "stock": "1995TS",
+      "metric": [
+        "LAeq",
+        "LCpeak"
+      ],
+      "coverage": "Northern line end-to-end via Bank/Charing Cross/Kennington Loop, inter-station appendices",
+      "mapReady": true,
+      "confidenceTier": "B",
+      "notes": "Occupational cab proxy, not passenger saloon",
+      "localPath": "northern-r2900/"
+    },
+    {
+      "id": "northern-passenger-corridor",
+      "title": "Northern line passenger corridor FOI excerpts",
+      "provider": "Transport for London",
+      "url": "https://tfl.gov.uk/corporate/transparency/freedom-of-information/foi-request-detail?referenceId=FOI-1719-2122",
+      "foi": "FOI-1719-2122",
+      "format": "FOI HTML (partial)",
+      "rights": "unknown",
+      "rightsLabel": "Not open data / permission required",
+      "position": [
+        "passenger",
+        "cab"
+      ],
+      "coverage": "Euston\u2013Camden Town corridor values mentioned in FOI answers; full R2355 passenger report not retrieved as standalone PDF",
+      "mapReady": false,
+      "confidenceTier": "C",
+      "localPath": "northern-passenger-corridor/"
+    },
+    {
+      "id": "victoria-occupational-2024",
+      "title": "Victoria line occupational survey 2024",
+      "provider": "Transport for London",
+      "url": "https://tfl.gov.uk/corporate/transparency/freedom-of-information/",
+      "format": "PDF (catalogue entry; discrete SHE assessment)",
+      "rights": "unknown",
+      "rightsLabel": "Not open data / permission required",
+      "position": [
+        "cab",
+        "dosimetry"
+      ],
+      "coverage": "Whole-shift / cab; not inter-station map-ready",
+      "mapReady": false,
+      "confidenceTier": "C",
+      "localPath": "victoria-occupational-2024/"
+    },
+    {
+      "id": "anuar-2025",
+      "title": "Anuar et al. 2025 Northern line noise hotspots",
+      "provider": "MDPI Sustainability / University of Birmingham",
+      "url": "https://www.mdpi.com/2071-1050/17/5/1880",
+      "documentDate": "2025-02-22",
+      "format": "Open-access HTML/PDF",
+      "rights": "open",
+      "rightsLabel": "CC BY 4.0",
+      "position": [
+        "passenger-smartphone"
+      ],
+      "stock": "Northern line service",
+      "metric": [
+        "FFT band classes",
+        "peak impact dB"
+      ],
+      "coverage": "Camden Town\u2013South Wimbledon corridor",
+      "mapReady": false,
+      "confidenceTier": "B",
+      "notes": "CC BY; chainage hotspot tables image-heavy \u2014 catalogued; hotspot maxima used for validation",
+      "localPath": "anuar-2025/"
+    },
+    {
+      "id": "garbala-2015",
+      "title": "Garbala & Gomez-Agustina 2015 Passenger Noise Exposure",
+      "provider": "LSBU / conference paper",
+      "url": "https://openresearch.lsbu.ac.uk/",
+      "documentDate": "2015",
+      "format": "PDF conference paper",
+      "rights": "unknown",
+      "rightsLabel": "Not open data / permission required",
+      "position": [
+        "passenger"
+      ],
+      "coverage": "Route-level / selected journeys; Leyton\u2013Bank Central cited ~90.9 dB LAeq",
+      "mapReady": false,
+      "confidenceTier": "C",
+      "localPath": "garbala-2015/"
+    },
+    {
+      "id": "singh-2020",
+      "title": "Singh et al. 2020 Noise Exposure on the London Underground",
+      "provider": "Academic journal",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/",
+      "documentDate": "2020",
+      "format": "Journal article",
+      "rights": "restricted",
+      "rightsLabel": "Publisher terms \u2014 not open data",
+      "position": [
+        "passenger"
+      ],
+      "coverage": "Northern/Victoria longitudinal; Zone 1 testing",
+      "mapReady": false,
+      "confidenceTier": "C",
+      "localPath": "singh-2020/"
+    },
+    {
+      "id": "eave-2019",
+      "title": "EAVE Tube Challenge 2019 citizen map",
+      "provider": "EAVE",
+      "url": "https://www.eave.io/",
+      "documentDate": "2019-04",
+      "format": "Web article / external map",
+      "rights": "unknown",
+      "rightsLabel": "Not open data / permission required",
+      "position": [
+        "instrumented hearing protection"
+      ],
+      "coverage": "Network-wide visit-all-stations campaign",
+      "mapReady": false,
+      "confidenceTier": "C",
+      "localPath": "eave-2019/"
+    },
+    {
+      "id": "tfl-tech-forum-2019",
+      "title": "TfL Tech Forum user noise spreadsheet 2019",
+      "provider": "Community user / TfL Tech Forum",
+      "url": "https://techforum.tfl.gov.uk/",
+      "documentDate": "2019-09",
+      "format": "Forum + Excel",
+      "rights": "unknown",
+      "rightsLabel": "Not open data / permission required",
+      "position": [
+        "passenger-phone"
+      ],
+      "coverage": "Zones 1\u20132 informal",
+      "mapReady": false,
+      "confidenceTier": "C",
+      "localPath": "tfl-tech-forum-2019/"
+    },
+    {
+      "id": "tfl-stations",
+      "title": "TfL station locations / Unified API stations",
+      "provider": "Transport for London",
+      "url": "https://api.tfl.gov.uk/",
+      "format": "API / OGL station feeds",
+      "rights": "open",
+      "rightsLabel": "TfL Open Data / OGL where published on Datastore",
+      "coverage": "Network station points",
+      "mapReady": false,
+      "confidenceTier": "A",
+      "localPath": "tfl-stations/"
+    },
+    {
+      "id": "osm-tube-geometry",
+      "title": "OpenStreetMap London Underground route geometry",
+      "provider": "OpenStreetMap contributors",
+      "url": "https://www.openstreetmap.org/copyright",
+      "format": "Overpass GeoJSON (cached)",
+      "rights": "open",
+      "rightsLabel": "ODbL 1.0",
+      "coverage": "London Underground track-following polylines",
+      "mapReady": false,
+      "confidenceTier": "A",
+      "localPath": "osm-tube-geometry/"
+    },
+    {
+      "id": "proxy-standards",
+      "title": "TfL track standards & ATO/corrugation proxy materials",
+      "provider": "Transport for London",
+      "url": "https://tfl.gov.uk/corporate/transparency/freedom-of-information/",
+      "format": "PDF standards / presentations",
+      "rights": "unknown",
+      "rightsLabel": "Not open data / permission required",
+      "coverage": "Network standards \u2014 not measured sections",
+      "mapReady": false,
+      "confidenceTier": "C",
+      "localPath": "proxy-standards/"
+    }
+  ]
+}

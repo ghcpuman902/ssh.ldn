@@ -108,7 +108,16 @@ export default function DataSourcesPage() {
             <p className="mt-2 text-sm text-muted-foreground md:text-base">
               Full dataset declarations for the ssh-ldn London noise map. Map
               tooltips show layer names only; this page holds the detailed
-              source information.
+              source information. An unindexed reference prototype for Tube
+              interior-noise mapping (FOI-backed, not open data) lives at{" "}
+              <Link
+                href="/maps/public-noise-data"
+                className="text-foreground underline-offset-2 hover:underline"
+              >
+                /maps/public-noise-data
+              </Link>
+              — useful to show what a section map can look like before we
+              collect our own measurements.
             </p>
           </div>
         </header>

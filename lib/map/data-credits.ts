@@ -108,6 +108,19 @@ export const OSM_TUBE_GEOMETRY_CREDIT: DataCredit = {
   notes: "London Underground route relations — dense track-following polylines.",
 }
 
+export const PUBLIC_TUBE_NOISE_CREDIT: DataCredit = {
+  id: "public-tube-interior-noise",
+  title: "Public Tube interior / in-cab noise surveys (reference prototype)",
+  provider: "TfL FOI releases, academic papers, OSM geometry",
+  licence: "Mixed — FOI unknown / CC BY / ODbL — not a redistributable open dataset",
+  licenceUrl: "/maps/public-noise-data",
+  datasetUrl: "/maps/public-noise-data",
+  version: "Compiled 2026-07 · unindexed demo",
+  attribution: "Public Tube noise surveys · FOI not open data unless stated",
+  notes:
+    "Unindexed reference map for what section-level Tube noise mapping can look like. Passenger and cab LAeq by station section. FOI attachments without an explicit open licence are marked “Not open data / permission required”. Intended as a demo for our own open measurement collection, not as published open data.",
+}
+
 export const OSM_OVERGROUND_GEOMETRY_CREDIT: DataCredit = {
   id: "osm-overground-geometry",
   title: "OpenStreetMap Overground route geometry",
@@ -194,6 +207,7 @@ export const NATIONAL_RAIL_TRADEMARK_CREDIT: DataCredit = {
 export const NOISE_DATA_CREDITS: DataCredit[] = [
   ...Object.values(DEFRA_NOISE_CREDITS),
   OSM_NIGHTLIFE_CREDIT,
+  PUBLIC_TUBE_NOISE_CREDIT,
 ]
 
 /** Visual-layer datasets documented on the data-sources page. */
@@ -211,6 +225,7 @@ export const MAP_DATA_CREDITS: DataCredit[] = [
   CARTO_BASEMAP_CREDIT,
   ...Object.values(DEFRA_NOISE_CREDITS),
   OSM_NIGHTLIFE_CREDIT,
+  PUBLIC_TUBE_NOISE_CREDIT,
   OSM_RAIL_CREDIT,
   OSM_GREEN_SPACES_CREDIT,
   OSM_TUBE_GEOMETRY_CREDIT,

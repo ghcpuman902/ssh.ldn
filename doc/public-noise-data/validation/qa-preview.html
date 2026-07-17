@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Public noise QA preview</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css"
+      rel="stylesheet"
+    />
+    <style>
+      html,
+      body,
+      #map {
+        margin: 0;
+        height: 100%;
+        font-family: system-ui, sans-serif;
+      }
+      #hud {
+        position: absolute;
+        z-index: 2;
+        top: 12px;
+        left: 12px;
+        right: 12px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+      }
+      #hud select,
+      #hud button {
+        padding: 8px 10px;
+        border-radius: 8px;
+        border: 1px solid #d1d5db;
+        background: #fff;
+      }
+      #meta {
+        background: rgba(255, 255, 255, 0.92);
+        border-radius: 8px;
+        padding: 8px 10px;
+        font-size: 12px;
+      }
+      #legend {
+        position: absolute;
+        z-index: 2;
+        left: 12px;
+        bottom: 12px;
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 10px;
+        padding: 10px;
+        font-size: 12px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+      }
+      .swatch {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 2px;
+        margin-right: 6px;
+        vertical-align: middle;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="hud">
+      <select id="source" aria-label="Source filter"></select>
+      <button type="button" id="reload">Reload</button>
+      <div id="meta">Loading…</div>
+    </div>
+    <div id="legend">
+      <div><span class="swatch" style="background:#00c853"></span>≤70</div>
+      <div><span class="swatch" style="background:#ff9800"></span>~84</div>
+      <div><span class="swatch" style="background:#4a148c"></span>≥105</div>
+      <div><span class="swatch" style="background:#9ca3af"></span>no data</div>
+    </div>
+    <div id="map"></div>
+    <script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
+    <script>
+      const stops = [
+        70, "#00c853",
+        78, "#ffeb3b",
+        84, "#ff9800",
+        90, "#f44336",
+        96, "#9c27b0",
+        105, "#4a148c",
+      ]
+      const map = new maplibregl.Map({
+        container: "map",
+        style: {
+          version: 8,
+          sources: {
+            basemap: {
+              type: "raster",
+              tiles: [
+                "https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png",
+              ],
+              tileSize: 256,
+            },
+          },
+          layers: [{ id: "basemap", type: "raster", source: "basemap" }],
+        },
+        center: [-0.118, 51.507],
+        zoom: 11.1,
+      })
+      map.addControl(new maplibregl.NavigationControl({ showCompass: false }))
+
+      let allFeatures = []
+      const sourceSelect = document.getElementById("source")
+      const meta = document.getElementById("meta")
+
+      const colourExpr = [
+        "case",
+        ["==", ["get", "valueDb"], null],
+        "#9ca3af",
+        ["interpolate", ["linear"], ["to-number", ["get", "valueDb"]], ...stops],
+      ]
+
+      const applyFilter = () => {
+        const sourceId = sourceSelect.value
+        const features =
+          sourceId === "all"
+            ? allFeatures
+            : allFeatures.filter((f) =>
+                (f.properties.sourceIds || []).includes(sourceId),
+              )
+        const data = { type: "FeatureCollection", features }
+        if (map.getSource("segments")) {
+          map.getSource("segments").setData(data)
+        } else {
+          map.addSource("segments", { type: "geojson", data })
+          map.addLayer({
+            id: "segments",
+            type: "line",
+            source: "segments",
+            paint: {
+              "line-color": colourExpr,
+              "line-width": 5,
+              "line-opacity": 0.92,
+            },
+          })
+        }
+        const vals = features
+          .map((f) => f.properties.valueDb)
+          .filter((v) => typeof v === "number")
+        meta.textContent = `${features.length} sections · ${
+          vals.length ? `dBA ${Math.min(...vals).toFixed(0)}–${Math.max(...vals).toFixed(0)}` : "no values"
+        } · source=${sourceId}`
+      }
+
+      const load = async () => {
+        const [segments, sources] = await Promise.all([
+          fetch("/public/data/public-noise/segments.geojson").then((r) => r.json()),
+          fetch("/public/data/public-noise/sources.json").then((r) => r.json()),
+        ])
+        allFeatures = segments.features
+        sourceSelect.innerHTML = ""
+        const allOpt = document.createElement("option")
+        allOpt.value = "all"
+        allOpt.textContent = "All sources"
+        sourceSelect.appendChild(allOpt)
+        for (const s of sources.sources.filter((x) => x.mapReady)) {
+          const opt = document.createElement("option")
+          opt.value = s.id
+          opt.textContent = s.id
+          sourceSelect.appendChild(opt)
+        }
+        const params = new URLSearchParams(location.search)
+        if (params.get("source")) sourceSelect.value = params.get("source")
+        applyFilter()
+      }
+
+      sourceSelect.addEventListener("change", () => {
+        const url = new URL(location.href)
+        if (sourceSelect.value === "all") url.searchParams.delete("source")
+        else url.searchParams.set("source", sourceSelect.value)
+        history.replaceState(null, "", url)
+        applyFilter()
+      })
+      document.getElementById("reload").addEventListener("click", load)
+      map.on("load", load)
+    </script>
+  </body>
+</html>

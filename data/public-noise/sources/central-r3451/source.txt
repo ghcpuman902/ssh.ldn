@@ -1,0 +1,12 @@
+Title: Interior Noise Measurement of a Test Vehicle — Central line (R3451)
+Provider: Transport for London
+Canonical URL: https://foi.tfl.gov.uk/FOI-3133-2526/R3451%20-%20250416%20-%20CEN%20-%20Interior%20Noise%20of%20a%20Test%20Vehicle.pdf
+FOI: FOI-3133-2526
+Document date: 16 April 2025
+Format: PDF (110 pages)
+Rights status: unknown — Not open data / permission required
+Methodology: Class 1 SLM in test vehicle interior; LAeq,T, LCpeak, LEP,d, SEL; distance-vs-noise plots; LCS track references in Appendix B.
+Coverage: Large Central line inter-station sample with spatial progression.
+Caveats: Test vehicle, not passenger saloon survey; FOI reuse not pre-cleared.
+Local assets: R3451-Interior-Noise-Test-Vehicle.pdf, R2883-Central-Line-Noise-at-Work.pdf, extracted-*.txt
+Retrieved: 2026-07-15

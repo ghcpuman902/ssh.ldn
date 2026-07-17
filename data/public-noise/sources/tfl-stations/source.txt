@@ -1,0 +1,6 @@
+Title: TfL Unified API / station locations
+Provider: Transport for London
+Canonical URL: https://api.tfl.gov.uk/ and London Datastore station feeds
+Rights: TfL Open Data / OGL v2 where published on Datastore
+Use: Canonical station coordinates and IDs for snapping observations
+Retrieved: 2026-07-15

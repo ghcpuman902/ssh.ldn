@@ -1,0 +1,15 @@
+Title: ACOUSTIC SURVEY IN PASSENGER CAR OF 1992 TUBE STOCK (R3291 v1.1)
+Provider: Transport for London — Technical Services / Noise & Vibration
+Canonical URL: https://foi.tfl.gov.uk/FOI-2746-2324/2746-2324-Passenger%20Car%20Acoustic%20Survey_Redacted.pdf
+FOI: FOI-2746-2324
+Document date: 15 September 2023
+Measurement date: 08 July 2023
+Format: PDF (redacted)
+Rights status: unknown — Not open data / permission required
+Methodology: Class 1 SLMs (standing 1.6 m and seated 1.2 m) in passenger car of 92TS; LAeq,T / LCeq,T / LCpeak per station-to-station transit during normal operations; announcements disabled; car unoccupied.
+Stock: 92TS train 775/1005134
+Coverage: Central line Ruislip Gardens ↔ Hainault, both directions
+Caveats: Westbound Wanstead–Leytonstone excluded while stationary; single survey day; FOI attachment not an open-data release.
+Context: Best currently-public passenger-centred deep-tube corridor dataset for map bootstrap.
+Local assets: R3291-Passenger-Car-Acoustic-Survey.pdf, extracted.txt
+Retrieved: 2026-07-15
