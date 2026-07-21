@@ -30,6 +30,10 @@ export type VisualLayerData = {
   overgroundStations: TubeStationFeatureCollection | null
   elizabethLines: TubeLineFeatureCollection | null
   elizabethStations: TubeStationFeatureCollection | null
+  dlrLines: TubeLineFeatureCollection | null
+  dlrStations: TubeStationFeatureCollection | null
+  tramLines: TubeLineFeatureCollection | null
+  tramStations: TubeStationFeatureCollection | null
   greenSpaces: GreenSpaceFeatureCollection | null
 }
 
@@ -84,6 +88,16 @@ export const useVisualLayerData = (
     enabled && (visibility.elizabeth || backgroundPrefetch),
   )
 
+  const dlrGeometry = useStaticGeoJson<TransitGeometryBundle>(
+    "/api/map/dlr-geometry",
+    enabled && (visibility.dlr || backgroundPrefetch),
+  )
+
+  const tramGeometry = useStaticGeoJson<TransitGeometryBundle>(
+    "/api/map/tram-geometry",
+    enabled && (visibility.tram || backgroundPrefetch),
+  )
+
   return useMemo(
     () => ({
       railLines,
@@ -102,17 +116,25 @@ export const useVisualLayerData = (
       elizabethStations: visibility.elizabeth
         ? (elizabethGeometry?.stations ?? null)
         : null,
+      dlrLines: visibility.dlr ? (dlrGeometry?.lines ?? null) : null,
+      dlrStations: visibility.dlr ? (dlrGeometry?.stations ?? null) : null,
+      tramLines: visibility.tram ? (tramGeometry?.lines ?? null) : null,
+      tramStations: visibility.tram ? (tramGeometry?.stations ?? null) : null,
       greenSpaces,
     }),
     [
+      dlrGeometry,
       elizabethGeometry,
       greenSpaces,
       overgroundGeometry,
       railLines,
       railStations,
+      tramGeometry,
       tubeGeometry,
+      visibility.dlr,
       visibility.elizabeth,
       visibility.overground,
+      visibility.tram,
       visibility.tube,
     ],
   )

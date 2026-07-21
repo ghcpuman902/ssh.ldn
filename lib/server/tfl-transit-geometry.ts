@@ -10,6 +10,10 @@ import type {
 } from "@/lib/map/geojson-types";
 import { defaultLineColor } from "@/lib/map/visual-layers";
 import {
+  isTrackFollowingFeature,
+  selectLineFeatures,
+} from "@/lib/map/transit-line-selection";
+import {
   fetchOverpass,
   type OverpassElement,
   type OverpassNode,
@@ -21,7 +25,12 @@ import { withOsmDiskCache } from "@/lib/server/osm-cache";
 const LONDON_BBOX = "51.24,-0.57,51.73,0.36";
 const TFL_API = "https://api.tfl.gov.uk";
 
-export type TransitMode = "tube" | "overground" | "elizabeth";
+export type TransitMode =
+  | "tube"
+  | "overground"
+  | "elizabeth"
+  | "dlr"
+  | "tram";
 
 export type TransitGeometryBundle = {
   lines: TubeLineFeatureCollection;
@@ -75,7 +84,7 @@ const TRANSIT_MODE_CONFIG: Record<TransitMode, TransitModeConfig> = {
     },
   },
   overground: {
-    cacheKey: "overground-v2",
+    cacheKey: "overground-v3",
     tflMode: "overground",
     osmRelationQuery: `relation["route"="train"]["network"="London Overground"](${LONDON_BBOX});
   relation["type"="route"]["route"="train"]["ref"~"Liberty|Lioness|Mildmay|Windrush|Weaver|Suffragette"](${LONDON_BBOX});`,
@@ -100,9 +109,11 @@ const TRANSIT_MODE_CONFIG: Record<TransitMode, TransitModeConfig> = {
     },
   },
   elizabeth: {
-    cacheKey: "elizabeth-v2",
+    cacheKey: "elizabeth-v3",
     tflMode: "elizabeth-line",
-    osmRelationQuery: `relation["route"="train"]["name"~"Elizabeth line",i](${LONDON_BBOX});`,
+    osmRelationQuery: `relation["route"="train"]["ref"="Elizabeth"](${LONDON_BBOX});
+  relation["route"="train"]["network:metro"="Elizabeth line"](${LONDON_BBOX});
+  relation["route"="train"]["name"~"Elizabeth line",i](${LONDON_BBOX});`,
     osmStationQuery: `node["railway"="station"]["name"~"Elizabeth line",i](${LONDON_BBOX});
   node["public_transport"="station"]["name"~"Elizabeth line",i](${LONDON_BBOX});
   way["railway"="station"]["name"~"Elizabeth line",i](${LONDON_BBOX});
@@ -110,6 +121,31 @@ const TRANSIT_MODE_CONFIG: Record<TransitMode, TransitModeConfig> = {
     osmFilterLabel: "Elizabeth line route relations — track-following geometry",
     tflFilterLabel: "Elizabeth line stations",
     resolveLineId: () => "elizabeth",
+  },
+  dlr: {
+    cacheKey: "dlr-v1",
+    tflMode: "dlr",
+    osmRelationQuery: `relation["route"="light_rail"]["network"="Docklands Light Railway"](${LONDON_BBOX});
+  relation["type"="route"]["route"="light_rail"]["name"~"Docklands Light Railway",i](${LONDON_BBOX});`,
+    osmStationQuery: `node["railway"="station"]["network"="Docklands Light Railway"](${LONDON_BBOX});
+  node["public_transport"="station"]["network"="Docklands Light Railway"](${LONDON_BBOX});
+  way["railway"="station"]["network"="Docklands Light Railway"](${LONDON_BBOX});
+  relation["railway"="station"]["network"="Docklands Light Railway"](${LONDON_BBOX});`,
+    osmFilterLabel: "DLR route relations — track-following geometry",
+    tflFilterLabel: "DLR stations",
+    resolveLineId: () => "dlr",
+  },
+  tram: {
+    cacheKey: "tram-v1",
+    tflMode: "tram",
+    osmRelationQuery: `relation["route"="tram"]["network"~"Tramlink|London Trams",i](${LONDON_BBOX});
+  relation["type"="route"]["route"="tram"]["name"~"Tramlink",i](${LONDON_BBOX});`,
+    osmStationQuery: `node["railway"="tram_stop"]["network"~"Tramlink|London Trams",i](${LONDON_BBOX});
+  node["public_transport"="stop"]["tram"="yes"]["network"~"Tramlink|London Trams",i](${LONDON_BBOX});
+  node["railway"="station"]["network"~"Tramlink|London Trams",i](${LONDON_BBOX});`,
+    osmFilterLabel: "London Trams route relations — track-following geometry",
+    tflFilterLabel: "London Trams stations",
+    resolveLineId: () => "tram",
   },
 };
 
@@ -474,58 +510,6 @@ const relationGeometryKey = (lineId: string, coordinates: CoordPair[]) => {
 
 type TubeLineFeature = TubeLineFeatureCollection["features"][number];
 
-const groupFeaturesByLineId = (features: TubeLineFeature[]) => {
-  const grouped = new Map<string, TubeLineFeature[]>();
-
-  for (const feature of features) {
-    const lineId = feature.properties.lineId;
-    const list = grouped.get(lineId) ?? [];
-    list.push(feature);
-    grouped.set(lineId, list);
-  }
-
-  return grouped;
-};
-
-/**
- * TfL route sequences enumerate every branch, but they are schematic polylines.
- * Use them only as a fallback for non-tube modes; tube must stay track-following.
- */
-const selectLineFeatures = (
-  osmFeatures: TubeLineFeature[],
-  tflFeatures: TubeLineFeature[],
-): TubeLineFeature[] => {
-  if (osmFeatures.length === 0) return tflFeatures;
-  if (tflFeatures.length === 0) return osmFeatures;
-
-  const osmByLine = groupFeaturesByLineId(osmFeatures);
-  const tflByLine = groupFeaturesByLineId(tflFeatures);
-  const lineIds = new Set([...osmByLine.keys(), ...tflByLine.keys()]);
-  const selected: TubeLineFeature[] = [];
-
-  for (const lineId of lineIds) {
-    const osm = osmByLine.get(lineId) ?? [];
-    const tfl = tflByLine.get(lineId) ?? [];
-
-    if (tfl.length === 0) {
-      selected.push(...osm);
-      continue;
-    }
-
-    if (osm.length === 0) {
-      selected.push(...tfl);
-      continue;
-    }
-
-    const osmComplete = osm.length >= tfl.length;
-    const osmNotExcessive = osm.length <= tfl.length * 2;
-
-    selected.push(...(osmComplete && osmNotExcessive ? osm : tfl));
-  }
-
-  return selected;
-};
-
 const fetchLinesFromOsmRelations = async (
   config: TransitModeConfig,
 ): Promise<TubeLineFeatureCollection["features"]> => {
@@ -622,13 +606,7 @@ const buildTransitGeometry = async (
       : osmLineFeatures;
 
   if (selectedLineFeatures.length > 0) {
-    const osmRelationCount = selectedLineFeatures.filter((feature) =>
-      String(feature.id ?? feature.properties.featureId).startsWith(
-        "relation/",
-      ),
-    ).length;
-    const usesOsmGeometry =
-      osmRelationCount > 0 && osmRelationCount === selectedLineFeatures.length;
+    const usesOsmGeometry = selectedLineFeatures.every(isTrackFollowingFeature);
 
     return bundleWithLineOffsets({
       lines: {
@@ -684,6 +662,8 @@ export const getOvergroundGeometryGeoJson = () =>
   getTransitGeometryGeoJson("overground");
 export const getElizabethGeometryGeoJson = () =>
   getTransitGeometryGeoJson("elizabeth");
+export const getDlrGeometryGeoJson = () => getTransitGeometryGeoJson("dlr");
+export const getTramGeometryGeoJson = () => getTransitGeometryGeoJson("tram");
 
 /** @deprecated Use TransitGeometryBundle */
 export type TubeGeometryBundle = TransitGeometryBundle;

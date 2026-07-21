@@ -42,6 +42,19 @@ const TransitLogoIcon = ({
 const ROUNDEL_ICON_CLASS = "h-[20px] w-auto max-w-none"
 const NATIONAL_RAIL_ICON_CLASS = "h-[15px] w-auto max-w-none"
 
+const TRANSIT_LINE_SWATCH_CLASS = "h-[20px] w-1.5 shrink-0 rounded-[1px]"
+
+const TransitLineSwatch = ({
+  color,
+  className,
+}: TransitIconProps & { color: string }) => (
+  <span
+    aria-hidden="true"
+    className={cn(TRANSIT_LINE_SWATCH_CLASS, className)}
+    style={{ backgroundColor: color }}
+  />
+)
+
 export const VISUAL_LAYER_ICON: Record<VisualLayerKey, ReactNode> = {
   rail: (
     <TransitLogoIcon
@@ -68,6 +81,18 @@ export const VISUAL_LAYER_ICON: Record<VisualLayerKey, ReactNode> = {
     <TransitLogoIcon
       src={TRANSIT_LOGO_PATH.elizabeth}
       alt="Elizabeth line"
+      className={ROUNDEL_ICON_CLASS}
+    />
+  ),
+  dlr: (
+    <TransitLineSwatch
+      color="#00A4A7"
+      className={ROUNDEL_ICON_CLASS}
+    />
+  ),
+  tram: (
+    <TransitLineSwatch
+      color="#84B817"
       className={ROUNDEL_ICON_CLASS}
     />
   ),

@@ -281,6 +281,20 @@ export const VisualMapLayers = ({ visibility, data }: VisualMapLayersProps) => {
         lines={data.elizabethLines}
         stations={data.elizabethStations}
       />
+
+      <TransitLineOverlay
+        idPrefix="dlr"
+        visible={visibility.dlr}
+        lines={data.dlrLines}
+        stations={data.dlrStations}
+      />
+
+      <TransitLineOverlay
+        idPrefix="tram"
+        visible={visibility.tram}
+        lines={data.tramLines}
+        stations={data.tramStations}
+      />
     </>
   )
 }

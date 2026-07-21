@@ -3,6 +3,8 @@ export type VisualLayerKey =
   | "tube"
   | "overground"
   | "elizabeth"
+  | "dlr"
+  | "tram"
   | "greenSpaces"
 
 export type VisualLayerVisibility = Record<VisualLayerKey, boolean>
@@ -12,6 +14,8 @@ export const DEFAULT_VISUAL_LAYER_VISIBILITY: VisualLayerVisibility = {
   tube: false,
   overground: false,
   elizabeth: false,
+  dlr: false,
+  tram: false,
   greenSpaces: false,
 }
 
@@ -46,6 +50,18 @@ export const VISUAL_LAYER_META: Record<VisualLayerKey, VisualLayerMeta> = {
       "Elizabeth line track geometry from OpenStreetMap, with TfL station names.",
     datasetUrl: "https://www.openstreetmap.org/copyright",
   },
+  dlr: {
+    label: "DLR lines & stations",
+    description:
+      "Docklands Light Railway track geometry from OpenStreetMap, with TfL station names.",
+    datasetUrl: "https://www.openstreetmap.org/copyright",
+  },
+  tram: {
+    label: "Tram lines & stations",
+    description:
+      "London Trams (Tramlink) track geometry from OpenStreetMap, with TfL station names.",
+    datasetUrl: "https://www.openstreetmap.org/copyright",
+  },
   greenSpaces: {
     label: "Parks & green space",
     description:
@@ -59,6 +75,8 @@ export const VISUAL_LAYER_ORDER: VisualLayerKey[] = [
   "tube",
   "overground",
   "elizabeth",
+  "dlr",
+  "tram",
   "greenSpaces",
 ]
 
