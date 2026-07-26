@@ -1,6 +1,7 @@
 import { type NextRequest } from "next/server";
 
 import { osmGridCellBbox } from "@/lib/map/osm-grid";
+import { osmCellCacheHeaders } from "@/lib/server/http-cache";
 import { getGreenSpacesGeoJsonForCell } from "@/lib/server/osm-green-spaces";
 
 export const GET = async (request: NextRequest) => {
@@ -21,7 +22,9 @@ export const GET = async (request: NextRequest) => {
   try {
     const cell = osmGridCellBbox(parsedRow, parsedCol);
     const geojson = await getGreenSpacesGeoJsonForCell(cell);
-    return Response.json(geojson);
+    return Response.json(geojson, {
+      headers: osmCellCacheHeaders("green-spaces"),
+    });
   } catch (error) {
     return Response.json(
       {

@@ -20,7 +20,7 @@ import {
   type OverpassRelation,
   type OverpassWay,
 } from "@/lib/server/osm-overpass";
-import { withOsmDiskCache } from "@/lib/server/osm-cache";
+import { withOsmCache } from "@/lib/server/osm-cache";
 
 const LONDON_BBOX = "51.24,-0.57,51.73,0.36";
 const TFL_API = "https://api.tfl.gov.uk";
@@ -649,7 +649,7 @@ export const getTransitGeometryGeoJson = async (
 ): Promise<TransitGeometryBundle> => {
   const config = TRANSIT_MODE_CONFIG[mode];
 
-  return withOsmDiskCache(
+  return withOsmCache(
     `${mode}-geometry`,
     [config.cacheKey],
     () => buildTransitGeometry(mode),

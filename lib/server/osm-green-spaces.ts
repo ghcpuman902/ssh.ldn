@@ -6,7 +6,7 @@ import {
   type OverpassElement,
   type OverpassWay,
 } from "@/lib/server/osm-overpass";
-import { withOsmDiskCache } from "@/lib/server/osm-cache";
+import { withOsmCache } from "@/lib/server/osm-cache";
 
 export type OsmGreenSpacesBboxInput = {
   west: number;
@@ -100,7 +100,7 @@ out geom;`;
 };
 
 export const getGreenSpacesGeoJsonForCell = async (cell: OsmGridCell) =>
-  withOsmDiskCache(
+  withOsmCache(
     "green-spaces",
     [
       osmGridCellKey(cell.row, cell.col),

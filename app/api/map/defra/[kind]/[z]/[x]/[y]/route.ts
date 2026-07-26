@@ -6,6 +6,7 @@ import {
 } from "@/lib/map/defra-layers";
 import { parseTileParams } from "@/lib/map/web-mercator";
 import { fetchDefraWmsTile } from "@/lib/server/defra-wms-tile";
+import { tileCacheHeaders } from "@/lib/server/http-cache";
 
 export const GET = async (
   request: NextRequest,
@@ -34,10 +35,7 @@ export const GET = async (
     });
 
     return new Response(buffer, {
-      headers: {
-        "Content-Type": "image/png",
-        "Cache-Control": "public, max-age=86400, stale-while-revalidate=604800",
-      },
+      headers: tileCacheHeaders("defra-tile"),
     });
   } catch (error) {
     return new Response(

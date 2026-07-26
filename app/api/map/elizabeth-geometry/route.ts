@@ -1,3 +1,4 @@
+import { geometryCacheHeaders } from "@/lib/server/http-cache";
 import { getElizabethGeometryGeoJson } from "@/lib/server/tfl-transit-geometry";
 
 export const GET = async () => {
@@ -5,9 +6,7 @@ export const GET = async () => {
     const geometry = await getElizabethGeometryGeoJson();
 
     return Response.json(geometry, {
-      headers: {
-        "Cache-Control": "public, max-age=604800, stale-while-revalidate=2592000",
-      },
+      headers: geometryCacheHeaders("elizabeth"),
     });
   } catch (error) {
     return Response.json(

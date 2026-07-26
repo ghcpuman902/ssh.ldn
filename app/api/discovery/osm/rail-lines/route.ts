@@ -1,6 +1,7 @@
 import { type NextRequest } from "next/server";
 
 import { parseLatLng } from "@/lib/server/geo";
+import { osmCellCacheHeaders } from "@/lib/server/http-cache";
 import { getOvergroundRailGeoJson } from "@/lib/server/osm-rail-overground";
 
 export const GET = async (request: NextRequest) => {
@@ -28,7 +29,9 @@ export const GET = async (request: NextRequest) => {
       lng: parsed.lng,
       radiusMeters,
     });
-    return Response.json(geojson);
+    return Response.json(geojson, {
+      headers: osmCellCacheHeaders("rail-lines"),
+    });
   } catch (error) {
     return Response.json(
       {

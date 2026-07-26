@@ -1,3 +1,4 @@
+import { geometryCacheHeaders } from "@/lib/server/http-cache";
 import { getTramGeometryGeoJson } from "@/lib/server/tfl-transit-geometry";
 
 /** Cold Overpass + TfL build can be slow; cache hits return immediately. */
@@ -8,10 +9,7 @@ export const GET = async () => {
     const geometry = await getTramGeometryGeoJson();
 
     return Response.json(geometry, {
-      headers: {
-        "Cache-Control":
-          "public, max-age=604800, stale-while-revalidate=2592000",
-      },
+      headers: geometryCacheHeaders("tram"),
     });
   } catch (error) {
     return Response.json(

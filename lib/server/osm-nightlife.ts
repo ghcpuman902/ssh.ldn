@@ -8,18 +8,22 @@ import {
   nightlifeFilterDescription,
 } from "@/lib/map/nightlife-venue-tags"
 import { isLocalNoiseAmenity } from "@/lib/map/venue-time"
-import { withOsmDiskCache } from "@/lib/server/osm-cache"
+import { withOsmCache } from "@/lib/server/osm-cache"
 import {
   fetchOverpass,
   type OverpassElement,
 } from "@/lib/server/osm-overpass"
 
 const getElementLatLng = (element: OverpassElement) => {
-  if (typeof element.lat === "number" && typeof element.lon === "number") {
+  if (
+    element.type === "node" &&
+    typeof element.lat === "number" &&
+    typeof element.lon === "number"
+  ) {
     return { latitude: element.lat, longitude: element.lon }
   }
 
-  if (element.center) {
+  if (element.type !== "node" && element.center) {
     return {
       latitude: element.center.lat,
       longitude: element.center.lon,
@@ -105,7 +109,7 @@ export type OsmNightlifeBboxInput = {
 }
 
 export const getNightlifeGeoJsonForCell = async (cell: OsmGridCell) =>
-  withOsmDiskCache(
+  withOsmCache(
     "nightlife",
     [
       NIGHTLIFE_CACHE_VERSION,
@@ -117,7 +121,7 @@ export const getNightlifeGeoJsonForCell = async (cell: OsmGridCell) =>
   )
 
 export const getNightlifeGeoJsonForBbox = async (bbox: OsmNightlifeBboxInput) =>
-  withOsmDiskCache(
+  withOsmCache(
     "nightlife",
     [
       NIGHTLIFE_CACHE_VERSION,
@@ -135,7 +139,7 @@ export const getNightlifeGeoJson = async ({
   lng,
   radiusMeters = 8_000,
 }: OsmNightlifeInput) =>
-  withOsmDiskCache(
+  withOsmCache(
     "nightlife",
     [NIGHTLIFE_CACHE_VERSION, "radius", lat.toFixed(3), lng.toFixed(3), radiusMeters],
     () => fetchNightlifeGeoJson({ lat, lng, radiusMeters })

@@ -9,7 +9,7 @@ import {
   type OverpassElement,
   type OverpassWay,
 } from "@/lib/server/osm-overpass";
-import { withOsmDiskCache } from "@/lib/server/osm-cache";
+import { withOsmCache } from "@/lib/server/osm-cache";
 
 const bboxFragment = (
   south: number,
@@ -142,7 +142,7 @@ out body;`;
 };
 
 export const getRailLinesGeoJsonForCell = async (cell: OsmGridCell) =>
-  withOsmDiskCache(
+  withOsmCache(
     "rail-lines",
     [
       osmGridCellKey(cell.row, cell.col),
@@ -153,7 +153,7 @@ export const getRailLinesGeoJsonForCell = async (cell: OsmGridCell) =>
   );
 
 export const getRailStationsGeoJsonForCell = async (cell: OsmGridCell) =>
-  withOsmDiskCache(
+  withOsmCache(
     "rail-stations",
     [
       osmGridCellKey(cell.row, cell.col),
@@ -175,7 +175,7 @@ export const getOvergroundRailGeoJson = async ({
   lng,
   radiusMeters = 6_000,
 }: OsmRailLinesInput) =>
-  withOsmDiskCache(
+  withOsmCache(
     "rail-lines",
     [lat.toFixed(3), lng.toFixed(3), radiusMeters],
     async () => {

@@ -7,6 +7,7 @@ import {
 } from "@/lib/map/config";
 import { isPoiDensitySlot } from "@/lib/map/poi-density";
 import { parseTileParams } from "@/lib/map/web-mercator";
+import { tileCacheHeaders } from "@/lib/server/http-cache";
 
 const TILE_ROOT = path.join(process.cwd(), "public/poi-density/tiles");
 const EMPTY_TILE_PATH = path.join(
@@ -14,10 +15,7 @@ const EMPTY_TILE_PATH = path.join(
   "public/poi-density/empty.png"
 );
 
-const PNG_HEADERS = {
-  "Content-Type": "image/png",
-  "Cache-Control": "public, max-age=86400, stale-while-revalidate=604800",
-} as const;
+const PNG_HEADERS = tileCacheHeaders("poi-density");
 
 /**
  * Sparse generator only writes tiles with density. MapLibre still requests the

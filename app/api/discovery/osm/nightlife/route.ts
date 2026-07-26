@@ -3,11 +3,14 @@ import { type NextRequest } from "next/server"
 import { LONDON_BBOX } from "@/lib/map/config"
 import { osmGridCellBbox } from "@/lib/map/osm-grid"
 import { parseLatLng } from "@/lib/server/geo"
+import { osmCellCacheHeaders } from "@/lib/server/http-cache"
 import {
   getNightlifeGeoJson,
   getNightlifeGeoJsonForBbox,
   getNightlifeGeoJsonForCell,
 } from "@/lib/server/osm-nightlife"
+
+const NIGHTLIFE_HEADERS = osmCellCacheHeaders("nightlife")
 
 const parseBbox = (request: NextRequest) => {
   const westParam = request.nextUrl.searchParams.get("west")
@@ -64,7 +67,7 @@ export const GET = async (request: NextRequest) => {
     try {
       const cell = osmGridCellBbox(parsedRow, parsedCol)
       const geojson = await getNightlifeGeoJsonForCell(cell)
-      return Response.json(geojson)
+      return Response.json(geojson, { headers: NIGHTLIFE_HEADERS })
     } catch (error) {
       return Response.json(
         {
@@ -91,7 +94,7 @@ export const GET = async (request: NextRequest) => {
         east: bbox.east,
         north: bbox.north,
       })
-      return Response.json(geojson)
+      return Response.json(geojson, { headers: NIGHTLIFE_HEADERS })
     } catch (error) {
       return Response.json(
         {
@@ -133,7 +136,7 @@ export const GET = async (request: NextRequest) => {
       lng: parsed.lng,
       radiusMeters,
     })
-    return Response.json(geojson)
+    return Response.json(geojson, { headers: NIGHTLIFE_HEADERS })
   } catch (error) {
     return Response.json(
       {

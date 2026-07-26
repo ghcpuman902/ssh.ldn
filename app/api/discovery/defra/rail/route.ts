@@ -2,6 +2,7 @@ import { type NextRequest } from "next/server";
 
 import { getDefraNoiseSample } from "@/lib/server/defra";
 import { parseLatLng } from "@/lib/server/geo";
+import { defraSampleCacheHeaders } from "@/lib/server/http-cache";
 
 export const GET = async (request: NextRequest) => {
   const lat = Number(request.nextUrl.searchParams.get("lat"));
@@ -22,7 +23,7 @@ export const GET = async (request: NextRequest) => {
       lng: parsed.lng,
       radiusMeters,
     });
-    return Response.json(data);
+    return Response.json(data, { headers: defraSampleCacheHeaders() });
   } catch (error) {
     return Response.json(
       {

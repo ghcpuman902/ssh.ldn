@@ -1,6 +1,7 @@
 import { type NextRequest } from "next/server";
 
 import { osmGridCellBbox } from "@/lib/map/osm-grid";
+import { osmCellCacheHeaders } from "@/lib/server/http-cache";
 import {
   getRailLinesGeoJsonForCell,
   getRailStationsGeoJsonForCell,
@@ -22,6 +23,8 @@ export const GET = async (request: NextRequest) => {
     return Response.json({ error: "row and col must be integers" }, { status: 400 });
   }
 
+  const namespace = layer === "stations" ? "rail-stations" : "rail-lines";
+
   try {
     const cell = osmGridCellBbox(parsedRow, parsedCol);
     const geojson =
@@ -29,7 +32,9 @@ export const GET = async (request: NextRequest) => {
         ? await getRailStationsGeoJsonForCell(cell)
         : await getRailLinesGeoJsonForCell(cell);
 
-    return Response.json(geojson);
+    return Response.json(geojson, {
+      headers: osmCellCacheHeaders(namespace),
+    });
   } catch (error) {
     return Response.json(
       {
