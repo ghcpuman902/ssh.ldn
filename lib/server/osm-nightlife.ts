@@ -1,6 +1,3 @@
-import { execFile } from "node:child_process"
-import { promisify } from "node:util"
-
 import type { OsmGridCell } from "@/lib/map/osm-grid"
 import { osmGridCellKey } from "@/lib/map/osm-grid"
 import {
@@ -12,56 +9,10 @@ import {
 } from "@/lib/map/nightlife-venue-tags"
 import { isLocalNoiseAmenity } from "@/lib/map/venue-time"
 import { withOsmDiskCache } from "@/lib/server/osm-cache"
-
-const execFileAsync = promisify(execFile)
-
-type OverpassElement = {
-  type: "node" | "way" | "relation"
-  id: number
-  lat?: number
-  lon?: number
-  center?: { lat: number; lon: number }
-  tags?: Record<string, string>
-}
-
-const OVERPASS_ENDPOINTS = [
-  "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
-  "https://overpass.kumi.systems/api/interpreter",
-  "https://overpass-api.de/api/interpreter",
-] as const
-
-const fetchOverpass = async (query: string) => {
-  let lastError: Error | null = null
-
-  for (const endpoint of OVERPASS_ENDPOINTS) {
-    try {
-      const { stdout } = await execFileAsync(
-        "curl",
-        [
-          "-sS",
-          "-G",
-          endpoint,
-          "--data-urlencode",
-          `data=${query}`,
-          "-H",
-          "User-Agent: ssh-ldn-map/1.0",
-          "-H",
-          "Accept: application/json",
-          "--max-time",
-          "60",
-        ],
-        { maxBuffer: 20 * 1024 * 1024 }
-      )
-
-      return JSON.parse(stdout) as { elements?: OverpassElement[] }
-    } catch (error) {
-      lastError =
-        error instanceof Error ? error : new Error("Overpass request failed")
-    }
-  }
-
-  throw lastError ?? new Error("Overpass request failed")
-}
+import {
+  fetchOverpass,
+  type OverpassElement,
+} from "@/lib/server/osm-overpass"
 
 const getElementLatLng = (element: OverpassElement) => {
   if (typeof element.lat === "number" && typeof element.lon === "number") {

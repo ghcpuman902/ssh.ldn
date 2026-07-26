@@ -26,9 +26,9 @@ type NoiseTimeGridProps = {
 };
 
 export const MAP_TOOLTIP_CONTENT_CLASS =
-  "border border-border bg-white text-foreground shadow-md";
+  "border border-border bg-popover text-popover-foreground shadow-md";
 
-export const MAP_TOOLTIP_ARROW_CLASS = "bg-white fill-white";
+export const MAP_TOOLTIP_ARROW_CLASS = "bg-popover fill-popover";
 
 export const MapTooltipContent = ({
   className,
@@ -66,22 +66,22 @@ const getButtonStyles = (
   const isWeekend = week === "weekend";
 
   if (isSelected) {
-    if (isWeekend && isNight) return "border-violet-700 bg-white";
-    if (isWeekend) return "border-violet-500 bg-white";
-    if (isNight) return "border-zinc-600 bg-white";
-    return "border-primary bg-white";
+    if (isWeekend && isNight) return "border-violet-700 bg-background";
+    if (isWeekend) return "border-violet-500 bg-background";
+    if (isNight) return "border-zinc-600 bg-background";
+    return "border-primary bg-background";
   }
 
   if (isWeekend && isNight) {
-    return "border-transparent bg-zinc-200/55 hover:bg-zinc-200/70";
+    return "border-transparent bg-muted/55 hover:bg-muted/70";
   }
   if (isWeekend) {
-    return "border-transparent bg-white/30 hover:bg-white/45";
+    return "border-transparent bg-background/30 hover:bg-background/45";
   }
   if (isNight) {
-    return "border-transparent bg-zinc-200/55 hover:bg-zinc-200/70";
+    return "border-transparent bg-muted/55 hover:bg-muted/70";
   }
-  return "border-transparent bg-white/30 hover:bg-white/45";
+  return "border-transparent bg-background/30 hover:bg-background/45";
 };
 
 const getBarStyles = (slot: NoiseTimeSlot, isSelected: boolean): string => {
@@ -153,8 +153,8 @@ export const NoiseTimeGrid = ({ value, onChange }: NoiseTimeGridProps) => {
   const selectedId = encodeNoiseTimeSlot(value);
 
   return (
-    <div className="w-fit space-y-1 border-b border-border/50 pb-2">
-      <div className="flex w-full items-center justify-end gap-0.5">
+    <div className="pointer-events-auto w-fit space-y-1 border-b border-border/50 pb-2">
+      <div className="flex w-fit items-center justify-end gap-0.5">
         <p className="text-xs font-medium text-foreground">When</p>
         <Tooltip>
           <TooltipTrigger asChild>

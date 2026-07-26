@@ -120,31 +120,83 @@ export const estimateClientNoiseScore = async ({
 }): Promise<ClientNoiseScoreSummary> => {
   const activePeriod = defraPeriodFromDayPart(timeSlot.part);
 
-  const [roadIntensity, railIntensity, airportIntensity, localFeatures] =
-    await Promise.all([
-      sampleTransportIntensity({
-        kind: "road",
-        period: activePeriod,
-        latitude,
-        longitude,
-        zoom,
-      }),
-      sampleTransportIntensity({
-        kind: "rail",
-        period: activePeriod,
-        latitude,
-        longitude,
-        zoom,
-      }),
-      sampleTransportIntensity({
-        kind: "airport",
-        period: activePeriod,
-        latitude,
-        longitude,
-        zoom,
-      }),
-      collectLocalFeatures(latitude, longitude, nightlifeGeoJson),
-    ]);
+  const [
+    roadIntensity,
+    railIntensity,
+    airportIntensity,
+    localFeatures,
+    roadDayIntensity,
+    roadEveningIntensity,
+    roadNightIntensity,
+    railNightIntensity,
+    airportDayIntensity,
+    airportNightIntensity,
+  ] = await Promise.all([
+    sampleTransportIntensity({
+      kind: "road",
+      period: activePeriod,
+      latitude,
+      longitude,
+      zoom,
+    }),
+    sampleTransportIntensity({
+      kind: "rail",
+      period: activePeriod,
+      latitude,
+      longitude,
+      zoom,
+    }),
+    sampleTransportIntensity({
+      kind: "airport",
+      period: activePeriod,
+      latitude,
+      longitude,
+      zoom,
+    }),
+    collectLocalFeatures(latitude, longitude, nightlifeGeoJson),
+    sampleTransportIntensity({
+      kind: "road",
+      period: "day",
+      latitude,
+      longitude,
+      zoom,
+    }),
+    sampleTransportIntensity({
+      kind: "road",
+      period: "evening",
+      latitude,
+      longitude,
+      zoom,
+    }),
+    sampleTransportIntensity({
+      kind: "road",
+      period: "night",
+      latitude,
+      longitude,
+      zoom,
+    }),
+    sampleTransportIntensity({
+      kind: "rail",
+      period: "night",
+      latitude,
+      longitude,
+      zoom,
+    }),
+    sampleTransportIntensity({
+      kind: "airport",
+      period: "day",
+      latitude,
+      longitude,
+      zoom,
+    }),
+    sampleTransportIntensity({
+      kind: "airport",
+      period: "night",
+      latitude,
+      longitude,
+      zoom,
+    }),
+  ]);
 
   const localScoreInputs = localFeatures.map((feature) => ({
     amenity: feature.amenity,
@@ -169,49 +221,6 @@ export const estimateClientNoiseScore = async ({
     airport: scoreFromRasterIntensity(airportIntensity, "airport"),
     nightlife: localNoiseScore,
   };
-
-  const roadDayIntensity = await sampleTransportIntensity({
-    kind: "road",
-    period: "day",
-    latitude,
-    longitude,
-    zoom,
-  });
-  const roadEveningIntensity = await sampleTransportIntensity({
-    kind: "road",
-    period: "evening",
-    latitude,
-    longitude,
-    zoom,
-  });
-  const roadNightIntensity = await sampleTransportIntensity({
-    kind: "road",
-    period: "night",
-    latitude,
-    longitude,
-    zoom,
-  });
-  const railNightIntensity = await sampleTransportIntensity({
-    kind: "rail",
-    period: "night",
-    latitude,
-    longitude,
-    zoom,
-  });
-  const airportDayIntensity = await sampleTransportIntensity({
-    kind: "airport",
-    period: "day",
-    latitude,
-    longitude,
-    zoom,
-  });
-  const airportNightIntensity = await sampleTransportIntensity({
-    kind: "airport",
-    period: "night",
-    latitude,
-    longitude,
-    zoom,
-  });
 
   const noiseScore = Math.round(combineLoudness(scoreByKind));
   const confidenceScore = Math.round(

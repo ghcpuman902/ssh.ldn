@@ -157,8 +157,8 @@ export default function DataSourcesPage() {
           </div>
           <div className="space-y-3 rounded-xl border border-border bg-background p-4 text-sm text-muted-foreground">
             <p>
-              The London Underground, Overground, and Elizabeth line roundel
-              icons are from{" "}
+              The London Underground, Overground, Elizabeth line, DLR, and Tram
+              roundel icons are from{" "}
               <a
                 href={TRANSIT_LOGO_SOURCES.underground}
                 target="_blank"
@@ -222,6 +222,26 @@ export default function DataSourcesPage() {
                   className="underline-offset-2 hover:text-primary hover:underline"
                 >
                   Elizabeth_line_roundel.svg
+                </a>
+              </li>
+              <li>
+                <a
+                  href={TRANSIT_LOGO_SOURCES.dlr}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline-offset-2 hover:text-primary hover:underline"
+                >
+                  DLR_roundel.svg
+                </a>
+              </li>
+              <li>
+                <a
+                  href={TRANSIT_LOGO_SOURCES.tram}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline-offset-2 hover:text-primary hover:underline"
+                >
+                  Tramlink_roundel.svg
                 </a>
               </li>
               <li>

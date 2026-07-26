@@ -15,6 +15,8 @@ export const TRANSIT_LOGO_SOURCES = {
     "https://commons.wikimedia.org/wiki/File:Elizabeth_line_roundel.svg",
   overground:
     "https://commons.wikimedia.org/wiki/File:Overground_roundel.svg",
+  dlr: "https://commons.wikimedia.org/wiki/File:DLR_roundel.svg",
+  tram: "https://commons.wikimedia.org/wiki/File:Tramlink_roundel.svg",
   nationalRail:
     "https://upload.wikimedia.org/wikipedia/sco/3/31/National_Rail_logo.svg",
 } as const
@@ -23,6 +25,8 @@ const TRANSIT_LOGO_PATH = {
   tube: "/transit-logos/underground.svg",
   elizabeth: "/transit-logos/elizabeth-line-roundel.svg",
   overground: "/transit-logos/overground-roundel.svg",
+  dlr: "/transit-logos/dlr-roundel.svg",
+  tram: "/transit-logos/tram-roundel.svg",
   rail: "/transit-logos/national-rail.svg",
 } as const
 
@@ -41,19 +45,6 @@ const TransitLogoIcon = ({
 
 const ROUNDEL_ICON_CLASS = "h-[20px] w-auto max-w-none"
 const NATIONAL_RAIL_ICON_CLASS = "h-[15px] w-auto max-w-none"
-
-const TRANSIT_LINE_SWATCH_CLASS = "h-[20px] w-1.5 shrink-0 rounded-[1px]"
-
-const TransitLineSwatch = ({
-  color,
-  className,
-}: TransitIconProps & { color: string }) => (
-  <span
-    aria-hidden="true"
-    className={cn(TRANSIT_LINE_SWATCH_CLASS, className)}
-    style={{ backgroundColor: color }}
-  />
-)
 
 export const VISUAL_LAYER_ICON: Record<VisualLayerKey, ReactNode> = {
   rail: (
@@ -85,14 +76,16 @@ export const VISUAL_LAYER_ICON: Record<VisualLayerKey, ReactNode> = {
     />
   ),
   dlr: (
-    <TransitLineSwatch
-      color="#00A4A7"
+    <TransitLogoIcon
+      src={TRANSIT_LOGO_PATH.dlr}
+      alt="Docklands Light Railway"
       className={ROUNDEL_ICON_CLASS}
     />
   ),
   tram: (
-    <TransitLineSwatch
-      color="#84B817"
+    <TransitLogoIcon
+      src={TRANSIT_LOGO_PATH.tram}
+      alt="London Trams"
       className={ROUNDEL_ICON_CLASS}
     />
   ),

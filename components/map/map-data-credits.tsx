@@ -17,7 +17,7 @@ const CreditLink = ({ credit }: { credit: DataCredit }) => {
     return (
       <Link
         href={credit.datasetUrl}
-        className="underline-offset-2 hover:text-foreground hover:underline"
+        className="pointer-events-auto underline-offset-2 hover:text-foreground hover:underline"
         title={`${credit.title} — ${credit.licence}`}
       >
         {credit.attribution}
@@ -30,7 +30,7 @@ const CreditLink = ({ credit }: { credit: DataCredit }) => {
       href={credit.datasetUrl}
       target="_blank"
       rel="noopener noreferrer"
-      className="underline-offset-2 hover:text-foreground hover:underline"
+      className="pointer-events-auto underline-offset-2 hover:text-foreground hover:underline"
       title={`${credit.title} — ${credit.licence}`}
     >
       {credit.attribution}

@@ -9,13 +9,25 @@ export type VisualLayerKey =
 
 export type VisualLayerVisibility = Record<VisualLayerKey, boolean>
 
+/** Rail + all TfL modes — toggled together in the map UI. */
+export const TRANSIT_VISUAL_LAYER_KEYS = [
+  "rail",
+  "tube",
+  "overground",
+  "elizabeth",
+  "dlr",
+  "tram",
+] as const satisfies readonly VisualLayerKey[]
+
+export type TransitVisualLayerKey = (typeof TRANSIT_VISUAL_LAYER_KEYS)[number]
+
 export const DEFAULT_VISUAL_LAYER_VISIBILITY: VisualLayerVisibility = {
-  rail: false,
-  tube: false,
-  overground: false,
-  elizabeth: false,
-  dlr: false,
-  tram: false,
+  rail: true,
+  tube: true,
+  overground: true,
+  elizabeth: true,
+  dlr: true,
+  tram: true,
   greenSpaces: false,
 }
 

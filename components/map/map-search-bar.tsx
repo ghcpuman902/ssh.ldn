@@ -1,14 +1,16 @@
 "use client"
 
 import {
+  forwardRef,
   useCallback,
   useEffect,
   useId,
+  useImperativeHandle,
   useRef,
   useState,
   type KeyboardEvent,
 } from "react"
-import { Clock3, Crosshair, Loader2, MapPin, Search, X } from "lucide-react"
+import { Clock3, Crosshair, Loader2, LocateFixed, MapPin, Search, X } from "lucide-react"
 
 import { buildGeocodeResultFromPlace } from "@/lib/map/build-geocode-result"
 import {
@@ -40,6 +42,8 @@ export type MapSearchSelection = {
 type MapSearchBarProps = {
   onSearch: (selection: MapSearchSelection) => void
   onSelectFromMap?: () => void
+  onUseCurrentLocation?: () => void
+  onUseMapCenter?: () => void
   isSearching?: boolean
   variant?: "floating" | "docked"
   instanceId?: string
@@ -50,18 +54,30 @@ type MapSearchBarProps = {
   className?: string
 }
 
-export const MapSearchBar = ({
-  onSearch,
-  onSelectFromMap,
-  isSearching = false,
-  variant = "floating",
-  instanceId = "search",
-  query: queryProp,
-  onQueryChange,
-  expanded: expandedProp,
-  onExpandedChange,
-  className,
-}: MapSearchBarProps) => {
+export type { MapSearchBarProps }
+
+export type MapSearchBarHandle = {
+  focusInput: () => void
+}
+
+export const MapSearchBar = forwardRef<MapSearchBarHandle, MapSearchBarProps>(
+  function MapSearchBar(
+    {
+      onSearch,
+      onSelectFromMap,
+      onUseCurrentLocation,
+      onUseMapCenter,
+      isSearching = false,
+      variant = "floating",
+      instanceId = "search",
+      query: queryProp,
+      onQueryChange,
+      expanded: expandedProp,
+      onExpandedChange,
+      className,
+    },
+    ref
+  ) {
   const baseId = useId()
   const listboxId = `${baseId}-${instanceId}`
   const containerRef = useRef<HTMLDivElement>(null)
@@ -277,11 +293,19 @@ export const MapSearchBar = ({
     [emitSearch, ensureSessionToken, placesAvailable]
   )
 
-  const handleExpand = () => {
+  const handleExpand = useCallback(() => {
     setExpanded(true)
     setShowSuggestions(true)
     window.requestAnimationFrame(() => inputRef.current?.focus())
-  }
+  }, [setExpanded])
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      focusInput: handleExpand,
+    }),
+    [handleExpand]
+  )
 
   const handleSubmit = (value = query) => {
     const trimmed = value.trim()
@@ -329,6 +353,30 @@ export const MapSearchBar = ({
     }
 
     onSelectFromMap?.()
+  }
+
+  const handleUseCurrentLocationClick = () => {
+    setShowSuggestions(false)
+    setActiveIndex(-1)
+    inputRef.current?.blur()
+
+    if (!isDocked && !query.trim()) {
+      setExpanded(false)
+    }
+
+    onUseCurrentLocation?.()
+  }
+
+  const handleUseMapCenterClick = () => {
+    setShowSuggestions(false)
+    setActiveIndex(-1)
+    inputRef.current?.blur()
+
+    if (!isDocked && !query.trim()) {
+      setExpanded(false)
+    }
+
+    onUseMapCenter?.()
   }
 
   const handleClear = () => {
@@ -388,6 +436,8 @@ export const MapSearchBar = ({
     expanded &&
     showSuggestions &&
     (Boolean(onSelectFromMap) ||
+      Boolean(onUseCurrentLocation) ||
+      Boolean(onUseMapCenter) ||
       visibleSuggestions.length > 0 ||
       isLoadingSuggestions ||
       (!placesAvailable && query.trim().length >= 2))
@@ -407,7 +457,7 @@ export const MapSearchBar = ({
               : "w-11"
         )}
       >
-        <div className="flex h-11 w-full flex-row-reverse items-center overflow-hidden rounded-full border border-border/60 bg-white">
+        <div className="flex h-11 w-full flex-row-reverse items-center overflow-hidden rounded-full border border-border/60 bg-background">
           <button
             type="button"
             aria-label={expanded ? "Search address" : "Open address search"}
@@ -477,7 +527,7 @@ export const MapSearchBar = ({
             onClick={handleClear}
             className="absolute top-1/2 right-12 z-20 flex size-8 -translate-y-1/2 items-center justify-center opacity-0 pointer-events-none transition-opacity duration-200 ease-out group-focus-within:pointer-events-auto group-focus-within:opacity-100 disabled:opacity-60"
           >
-            <span className="flex size-7 items-center justify-center rounded-full bg-white text-muted-foreground shadow-[0_0_0_3px_white,0_1px_3px_rgba(0,0,0,0.1)] transition-[color,background-color] hover:bg-muted/60 hover:text-foreground">
+            <span className="flex size-7 items-center justify-center rounded-full bg-background text-muted-foreground shadow-[0_0_0_3px_var(--background),0_1px_3px_rgba(0,0,0,0.1)] transition-[color,background-color] hover:bg-muted/60 hover:text-foreground">
               <X className="size-3.5" aria-hidden="true" />
             </span>
           </button>
@@ -490,7 +540,7 @@ export const MapSearchBar = ({
           role="listbox"
           aria-label="Location suggestions"
           className={cn(
-            "absolute top-[calc(100%+0.5rem)] z-30 max-h-72 overflow-y-auto rounded-2xl border border-border/60 bg-white p-1.5",
+            "absolute top-[calc(100%+0.5rem)] z-30 max-h-72 overflow-y-auto rounded-2xl border border-border/60 bg-popover p-1.5",
             isDocked
               ? "inset-x-0 w-full"
               : "right-0 w-[min(calc(100vw-2rem),22rem)]"
@@ -511,6 +561,44 @@ export const MapSearchBar = ({
                   aria-hidden="true"
                 />
                 Select from map
+              </button>
+            </li>
+          ) : null}
+
+          {onUseCurrentLocation ? (
+            <li role="presentation">
+              <button
+                type="button"
+                onMouseDown={(event) => {
+                  event.preventDefault()
+                  handleUseCurrentLocationClick()
+                }}
+                className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-medium text-foreground transition-colors hover:bg-muted/70"
+              >
+                <LocateFixed
+                  className="size-3.5 shrink-0 text-primary"
+                  aria-hidden="true"
+                />
+                Use my current location
+              </button>
+            </li>
+          ) : null}
+
+          {onUseMapCenter ? (
+            <li role="presentation">
+              <button
+                type="button"
+                onMouseDown={(event) => {
+                  event.preventDefault()
+                  handleUseMapCenterClick()
+                }}
+                className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-medium text-foreground transition-colors hover:bg-muted/70"
+              >
+                <MapPin
+                  className="size-3.5 shrink-0 text-primary"
+                  aria-hidden="true"
+                />
+                Use map centre
               </button>
             </li>
           ) : null}
@@ -574,4 +662,4 @@ export const MapSearchBar = ({
       ) : null}
     </div>
   )
-}
+})

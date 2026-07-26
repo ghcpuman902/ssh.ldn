@@ -112,7 +112,7 @@ const defraTileUrl = (kind: DefraMapKind, period: string) =>
   `/api/map/defra/${kind}/{z}/{x}/{y}.png?period=${period}`
 
 const poiDensityTileUrl = (slot: string) =>
-  `/poi-density/tiles/${slot}/{z}/{x}/{y}.png`
+  `/api/map/poi-density/${slot}/{z}/{x}/{y}.png`
 
 const enrichNightlifeGeoJson = (
   data: NightlifeFeatureCollection | null,

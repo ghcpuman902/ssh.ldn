@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, type RefObject } from "react"
+import { useEffect, useMemo, useState, type RefObject } from "react"
 import type { MapRef } from "react-map-gl/maplibre"
 
 import type {
@@ -37,11 +37,34 @@ export type VisualLayerData = {
   greenSpaces: GreenSpaceFeatureCollection | null
 }
 
+const TRANSIT_PREFETCH_STAGGER_MS = 450
+
+const buildRailLinesUrl = (row: number, col: number) =>
+  `/api/discovery/osm/rail-visual?row=${row}&col=${col}&layer=lines`
+
+const buildRailStationsUrl = (row: number, col: number) =>
+  `/api/discovery/osm/rail-visual?row=${row}&col=${col}&layer=stations`
+
+const buildGreenSpacesUrl = (row: number, col: number) =>
+  `/api/discovery/osm/green-spaces?row=${row}&col=${col}`
+
+const getRailLineFeatureId = (
+  feature: RailLineFeatureCollection["features"][number]
+) => String(feature.id ?? feature.properties.name)
+
+const getRailStationFeatureId = (
+  feature: RailStationFeatureCollection["features"][number]
+) => feature.properties.featureId
+
+const getGreenSpaceFeatureId = (
+  feature: GreenSpaceFeatureCollection["features"][number]
+) => feature.properties.featureId
+
 /**
- * Visual layers are hidden by default, but their data is still fetched once
- * the (default-visible) noise layers have finished their initial load —
- * see `backgroundPrefetchReady` in MapShell — so toggling a visual layer on
- * later renders instantly instead of triggering a fresh network fetch.
+ * Visual layers are hidden by default. Once `backgroundPrefetch` turns on
+ * (quiet-gated in MapShell after nightlife settles), data warms in the
+ * background so toggles render quickly. Transit geometry URLs are staggered
+ * so they do not all hit the network at once.
  */
 export const useVisualLayerData = (
   mapRef: RefObject<MapRef | null>,
@@ -49,53 +72,72 @@ export const useVisualLayerData = (
   visibility: VisualLayerVisibility,
   backgroundPrefetch: boolean,
 ): VisualLayerData => {
+  /** 0 = none; 1..5 unlock tube → overground → elizabeth → dlr → tram prefetch. */
+  const [transitPrefetchSlot, setTransitPrefetchSlot] = useState(0)
+
+  useEffect(() => {
+    if (!backgroundPrefetch) {
+      setTransitPrefetchSlot(0)
+      return
+    }
+
+    setTransitPrefetchSlot(1)
+    const timers = [2, 3, 4, 5].map((slot, index) =>
+      window.setTimeout(
+        () => setTransitPrefetchSlot(slot),
+        (index + 1) * TRANSIT_PREFETCH_STAGGER_MS
+      )
+    )
+
+    return () => {
+      for (const timer of timers) window.clearTimeout(timer)
+    }
+  }, [backgroundPrefetch])
+
   const railLines = useViewportOsmGeoJson<RailLineFeatureCollection>({
     mapRef,
     enabled: enabled && (visibility.rail || backgroundPrefetch),
-    buildUrl: (row, col) =>
-      `/api/discovery/osm/rail-visual?row=${row}&col=${col}&layer=lines`,
-    getFeatureId: (feature) => String(feature.id ?? feature.properties.name),
+    buildUrl: buildRailLinesUrl,
+    getFeatureId: getRailLineFeatureId,
   })
 
   const railStations = useViewportOsmGeoJson<RailStationFeatureCollection>({
     mapRef,
     enabled: enabled && (visibility.rail || backgroundPrefetch),
-    buildUrl: (row, col) =>
-      `/api/discovery/osm/rail-visual?row=${row}&col=${col}&layer=stations`,
-    getFeatureId: (feature) => feature.properties.featureId,
+    buildUrl: buildRailStationsUrl,
+    getFeatureId: getRailStationFeatureId,
   })
 
   const greenSpaces = useViewportOsmGeoJson<GreenSpaceFeatureCollection>({
     mapRef,
     enabled: enabled && (visibility.greenSpaces || backgroundPrefetch),
-    buildUrl: (row, col) =>
-      `/api/discovery/osm/green-spaces?row=${row}&col=${col}`,
-    getFeatureId: (feature) => feature.properties.featureId,
+    buildUrl: buildGreenSpacesUrl,
+    getFeatureId: getGreenSpaceFeatureId,
   })
 
   const tubeGeometry = useStaticGeoJson<TransitGeometryBundle>(
     "/api/map/tube-geometry",
-    enabled && (visibility.tube || backgroundPrefetch),
+    enabled && (visibility.tube || transitPrefetchSlot >= 1),
   )
 
   const overgroundGeometry = useStaticGeoJson<TransitGeometryBundle>(
     "/api/map/overground-geometry",
-    enabled && (visibility.overground || backgroundPrefetch),
+    enabled && (visibility.overground || transitPrefetchSlot >= 2),
   )
 
   const elizabethGeometry = useStaticGeoJson<TransitGeometryBundle>(
     "/api/map/elizabeth-geometry",
-    enabled && (visibility.elizabeth || backgroundPrefetch),
+    enabled && (visibility.elizabeth || transitPrefetchSlot >= 3),
   )
 
   const dlrGeometry = useStaticGeoJson<TransitGeometryBundle>(
     "/api/map/dlr-geometry",
-    enabled && (visibility.dlr || backgroundPrefetch),
+    enabled && (visibility.dlr || transitPrefetchSlot >= 4),
   )
 
   const tramGeometry = useStaticGeoJson<TransitGeometryBundle>(
     "/api/map/tram-geometry",
-    enabled && (visibility.tram || backgroundPrefetch),
+    enabled && (visibility.tram || transitPrefetchSlot >= 5),
   )
 
   return useMemo(

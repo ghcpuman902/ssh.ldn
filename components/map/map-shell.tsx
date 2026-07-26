@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react"
+import dynamic from "next/dynamic"
 import Map, {
   Marker,
   NavigationControl,
@@ -11,18 +12,19 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useTheme } from "next-themes"
 import { toast } from "sonner"
 import { useCursorNoise } from "@/hooks/use-cursor-noise"
+import { useMapLongPress } from "@/hooks/use-map-long-press"
+import { useMapTypeToSearch } from "@/hooks/use-map-type-to-search"
 import { useMapWindowClip } from "@/hooks/use-map-window-clip"
 import { useMapZoomControlStyles } from "@/hooks/use-map-zoom-control-styles"
 import { useIsMobile } from "@/hooks/use-mobile"
+import { useShiftDragRotate } from "@/hooks/use-shift-drag-rotate"
 import { useViewportNightlifeGeoJson } from "@/hooks/use-viewport-nightlife-geojson"
-import {
-  MapAnalysePanel,
-  type AnalyseState,
-} from "@/components/map/map-analyse-panel"
-import { VoiceModeButton } from "@/components/map/voice-mode-button"
+import type { AnalyseState } from "@/components/map/map-analyse-panel"
+// Voice mode is temporarily unwired so ElevenLabs stays off the map load path.
+// import { VoiceModeButton } from "@/components/map/voice-mode-button"
 import { NoiseMapLayers } from "@/components/map/noise-map-layers"
 import { MapDataCredits } from "@/components/map/map-data-credits"
-import { MapSearchBar, type MapSearchSelection } from "@/components/map/map-search-bar"
+import { MapSearchBar, type MapSearchBarHandle, type MapSearchSelection } from "@/components/map/map-search-bar"
 import { NoiseLayerControls } from "@/components/map/noise-layer-controls"
 import { VisualMapLayers } from "@/components/map/visual-map-layers"
 import { useVisualLayerData } from "@/hooks/use-visual-layer-data"
@@ -35,8 +37,8 @@ import {
   getCurrentNoiseTimeSlot,
   type NoiseTimeSlot,
 } from "@/lib/map/noise-time"
-import { locationContextFromAnalyse } from "@/lib/voice/location-context"
-import { isVoiceModeEnabledClient } from "@/lib/voice/voice-mode"
+// import { locationContextFromAnalyse } from "@/lib/voice/location-context"
+// import { isVoiceModeEnabledClient } from "@/lib/voice/voice-mode"
 import { estimateClientNoiseScore } from "@/lib/map/client-noise-score"
 import {
   fetchNearbyNoisyPois,
@@ -47,6 +49,7 @@ import type { GeocodeResult } from "@/lib/server/geocode-types"
 import {
   getMapPixelRatio,
   getMapStyle,
+  isWithinLondonBounds,
   LONDON_BOUNDS,
   LONDON_VIEWPORT,
   MAP_CONFIG,
@@ -66,9 +69,25 @@ import { cn } from "@/lib/utils"
 import "maplibre-gl/dist/maplibre-gl.css"
 import "@/components/map/map-controls.css"
 
+const MapAnalysePanel = dynamic(
+  () =>
+    import("@/components/map/map-analyse-panel").then((mod) => mod.MapAnalysePanel),
+  { ssr: false }
+)
+
+const MapAnalyseSheet = dynamic(
+  () =>
+    import("@/components/map/map-analyse-sheet").then((mod) => mod.MapAnalyseSheet),
+  { ssr: false }
+)
+
 const SEARCH_RESULT_ZOOM = 15
 const PANEL_WIDTH = "26rem"
 const PANEL_TRANSITION_MS = 300
+/** Wait after nightlife settles before warming visual layers. */
+const VISUAL_PREFETCH_SETTLE_MS = 400
+/** If nightlife never settles, still warm visual layers after this. */
+const VISUAL_PREFETCH_FALLBACK_MS = 3500
 
 type PlanningApplicationResponse = {
   applicationId: string | null
@@ -134,6 +153,7 @@ export const MapShell = () => {
     useState(readVisualLayerVisibility)
   const [timeSlot, setTimeSlot] = useState(DEFAULT_NOISE_TIME_SLOT)
   const [mapReady, setMapReady] = useState(false)
+  const [mapHasIdled, setMapHasIdled] = useState(false)
   const [backgroundPrefetchReady, setBackgroundPrefetchReady] = useState(false)
   const [analyseState, setAnalyseState] = useState<AnalyseState>({
     status: "idle",
@@ -142,6 +162,9 @@ export const MapShell = () => {
   const [audioEnabled, setAudioEnabled] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [searchExpanded, setSearchExpanded] = useState(false)
+  const desktopSearchRef = useRef<MapSearchBarHandle>(null)
+  const mobileFloatingSearchRef = useRef<MapSearchBarHandle>(null)
+  const mobileDockedSearchRef = useRef<MapSearchBarHandle>(null)
   const audioToggleEventsRef = useRef<number[]>([])
   const audioHelpShownRef = useRef(false)
   const [selectedLocation, setSelectedLocation] = useState<{
@@ -164,7 +187,11 @@ export const MapShell = () => {
   } = useMapWindowClip()
   const layoutGridRef = useRef<HTMLDivElement>(null)
   const applyZoomControlStyles = useMapZoomControlStyles(mapRef)
-  const nightlifeGeoJson = useViewportNightlifeGeoJson(mapRef, mounted && mapReady)
+  const {
+    geoJson: nightlifeGeoJson,
+    isFetching: nightlifeIsFetching,
+    hasSettledInitial: nightlifeHasSettledInitial,
+  } = useViewportNightlifeGeoJson(mapRef, mounted && mapReady)
   const visualLayerData = useVisualLayerData(
     mapRef,
     mounted && mapReady,
@@ -195,6 +222,33 @@ export const MapShell = () => {
   useEffect(() => {
     writeVisualLayerVisibility(visualLayerVisibility)
   }, [visualLayerVisibility])
+
+  // Quiet-gated visual prefetch: wait until nightlife has settled (or timeout)
+  // so background OSM/transit fetches do not race the critical cold-open path.
+  useEffect(() => {
+    if (!mapHasIdled || backgroundPrefetchReady) return
+
+    let settleTimer: number | undefined
+    const fallbackTimer = window.setTimeout(() => {
+      setBackgroundPrefetchReady(true)
+    }, VISUAL_PREFETCH_FALLBACK_MS)
+
+    if (nightlifeHasSettledInitial && !nightlifeIsFetching) {
+      settleTimer = window.setTimeout(() => {
+        setBackgroundPrefetchReady(true)
+      }, VISUAL_PREFETCH_SETTLE_MS)
+    }
+
+    return () => {
+      window.clearTimeout(fallbackTimer)
+      if (settleTimer !== undefined) window.clearTimeout(settleTimer)
+    }
+  }, [
+    backgroundPrefetchReady,
+    mapHasIdled,
+    nightlifeHasSettledInitial,
+    nightlifeIsFetching,
+  ])
 
   useEffect(() => {
     if (!mounted) return
@@ -475,7 +529,13 @@ export const MapShell = () => {
     setIsSearching(false)
     setHoveredNoisyPoiId(null)
     setFocusedNoisyPoiId(null)
-  }, [])
+    setSearchQuery("")
+    setSearchExpanded(false)
+    // Clear share params immediately so dismiss does not wait on the sync effect.
+    if (searchParams.toString().length > 0) {
+      router.replace(pathname, { scroll: false })
+    }
+  }, [pathname, router, searchParams])
 
   const urlAddress =
     analyseState.status === "analysing" ? analyseState.address : null
@@ -660,6 +720,77 @@ export const MapShell = () => {
     })
   }, [])
 
+  const handleUseMapCenter = useCallback(() => {
+    const center = mapRef.current?.getMap()?.getCenter()
+    if (!center) {
+      toast.error("Map is not ready yet. Try again in a moment.")
+      return
+    }
+
+    void handleMapLocationPicked(center.lat, center.lng)
+  }, [handleMapLocationPicked])
+
+  const handleUseCurrentLocation = useCallback(() => {
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      toast.error("Location is not available in this browser.")
+      return
+    }
+
+    toast.info("Getting your location…", {
+      id: "current-location-pending",
+      duration: 8000,
+    })
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        toast.dismiss("current-location-pending")
+        const { latitude, longitude } = position.coords
+
+        if (!isWithinLondonBounds(latitude, longitude)) {
+          toast.error("Your location is outside Greater London.")
+          return
+        }
+
+        mapRef.current?.flyTo({
+          center: [longitude, latitude],
+          zoom: SEARCH_RESULT_ZOOM,
+          duration: 1200,
+        })
+        void handleMapLocationPicked(latitude, longitude)
+      },
+      (error) => {
+        toast.dismiss("current-location-pending")
+
+        if (error.code === error.PERMISSION_DENIED) {
+          toast.error("Location permission denied. Enable it in browser settings.")
+          return
+        }
+
+        if (error.code === error.TIMEOUT) {
+          toast.error("Timed out getting your location. Try again.")
+          return
+        }
+
+        toast.error("Could not get your current location.")
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 12_000,
+        maximumAge: 60_000,
+      }
+    )
+  }, [handleMapLocationPicked])
+
+  const handleMapLongPress = useCallback(
+    ({ latitude, longitude }: { latitude: number; longitude: number }) => {
+      void handleMapLocationPicked(latitude, longitude)
+    },
+    [handleMapLocationPicked]
+  )
+
+  useShiftDragRotate(mapRef, mounted && mapReady)
+  useMapLongPress(mapRef, mounted && mapReady && isMobile, handleMapLongPress)
+
   const handleMapClick = useCallback(
     (event: MapLayerMouseEvent) => {
       if (!isPickingLocation) return
@@ -745,27 +876,46 @@ export const MapShell = () => {
         : [],
     [analyseState]
   )
-  const voiceContext = useMemo(() => {
-    if (analyseState.status !== "analysing") {
-      return null
-    }
-
-    if (analyseState.geocode.status !== "done") {
-      return null
-    }
-
-    return locationContextFromAnalyse(analyseState, timeSlot)
-  }, [analyseState, timeSlot])
+  // Voice mode temporarily disabled — restore with VoiceModeButton import above.
+  // const voiceContext = useMemo(() => {
+  //   if (analyseState.status !== "analysing") {
+  //     return null
+  //   }
+  //
+  //   if (analyseState.geocode.status !== "done") {
+  //     return null
+  //   }
+  //
+  //   return locationContextFromAnalyse(analyseState, timeSlot)
+  // }, [analyseState, timeSlot])
 
   const searchBarProps = {
     onSearch: handleSearch,
-    onSelectFromMap: handleSelectFromMap,
+    onSelectFromMap: isMobile ? undefined : handleSelectFromMap,
+    onUseCurrentLocation: handleUseCurrentLocation,
+    onUseMapCenter: handleUseMapCenter,
     isSearching,
     query: searchQuery,
     onQueryChange: setSearchQuery,
     expanded: searchExpanded,
     onExpandedChange: setSearchExpanded,
   }
+
+  const activeSearchRef = isMobile
+    ? analyseOpen
+      ? mobileDockedSearchRef
+      : mobileFloatingSearchRef
+    : desktopSearchRef
+
+  const handleTypeToSearch = useCallback((character: string) => {
+    setSearchExpanded(true)
+    setSearchQuery((current) => `${current}${character}`)
+  }, [])
+
+  useMapTypeToSearch({
+    searchRef: activeSearchRef,
+    onType: handleTypeToSearch,
+  })
 
   useEffect(() => {
     if (!mounted) return
@@ -796,7 +946,7 @@ export const MapShell = () => {
     return (
       <div
         aria-hidden
-        className="h-svh w-full animate-pulse bg-white p-4 md:p-5"
+        className="h-svh w-full animate-pulse bg-background p-4 md:p-5"
       >
         <div className="h-full w-full rounded-4xl bg-muted" />
       </div>
@@ -804,7 +954,7 @@ export const MapShell = () => {
   }
 
   return (
-    <div className="relative h-svh w-full bg-white p-4 md:p-5">
+    <div className="relative h-svh w-full bg-background p-4 md:p-5">
       <div
         className={cn(
           "pointer-events-auto absolute z-50 max-md:hidden",
@@ -815,6 +965,7 @@ export const MapShell = () => {
         )}
       >
         <MapSearchBar
+          ref={desktopSearchRef}
           variant={analyseOpen ? "docked" : "floating"}
           instanceId="desktop"
           {...searchBarProps}
@@ -855,12 +1006,14 @@ export const MapShell = () => {
               style={{ width: "100%", height: "100%" }}
               attributionControl={false}
               reuseMaps
+              dragRotate={false}
+              boxZoom={false}
               onClick={handleMapClick}
               onLoad={() => {
                 const map = mapRef.current?.getMap()
                 if (map) {
                   bindNightlifeEmojiImages(map)
-                  map.once("idle", () => setBackgroundPrefetchReady(true))
+                  map.once("idle", () => setMapHasIdled(true))
                   if (process.env.NODE_ENV === "development") {
                     ;(
                       window as Window & {
@@ -972,26 +1125,24 @@ export const MapShell = () => {
             <div
               ref={logoRef}
               aria-label="ssh-ldn London Noise Map"
-              className="pointer-events-auto absolute left-0 top-0 flex w-fit flex-col items-center gap-0.5 pb-2 pr-2.5 text-center md:pb-2.5 md:pr-3.5"
+              className="pointer-events-none absolute left-0 top-0 w-fit pb-2 pr-2.5 md:pb-2.5 md:pr-3.5"
             >
-              <div className="flex items-center justify-center gap-1.5 md:gap-2">
+              <div className="flex items-center gap-1 md:gap-1.5">
                 <span
                   aria-hidden
-                  className="text-[1.3lh] leading-none translate-y-1"
-                  style={{
-                    textBoxTrim: "trim-both",
-                    textBoxEdge: "cap alphabetic",
-                  }}
+                  className="shrink-0 translate-y-1 text-[1.5rem] leading-none md:translate-y-1.5 md:text-[1.8rem]"
                 >
                   🤫
                 </span>
-                <span className="font-mono text-base font-bold tracking-tight text-foreground md:text-4xl">
-                  ssh-ldn
-                </span>
+                <div className="-translate-y-px flex flex-col gap-0 leading-none">
+                  <span className="font-mono text-2xl font-bold tracking-tight text-foreground leading-none md:text-4xl">
+                    ssh-ldn
+                  </span>
+                  <p className="text-[10px] leading-none text-muted-foreground">
+                    London Noise Map
+                  </p>
+                </div>
               </div>
-              <p className="text-[9px] leading-none text-muted-foreground md:text-[10px]">
-                ssh-ldn.app - London Noise Map
-              </p>
             </div>
 
             <div
@@ -1001,13 +1152,14 @@ export const MapShell = () => {
               )}
             >
               <MapSearchBar
+                ref={mobileFloatingSearchRef}
                 variant="floating"
                 instanceId="mobile-floating"
                 {...searchBarProps}
               />
             </div>
 
-            <div className="pointer-events-auto absolute bottom-24 right-2 w-fit max-w-[calc(100%-2rem)] md:bottom-28 md:right-2.5">
+            <div className="pointer-events-none absolute bottom-24 right-2 w-fit max-w-[calc(100%-2rem)] md:bottom-28 md:right-2.5">
               <NoiseLayerControls
                 visibility={layerVisibility}
                 visualVisibility={visualLayerVisibility}
@@ -1023,7 +1175,7 @@ export const MapShell = () => {
               />
             </div>
 
-            <div className="pointer-events-auto absolute inset-x-4 bottom-0 z-20 flex h-4 items-center md:inset-x-5 md:h-5">
+            <div className="pointer-events-none absolute inset-x-4 bottom-0 z-20 flex h-4 items-center md:inset-x-5 md:h-5">
               <MapDataCredits />
             </div>
           </div>
@@ -1031,22 +1183,13 @@ export const MapShell = () => {
 
         <div
           className={cn(
-            "flex min-h-0 flex-col overflow-hidden",
-            "fixed inset-x-3 bottom-3 z-40 max-h-[82svh] transition-[transform,opacity] duration-300 ease-out",
-            "md:static md:inset-auto md:z-auto md:h-full md:max-h-none md:overflow-hidden md:transition-none",
+            "hidden min-h-0 flex-col overflow-hidden md:flex",
+            "md:h-full md:transition-none",
             analyseOpen
-              ? "translate-y-0 opacity-100 md:pointer-events-auto"
-              : "pointer-events-none translate-y-[calc(100%+1.5rem)] opacity-0 md:translate-y-0 md:opacity-100 md:pointer-events-none"
+              ? "md:pointer-events-auto"
+              : "md:pointer-events-none"
           )}
         >
-          <div className="shrink-0 pb-3 md:hidden">
-            <MapSearchBar
-              variant="docked"
-              instanceId="mobile-docked"
-              {...searchBarProps}
-            />
-          </div>
-
           <div aria-hidden className="hidden h-14 shrink-0 md:block" />
 
           <MapAnalysePanel
@@ -1056,14 +1199,21 @@ export const MapShell = () => {
             onNoisyPoiHover={setHoveredNoisyPoiId}
             onNoisyPoiFocus={handleNoisyPoiFocus}
           />
-
-          {analyseOpen && isVoiceModeEnabledClient() ? (
-            <div className="shrink-0 px-0 pt-3">
-              <VoiceModeButton context={voiceContext} />
-            </div>
-          ) : null}
         </div>
       </div>
+
+      {isMobile ? (
+        <MapAnalyseSheet
+          open={analyseOpen}
+          state={analyseState}
+          onClose={handleCloseAnalyse}
+          searchBarProps={searchBarProps}
+          searchBarRef={mobileDockedSearchRef}
+          focusedNoisyPoiId={focusedNoisyPoiId}
+          onNoisyPoiHover={setHoveredNoisyPoiId}
+          onNoisyPoiFocus={handleNoisyPoiFocus}
+        />
+      ) : null}
     </div>
   )
 }

@@ -59,33 +59,41 @@ export const useViewportOsmGeoJson = <T extends FeatureCollection>({
   const [geoJson, setGeoJson] = useState<T | null>(null)
   const abortControllersRef = useRef(new Set<AbortController>())
   const processingRef = useRef(false)
+  const buildUrlRef = useRef(buildUrl)
+  const getFeatureIdRef = useRef(getFeatureId)
+  const mapRefStable = useRef(mapRef)
 
-  const fetchGridCell = useCallback(
-    async (row: number, col: number) => {
-      const key = osmGridCellKey(row, col)
-      if (fetchedKeysRef.current.has(key)) return
+  buildUrlRef.current = buildUrl
+  getFeatureIdRef.current = getFeatureId
+  mapRefStable.current = mapRef
 
-      const controller = new AbortController()
-      abortControllersRef.current.add(controller)
+  const fetchGridCell = useCallback(async (row: number, col: number) => {
+    const key = osmGridCellKey(row, col)
+    if (fetchedKeysRef.current.has(key)) return
 
-      try {
-        const response = await fetch(buildUrl(row, col), { signal: controller.signal })
-        if (!response.ok) return
+    const controller = new AbortController()
+    abortControllersRef.current.add(controller)
 
-        const data = (await response.json()) as T
-        fetchedKeysRef.current.add(key)
-        setGeoJson((current) => mergeFeatureCollections(current, data, getFeatureId))
-      } catch {
-        // keep previously merged features visible
-      } finally {
-        abortControllersRef.current.delete(controller)
-      }
-    },
-    [buildUrl, getFeatureId],
-  )
+    try {
+      const response = await fetch(buildUrlRef.current(row, col), {
+        signal: controller.signal,
+      })
+      if (!response.ok) return
+
+      const data = (await response.json()) as T
+      fetchedKeysRef.current.add(key)
+      setGeoJson((current) =>
+        mergeFeatureCollections(current, data, getFeatureIdRef.current)
+      )
+    } catch {
+      // Aborted or failed — leave cell unfetched so a later pass can retry
+    } finally {
+      abortControllersRef.current.delete(controller)
+    }
+  }, [])
 
   const loadForViewport = useCallback(async () => {
-    const map = mapRef.current?.getMap()
+    const map = mapRefStable.current.current?.getMap()
     if (!map || processingRef.current) return
 
     const bounds = map.getBounds()
@@ -126,12 +134,15 @@ export const useViewportOsmGeoJson = <T extends FeatureCollection>({
         void loadForViewport()
       }, BATCH_GAP_MS)
     }
-  }, [fetchGridCell, mapRef])
+  }, [fetchGridCell])
+
+  const loadForViewportRef = useRef(loadForViewport)
+  loadForViewportRef.current = loadForViewport
 
   useEffect(() => {
     if (!enabled) return
 
-    const map = mapRef.current?.getMap()
+    const map = mapRefStable.current.current?.getMap()
     if (!map) return
 
     let timeout: ReturnType<typeof setTimeout> | undefined
@@ -139,7 +150,7 @@ export const useViewportOsmGeoJson = <T extends FeatureCollection>({
     const scheduleLoad = () => {
       if (timeout) clearTimeout(timeout)
       timeout = setTimeout(() => {
-        void loadForViewport()
+        void loadForViewportRef.current()
       }, DEBOUNCE_MS)
     }
 
@@ -149,12 +160,14 @@ export const useViewportOsmGeoJson = <T extends FeatureCollection>({
     return () => {
       if (timeout) clearTimeout(timeout)
       map.off("moveend", scheduleLoad)
+      // Abort only when this layer is disabled or the hook unmounts —
+      // not on parent re-renders that used to recreate callback identities.
       for (const controller of abortControllersRef.current) {
         controller.abort()
       }
       abortControllersRef.current.clear()
     }
-  }, [enabled, loadForViewport, mapRef])
+  }, [enabled])
 
   return geoJson
 }
@@ -162,7 +175,7 @@ export const useViewportOsmGeoJson = <T extends FeatureCollection>({
 const staticGeoJsonCache = new Map<string, unknown>()
 const staticGeoJsonInflight = new Map<string, Promise<unknown>>()
 
-const loadStaticGeoJson = async <T>(url: string, signal?: AbortSignal): Promise<T | null> => {
+const loadStaticGeoJson = async <T>(url: string): Promise<T | null> => {
   if (staticGeoJsonCache.has(url)) {
     return staticGeoJsonCache.get(url) as T
   }
@@ -185,12 +198,10 @@ const loadStaticGeoJson = async <T>(url: string, signal?: AbortSignal): Promise<
     staticGeoJsonInflight.set(url, request)
   }
 
-  if (signal?.aborted) return null
-
   return request
 }
 
-/** Fetch once, cache in memory, and prefetch before the layer is toggled on. */
+/** Fetch once, cache in memory. Prefetch when `prefetch` is true. */
 export const useStaticGeoJson = <T>(url: string, prefetch: boolean) => {
   const [data, setData] = useState<T | null>(
     () => (staticGeoJsonCache.get(url) as T | undefined) ?? null,
@@ -204,13 +215,15 @@ export const useStaticGeoJson = <T>(url: string, prefetch: boolean) => {
       return
     }
 
-    const controller = new AbortController()
+    let cancelled = false
 
-    void loadStaticGeoJson<T>(url, controller.signal).then((next) => {
-      if (next) setData(next)
+    void loadStaticGeoJson<T>(url).then((next) => {
+      if (!cancelled && next) setData(next)
     })
 
-    return () => controller.abort()
+    return () => {
+      cancelled = true
+    }
   }, [prefetch, url])
 
   return data

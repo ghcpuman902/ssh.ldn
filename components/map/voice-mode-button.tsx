@@ -419,7 +419,7 @@ const VoiceModeButtonInner = ({ context, className }: VoiceModeButtonProps) => {
   return (
     <div
       className={cn(
-        "space-y-2 rounded-4xl border border-border/60 bg-white p-3",
+        "space-y-2 rounded-4xl border border-border/60 bg-background p-3",
         className
       )}
     >
@@ -470,8 +470,8 @@ const VoiceModeButtonInner = ({ context, className }: VoiceModeButtonProps) => {
             isActive
               ? micInputMuted
                 ? "border-border/60 bg-muted/40 text-muted-foreground"
-                : "border-border/60 bg-white text-foreground hover:bg-muted/40"
-              : "border-border/40 bg-white/50 text-muted-foreground"
+                : "border-border/60 bg-background text-foreground hover:bg-muted/40"
+              : "border-border/40 bg-background/50 text-muted-foreground"
           )}
         >
           <SpectrometerMeterFill

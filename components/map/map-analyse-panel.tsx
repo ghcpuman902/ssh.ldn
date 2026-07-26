@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, type ElementType, type RefObject } from "react"
 
 import { useRevealProgress } from "@/hooks/use-reveal-progress"
 import {
@@ -220,7 +220,7 @@ const NoiseScoreCard = ({
                 <p className="w-24 shrink-0 text-xs font-medium text-foreground">
                   {meta.label}
                 </p>
-                <div className="h-3 flex-1 overflow-hidden rounded-full bg-white">
+                <div className="h-3 flex-1 overflow-hidden rounded-full bg-muted">
                   <div
                     className="h-full rounded-full"
                     style={{
@@ -719,23 +719,108 @@ const renderPlanningApplication = (application: ScorePlanningApplication) => {
   )
 }
 
-export const MapAnalysePanel = ({
+type AnalysingState = Extract<AnalyseState, { status: "analysing" }>
+
+type PrimaryBorough = ReturnType<typeof resolvePrimaryBorough>
+
+export const resolveAnalysePrimaryBorough = (
+  state: AnalyseState
+): PrimaryBorough => {
+  if (
+    state.status !== "analysing" ||
+    state.planning.status !== "done" ||
+    state.planning.data.length === 0
+  ) {
+    return null
+  }
+
+  return resolvePrimaryBorough(
+    state.planning.data.map((application) => application.planningAuthority)
+  )
+}
+
+type AnalyseHeaderProps = {
+  state: AnalysingState
+  onClose: () => void
+  primaryBorough?: PrimaryBorough
+  AddressHeading?: ElementType
+  className?: string
+}
+
+export const AnalyseHeader = ({
   state,
   onClose,
+  primaryBorough = null,
+  AddressHeading = "p",
   className,
+}: AnalyseHeaderProps) => {
+  const address =
+    state.geocode.status === "done"
+      ? state.geocode.data.normalizedAddress
+      : state.address
+
+  return (
+    <div
+      className={cn(
+        "relative border-b border-border/60 px-4 py-3 pr-12",
+        className
+      )}
+    >
+      <div className="min-w-0">
+        <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          Analyse
+        </p>
+        <AddressHeading className="mt-1 line-clamp-2 text-sm font-medium text-foreground">
+          {address}
+        </AddressHeading>
+        {state.geocode.status === "done" ? (
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {state.geocode.data.latitude.toFixed(5)},{" "}
+            {state.geocode.data.longitude.toFixed(5)} ·{" "}
+            {state.geocode.data.coordinatePrecision.replaceAll("_", " ")}
+            {primaryBorough ? ` · ${primaryBorough.name}` : ""}
+          </p>
+        ) : null}
+      </div>
+      {primaryBorough ? (
+        <BoroughLogo
+          planningAuthority={primaryBorough.name}
+          size="sm"
+          className="absolute right-10 bottom-3"
+        />
+      ) : null}
+
+      <button
+        type="button"
+        aria-label="Close analysis panel"
+        onClick={onClose}
+        className="absolute top-3 right-3 rounded-full p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+      >
+        <X className="size-4" aria-hidden="true" />
+      </button>
+    </div>
+  )
+}
+
+type AnalyseBodyProps = {
+  state: AnalysingState
+  primaryBorough?: PrimaryBorough
+  focusedNoisyPoiId?: string | null
+  onNoisyPoiHover?: (placeId: string | null) => void
+  onNoisyPoiFocus?: (poi: NearbyNoisyPoiSummary) => void
+  className?: string
+  scrollRef?: RefObject<HTMLDivElement | null>
+}
+
+export const AnalyseBody = ({
+  state,
+  primaryBorough = null,
   focusedNoisyPoiId = null,
   onNoisyPoiHover,
   onNoisyPoiFocus,
-}: MapAnalysePanelProps) => {
-  const isOpen = state.status !== "idle"
-  const primaryBorough =
-    state.status === "analysing" &&
-    state.planning.status === "done" &&
-    state.planning.data.length > 0
-      ? resolvePrimaryBorough(
-          state.planning.data.map((application) => application.planningAuthority)
-        )
-      : null
+  className,
+  scrollRef,
+}: AnalyseBodyProps) => {
   const noisyPoiScrollerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -752,7 +837,188 @@ export const MapAnalysePanel = ({
     })
   }, [focusedNoisyPoiId])
 
-  if (!isOpen) {
+  return (
+    <div
+      ref={scrollRef}
+      className={cn(
+        "min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4",
+        className
+      )}
+    >
+      {state.geocode.status === "running" ||
+      state.geocode.status === "queued" ? (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+          Finding this location…
+        </div>
+      ) : null}
+
+      {state.geocode.status === "failed" ? (
+        <p className="text-sm text-destructive">{state.geocode.message}</p>
+      ) : null}
+
+      {state.score.status === "queued" || state.score.status === "running" ? (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+          Reading noise from the map…
+        </div>
+      ) : null}
+
+      {state.score.status === "failed" ? (
+        <p className="text-sm text-muted-foreground">{state.score.message}</p>
+      ) : null}
+
+      {state.score.status === "done" ? (
+        <>
+          <NoiseScoreCard
+            score={state.score.data}
+            animationKey={`${state.address}-${state.score.data.noiseScore}`}
+          />
+
+          {state.score.data.recommendedChecks.length > 0 ? (
+            <div className="space-y-1">
+              <p className="text-xs font-medium text-muted-foreground">
+                Recommended checks
+              </p>
+              <ul className="list-disc space-y-1 pl-4 text-xs text-muted-foreground">
+                {state.score.data.recommendedChecks.map((check) => (
+                  <li key={check}>{check}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+        </>
+      ) : null}
+
+      {state.geocode.status === "done" ? (
+        <>
+          {state.noisyPois.status === "queued" ||
+          state.noisyPois.status === "running" ? (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+              Finding noisy venues on Google…
+            </div>
+          ) : null}
+
+          {state.noisyPois.status === "failed" ? (
+            <p className="text-xs text-muted-foreground">
+              {state.noisyPois.message}
+            </p>
+          ) : null}
+
+          {state.noisyPois.status === "done" &&
+          state.noisyPois.data.length > 0 ? (
+            <div className="space-y-1.5">
+              <p className="text-xs font-medium text-muted-foreground">
+                Nearby noisy venues · within {NOISY_POI_SEARCH_RADIUS_METERS}m
+              </p>
+              <div
+                ref={noisyPoiScrollerRef}
+                className="-mx-4 flex gap-2.5 overflow-x-auto px-4 pb-1 snap-x snap-mandatory scrollbar-none"
+              >
+                {state.noisyPois.data.map((poi, index) => (
+                  <NoisyPoiCard
+                    key={poi.placeId}
+                    poi={poi}
+                    index={index}
+                    isFocused={focusedNoisyPoiId === poi.placeId}
+                    onHover={(placeId) => onNoisyPoiHover?.(placeId)}
+                    onFocus={(focusedPoi) => onNoisyPoiFocus?.(focusedPoi)}
+                  />
+                ))}
+              </div>
+              {focusedNoisyPoiId
+                ? (() => {
+                    const focusedPoi = state.noisyPois.data.find(
+                      (poi) => poi.placeId === focusedNoisyPoiId
+                    )
+                    if (!focusedPoi) return null
+
+                    return (
+                      <p className="text-xs text-muted-foreground">
+                        {PROXIMITY_TIER_LABEL[focusedPoi.proximityTier]} from
+                        this address.
+                      </p>
+                    )
+                  })()
+                : null}
+            </div>
+          ) : null}
+
+          {state.noisyPois.status === "done" &&
+          state.noisyPois.data.length === 0 &&
+          hasGooglePlacesClientKey() ? (
+            <p className="text-xs text-muted-foreground">
+              No bars, clubs, or live venues found within{" "}
+              {NOISY_POI_SEARCH_RADIUS_METERS}m on Google.
+            </p>
+          ) : null}
+
+          {state.planning.status === "queued" ||
+          state.planning.status === "running" ? (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+              Loading nearby planning applications…
+            </div>
+          ) : null}
+
+          {state.planning.status === "failed" ? (
+            <p className="text-xs text-muted-foreground">
+              {state.planning.message}
+            </p>
+          ) : null}
+
+          {state.planning.status === "done" &&
+          state.planning.data.length > 0 ? (
+            <div className="space-y-1.5">
+              <p className="text-xs font-medium text-muted-foreground">
+                Nearby planning applications
+                {primaryBorough ? ` · ${primaryBorough.name}` : ""}
+              </p>
+              <ul className="space-y-1.5">
+                {state.planning.data.map((application) =>
+                  renderPlanningApplication(application)
+                )}
+              </ul>
+            </div>
+          ) : null}
+
+          {state.planning.status === "done" &&
+          state.planning.data.length === 0 ? (
+            <p className="text-xs text-muted-foreground">
+              No nearby planning applications found within 300m.
+            </p>
+          ) : null}
+        </>
+      ) : null}
+
+      {state.geocode.status === "done" &&
+      state.geocode.data.warnings.length > 0 ? (
+        <div className="space-y-1">
+          <p className="text-xs font-medium text-muted-foreground">Notes</p>
+          <ul className="space-y-1 text-xs text-muted-foreground">
+            {state.geocode.data.warnings.slice(0, 2).map((warning) => (
+              <li key={warning}>{warning}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+export const MapAnalysePanel = ({
+  state,
+  onClose,
+  className,
+  focusedNoisyPoiId = null,
+  onNoisyPoiHover,
+  onNoisyPoiFocus,
+}: MapAnalysePanelProps) => {
+  const isOpen = state.status !== "idle"
+  const primaryBorough = resolveAnalysePrimaryBorough(state)
+
+  if (!isOpen || state.status !== "analysing") {
     return null
   }
 
@@ -760,232 +1026,23 @@ export const MapAnalysePanel = ({
     <aside
       aria-label="Address analysis"
       className={cn(
-        "flex min-h-0 flex-1 flex-col overflow-hidden rounded-4xl border border-border/60 bg-white",
+        "flex min-h-0 flex-1 flex-col overflow-hidden rounded-4xl border border-border/60 bg-background",
         className
       )}
     >
       <div className="flex min-h-0 flex-1 flex-col">
-        <div className="relative border-b border-border/60 px-4 py-3 pr-12">
-          <div className="min-w-0">
-            <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-              Analyse
-            </p>
-            {state.geocode.status === "done" ? (
-              <>
-                <p className="mt-1 line-clamp-2 text-sm font-medium text-foreground">
-                  {state.geocode.data.normalizedAddress}
-                </p>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  {state.geocode.data.latitude.toFixed(5)},{" "}
-                  {state.geocode.data.longitude.toFixed(5)} ·{" "}
-                  {state.geocode.data.coordinatePrecision.replaceAll("_", " ")}
-                  {primaryBorough ? ` · ${primaryBorough.name}` : ""}
-                </p>
-              </>
-            ) : (
-              <p className="mt-1 line-clamp-2 text-sm font-medium text-foreground">
-                {state.address}
-              </p>
-            )}
-          </div>
-          {primaryBorough ? (
-            <BoroughLogo
-              planningAuthority={primaryBorough.name}
-              size="sm"
-              className="absolute right-10 bottom-3"
-            />
-          ) : null}
-
-          <button
-            type="button"
-            aria-label="Close analysis panel"
-            onClick={onClose}
-            className="absolute top-3 right-3 rounded-full p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          >
-            <X className="size-4" aria-hidden="true" />
-          </button>
-        </div>
-
-        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4">
-          {state.status === "analysing" ? (
-            <>
-              {state.geocode.status === "running" ||
-              state.geocode.status === "queued" ? (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-                  Finding this location…
-                </div>
-              ) : null}
-
-              {state.geocode.status === "failed" ? (
-                <p className="text-sm text-destructive">
-                  {state.geocode.message}
-                </p>
-              ) : null}
-
-              {state.score.status === "queued" ||
-              state.score.status === "running" ? (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-                  Reading noise from the map…
-                </div>
-              ) : null}
-
-              {state.score.status === "failed" ? (
-                <p className="text-sm text-muted-foreground">
-                  {state.score.message}
-                </p>
-              ) : null}
-
-              {state.score.status === "done" ? (() => {
-                const score = state.score.data
-
-                return (
-                  <>
-                    <NoiseScoreCard
-                      score={score}
-                      animationKey={`${state.address}-${score.noiseScore}`}
-                    />
-
-                    {score.recommendedChecks.length > 0 ? (
-                      <div className="space-y-1">
-                        <p className="text-xs font-medium text-muted-foreground">
-                          Recommended checks
-                        </p>
-                        <ul className="list-disc space-y-1 pl-4 text-xs text-muted-foreground">
-                          {score.recommendedChecks.map((check) => (
-                            <li key={check}>{check}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    ) : null}
-                  </>
-                )
-              })() : null}
-
-              {state.geocode.status === "done" ? (
-                <>
-                  {state.noisyPois.status === "queued" ||
-                  state.noisyPois.status === "running" ? (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Loader2
-                        className="size-4 animate-spin"
-                        aria-hidden="true"
-                      />
-                      Finding noisy venues on Google…
-                    </div>
-                  ) : null}
-
-                  {state.noisyPois.status === "failed" ? (
-                    <p className="text-xs text-muted-foreground">
-                      {state.noisyPois.message}
-                    </p>
-                  ) : null}
-
-                  {state.noisyPois.status === "done" &&
-                  state.noisyPois.data.length > 0 ? (
-                    <div className="space-y-1.5">
-                      <p className="text-xs font-medium text-muted-foreground">
-                        Nearby noisy venues · within{" "}
-                        {NOISY_POI_SEARCH_RADIUS_METERS}m
-                      </p>
-                      <div
-                        ref={noisyPoiScrollerRef}
-                        className="-mx-4 flex gap-2.5 overflow-x-auto px-4 pb-1 snap-x snap-mandatory scrollbar-none"
-                      >
-                        {state.noisyPois.data.map((poi, index) => (
-                          <NoisyPoiCard
-                            key={poi.placeId}
-                            poi={poi}
-                            index={index}
-                            isFocused={focusedNoisyPoiId === poi.placeId}
-                            onHover={(placeId) => onNoisyPoiHover?.(placeId)}
-                            onFocus={(focusedPoi) => onNoisyPoiFocus?.(focusedPoi)}
-                          />
-                        ))}
-                      </div>
-                      {focusedNoisyPoiId ? (() => {
-                        const focusedPoi = state.noisyPois.data.find(
-                          (poi) => poi.placeId === focusedNoisyPoiId
-                        )
-                        if (!focusedPoi) return null
-
-                        return (
-                          <p className="text-xs text-muted-foreground">
-                            {PROXIMITY_TIER_LABEL[focusedPoi.proximityTier]} from
-                            this address.
-                          </p>
-                        )
-                      })() : null}
-                    </div>
-                  ) : null}
-
-                  {state.noisyPois.status === "done" &&
-                  state.noisyPois.data.length === 0 &&
-                  hasGooglePlacesClientKey() ? (
-                    <p className="text-xs text-muted-foreground">
-                      No bars, clubs, or live venues found within{" "}
-                      {NOISY_POI_SEARCH_RADIUS_METERS}m on Google.
-                    </p>
-                  ) : null}
-
-                  {state.planning.status === "queued" ||
-                  state.planning.status === "running" ? (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Loader2
-                        className="size-4 animate-spin"
-                        aria-hidden="true"
-                      />
-                      Loading nearby planning applications…
-                    </div>
-                  ) : null}
-
-                  {state.planning.status === "failed" ? (
-                    <p className="text-xs text-muted-foreground">
-                      {state.planning.message}
-                    </p>
-                  ) : null}
-
-                  {state.planning.status === "done" &&
-                  state.planning.data.length > 0 ? (
-                    <div className="space-y-1.5">
-                      <p className="text-xs font-medium text-muted-foreground">
-                        Nearby planning applications
-                        {primaryBorough ? ` · ${primaryBorough.name}` : ""}
-                      </p>
-                      <ul className="space-y-1.5">
-                        {state.planning.data.map((application) =>
-                          renderPlanningApplication(application)
-                        )}
-                      </ul>
-                    </div>
-                  ) : null}
-
-                  {state.planning.status === "done" &&
-                  state.planning.data.length === 0 ? (
-                    <p className="text-xs text-muted-foreground">
-                      No nearby planning applications found within 300m.
-                    </p>
-                  ) : null}
-                </>
-              ) : null}
-
-              {state.geocode.status === "done" &&
-              state.geocode.data.warnings.length > 0 ? (
-                <div className="space-y-1">
-                  <p className="text-xs font-medium text-muted-foreground">
-                    Notes
-                  </p>
-                  <ul className="space-y-1 text-xs text-muted-foreground">
-                    {state.geocode.data.warnings.slice(0, 2).map((warning) => (
-                      <li key={warning}>{warning}</li>
-                    ))}
-                  </ul>
-                </div>
-              ) : null}
-            </>
-          ) : null}
-        </div>
+        <AnalyseHeader
+          state={state}
+          onClose={onClose}
+          primaryBorough={primaryBorough}
+        />
+        <AnalyseBody
+          state={state}
+          primaryBorough={primaryBorough}
+          focusedNoisyPoiId={focusedNoisyPoiId}
+          onNoisyPoiHover={onNoisyPoiHover}
+          onNoisyPoiFocus={onNoisyPoiFocus}
+        />
       </div>
     </aside>
   )

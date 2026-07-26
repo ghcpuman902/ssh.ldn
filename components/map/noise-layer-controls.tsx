@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { Info, Volume2, VolumeX } from "lucide-react"
 
 import {
@@ -21,9 +22,8 @@ import {
 } from "@/lib/map/noise-contributor-meta"
 import {
   DEFAULT_VISUAL_LAYER_VISIBILITY,
+  TRANSIT_VISUAL_LAYER_KEYS,
   VISUAL_LAYER_META,
-  VISUAL_LAYER_ORDER,
-  type VisualLayerKey,
   type VisualLayerVisibility,
 } from "@/lib/map/visual-layers"
 import type { LocalAmenityLevels } from "@/hooks/use-cursor-noise"
@@ -101,6 +101,37 @@ const buildNightlifeSegments = (
     color: LOCAL_AMENITY_META[amenity].strokeColor,
   })).filter((segment) => segment.value > 0)
 
+const useTogglePress = () => {
+  const [pressed, setPressed] = useState(false)
+
+  return {
+    pressed,
+    pressHandlers: {
+      onPointerDown: (event: React.PointerEvent<HTMLButtonElement>) => {
+        if (event.button !== 0) return
+        setPressed(true)
+      },
+      onPointerUp: () => setPressed(false),
+      onPointerLeave: () => setPressed(false),
+      onPointerCancel: () => setPressed(false),
+    },
+  }
+}
+
+const toggleSurfaceClass = (
+  active: boolean,
+  pressed: boolean,
+  shapeClass: string
+) =>
+  cn(
+    "relative flex size-full items-center justify-center overflow-hidden border border-border bg-background",
+    "transition-[opacity,transform] duration-150 ease will-change-transform",
+    "motion-reduce:transition-none",
+    shapeClass,
+    pressed ? "scale-[0.8]" : active ? "scale-100" : "scale-90",
+    active ? "opacity-100" : "opacity-40"
+  )
+
 const LayerToggle = ({
   layerKey,
   active,
@@ -119,6 +150,7 @@ const LayerToggle = ({
   onToggle: (key: LayerKey, next: boolean) => void
 }) => {
   const meta = LAYER_META[layerKey]
+  const { pressed, pressHandlers } = useTogglePress()
 
   return (
     <Tooltip>
@@ -128,29 +160,22 @@ const LayerToggle = ({
           aria-pressed={active}
           aria-label={`Toggle ${meta.label}`}
           onClick={() => onToggle(layerKey, !active)}
-          className={cn(
-            "relative flex size-8 items-center justify-center overflow-hidden rounded-full border transition-colors",
-            active ? "border-border bg-white" : "border-border/40 bg-white/50"
-          )}
+          {...pressHandlers}
+          className="relative flex size-8 cursor-pointer touch-manipulation select-none items-center justify-center rounded-full p-0"
         >
-          <NoiseLayerGaugeRing
-            active={active}
-            level={level}
-            segments={segments}
-            phase={phase}
-            color={color}
-          />
-          <span className="relative z-10 text-sm leading-none" aria-hidden="true">
-            {meta.emoji}
-          </span>
-          {!active ? (
-            <span
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center"
-            >
-              <span className="h-px w-[140%] rotate-45 bg-border/70" />
+          <span className={toggleSurfaceClass(active, pressed, "rounded-full")}>
+            <NoiseLayerGaugeRing
+              active={active}
+              level={level}
+              segments={segments}
+              phase={phase}
+              color={color}
+            />
+            <span className="relative z-10 text-sm leading-none" aria-hidden="true">
+              {meta.emoji}
             </span>
-          ) : null}
+            {!active ? <VisualLayerStrike /> : null}
+          </span>
         </button>
       </TooltipTrigger>
       <MapTooltipContent side="bottom" className="whitespace-nowrap">
@@ -160,16 +185,76 @@ const LayerToggle = ({
   )
 }
 
-const VisualLayerToggle = ({
-  layerKey,
+const VisualLayerStrike = () => (
+  <span
+    aria-hidden="true"
+    className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center"
+  >
+    <span className="h-px w-[140%] rotate-45 bg-border/70" />
+  </span>
+)
+
+const TransitLayersToggle = ({
   active,
   onToggle,
 }: {
-  layerKey: VisualLayerKey
   active: boolean
-  onToggle: (key: VisualLayerKey, next: boolean) => void
+  onToggle: (next: boolean) => void
 }) => {
-  const meta = VISUAL_LAYER_META[layerKey]
+  const { pressed, pressHandlers } = useTogglePress()
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          aria-pressed={active}
+          aria-label={
+            active
+              ? "Hide rail and TfL layers"
+              : "Show rail and TfL layers"
+          }
+          onClick={() => onToggle(!active)}
+          {...pressHandlers}
+          className="relative flex h-8 w-auto cursor-pointer touch-manipulation select-none items-center justify-center rounded-full p-0"
+        >
+          <span
+            className={toggleSurfaceClass(
+              active,
+              pressed,
+              "gap-1 rounded-full px-2.5"
+            )}
+          >
+            <span
+              className="relative z-10 flex items-center gap-1"
+              aria-hidden="true"
+            >
+              {VISUAL_LAYER_ICON.rail}
+              <span className="text-[11px] font-medium leading-none text-foreground">
+                &
+              </span>
+              {VISUAL_LAYER_ICON.tube}
+            </span>
+            {!active ? <VisualLayerStrike /> : null}
+          </span>
+        </button>
+      </TooltipTrigger>
+      <MapTooltipContent side="bottom" className="whitespace-nowrap">
+        Rail & all TfL
+      </MapTooltipContent>
+    </Tooltip>
+  )
+}
+
+const GreenSpacesToggle = ({
+  active,
+  onToggle,
+}: {
+  active: boolean
+  onToggle: (next: boolean) => void
+}) => {
+  const { pressed, pressHandlers } = useTogglePress()
+  const meta = VISUAL_LAYER_META.greenSpaces
 
   return (
     <Tooltip>
@@ -178,23 +263,25 @@ const VisualLayerToggle = ({
           type="button"
           aria-pressed={active}
           aria-label={`Toggle ${meta.label}`}
-          onClick={() => onToggle(layerKey, !active)}
-          className={cn(
-            "relative flex size-8 items-center justify-center overflow-hidden rounded-full border transition-colors",
-            active ? "border-border bg-white" : "border-border/40 bg-white/50"
-          )}
+          onClick={() => onToggle(!active)}
+          {...pressHandlers}
+          className="relative flex size-8 cursor-pointer touch-manipulation select-none items-center justify-center rounded-full p-0"
         >
-          <span className="relative z-10 flex items-center justify-center" aria-hidden="true">
-            {VISUAL_LAYER_ICON[layerKey]}
-          </span>
-          {!active ? (
+          <span
+            className={toggleSurfaceClass(
+              active,
+              pressed,
+              "rounded-full"
+            )}
+          >
             <span
+              className="relative z-10 flex items-center justify-center"
               aria-hidden="true"
-              className="pointer-events-none absolute inset-0 flex items-center justify-center"
             >
-              <span className="h-px w-[140%] rotate-45 bg-border/70" />
+              {VISUAL_LAYER_ICON.greenSpaces}
             </span>
-          ) : null}
+            {!active ? <VisualLayerStrike /> : null}
+          </span>
         </button>
       </TooltipTrigger>
       <MapTooltipContent side="bottom" className="whitespace-nowrap">
@@ -236,8 +323,23 @@ export const NoiseLayerControls = ({
     onVisibilityChange({ ...visibility, [key]: checked })
   }
 
-  const handleVisualToggle = (key: VisualLayerKey, checked: boolean) => {
-    onVisualVisibilityChange?.({ ...visualVisibility, [key]: checked })
+  const transitLayersActive = TRANSIT_VISUAL_LAYER_KEYS.some(
+    (key) => visualVisibility[key]
+  )
+
+  const handleTransitToggle = (checked: boolean) => {
+    const next = { ...visualVisibility }
+    for (const key of TRANSIT_VISUAL_LAYER_KEYS) {
+      next[key] = checked
+    }
+    onVisualVisibilityChange?.(next)
+  }
+
+  const handleGreenSpacesToggle = (checked: boolean) => {
+    onVisualVisibilityChange?.({
+      ...visualVisibility,
+      greenSpaces: checked,
+    })
   }
 
   const handleAudioToggle = () => {
@@ -251,11 +353,11 @@ export const NoiseLayerControls = ({
   return (
     <section
       aria-label="Noise map layers"
-      className="inline-flex w-fit max-w-[calc(100vw-2rem)] flex-col items-end rounded-2xl bg-transparent"
+      className="pointer-events-none inline-flex w-fit max-w-[calc(100vw-2rem)] flex-col items-end rounded-2xl bg-transparent"
     >
       <NoiseTimeGrid value={timeSlot} onChange={onTimeSlotChange} />
 
-      <div className="mt-3 mb-2 flex w-full items-center justify-end gap-1">
+      <div className="pointer-events-auto mt-3 mb-2 flex w-fit self-end items-center justify-end gap-1">
         <Tooltip>
           <TooltipTrigger asChild>
             <button
@@ -268,10 +370,10 @@ export const NoiseLayerControls = ({
               }
               onClick={handleAudioToggle}
               className={cn(
-                "flex size-4 shrink-0 items-center justify-center rounded-full border border-border/50 bg-white shadow-sm transition-colors",
+                "flex size-4 shrink-0 items-center justify-center rounded-full border border-border/50 bg-background shadow-sm transition-colors",
                 audioEnabled
-                  ? "text-primary hover:bg-white/90"
-                  : "text-muted-foreground hover:bg-white/90 hover:text-foreground"
+                  ? "text-primary hover:bg-muted"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
               )}
             >
               {audioEnabled ? (
@@ -308,7 +410,7 @@ export const NoiseLayerControls = ({
       <div
         role="group"
         aria-label="Noise layer visibility"
-        className="flex w-fit flex-row gap-1"
+        className="pointer-events-auto flex w-fit flex-row gap-1"
       >
         {LAYER_ORDER.map((key) => {
           const meta = LAYER_META[key]
@@ -343,7 +445,7 @@ export const NoiseLayerControls = ({
         })}
       </div>
 
-      <div className="mt-3 mb-2 flex w-full items-center justify-end gap-0.5">
+      <div className="pointer-events-auto mt-3 mb-2 flex w-fit self-end items-center justify-end gap-0.5">
         <p className="text-xs font-medium text-foreground">Visual layers</p>
         <Tooltip>
           <TooltipTrigger asChild>
@@ -367,16 +469,16 @@ export const NoiseLayerControls = ({
       <div
         role="group"
         aria-label="Visual layer visibility"
-        className="flex w-fit flex-row gap-1"
+        className="pointer-events-auto flex w-fit flex-row gap-1"
       >
-        {VISUAL_LAYER_ORDER.map((key) => (
-          <VisualLayerToggle
-            key={key}
-            layerKey={key}
-            active={visualVisibility[key]}
-            onToggle={handleVisualToggle}
-          />
-        ))}
+        <TransitLayersToggle
+          active={transitLayersActive}
+          onToggle={handleTransitToggle}
+        />
+        <GreenSpacesToggle
+          active={visualVisibility.greenSpaces}
+          onToggle={handleGreenSpacesToggle}
+        />
       </div>
     </section>
   )

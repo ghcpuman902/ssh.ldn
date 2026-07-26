@@ -5,6 +5,7 @@ import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 import { SiteJsonLd } from "@/components/site-json-ld"
 import { ThemeProvider } from "@/components/theme-provider"
+import { ThemeShortcuts } from "@/components/theme-shortcuts"
 import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import {
@@ -64,10 +65,12 @@ export default function RootLayout({
       <body>
         <SiteJsonLd />
         <ThemeProvider>
+          <ThemeShortcuts />
           <TooltipProvider>{children}</TooltipProvider>
+          <Toaster position="top-center" />
         </ThemeProvider>
-        <Toaster position="top-center" />
-        <Analytics />
+        {/* `/_vercel/insights` is only injected on Vercel — skip local `next start`. */}
+        {process.env.VERCEL ? <Analytics /> : null}
       </body>
     </html>
   )

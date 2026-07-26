@@ -61,14 +61,26 @@ const loadNightlifeCell = async (row: number, col: number, signal?: AbortSignal)
   )
 }
 
+export type NightlifeViewportState = {
+  geoJson: NightlifeFeatureCollection | null
+  /** True while a viewport batch is in flight. */
+  isFetching: boolean
+  /** True after the first viewport load attempt has finished (success or empty). */
+  hasSettledInitial: boolean
+}
+
 export const useViewportNightlifeGeoJson = (
   mapRef: RefObject<MapRef | null>,
   enabled: boolean
-) => {
+): NightlifeViewportState => {
   const fetchedKeysRef = useRef(new Set<string>())
   const [geoJson, setGeoJson] = useState<NightlifeFeatureCollection | null>(null)
+  const [isFetching, setIsFetching] = useState(false)
+  const [hasSettledInitial, setHasSettledInitial] = useState(false)
   const abortControllersRef = useRef(new Set<AbortController>())
   const processingRef = useRef(false)
+  const mapRefStable = useRef(mapRef)
+  mapRefStable.current = mapRef
 
   const fetchGridCell = useCallback(async (row: number, col: number) => {
     const key = osmGridCellKey(row, col)
@@ -84,14 +96,14 @@ export const useViewportNightlifeGeoJson = (
       fetchedKeysRef.current.add(key)
       setGeoJson((current) => mergeNightlifeCollections(current, data))
     } catch {
-      // keep previously merged features visible
+      // Aborted or failed — leave cell unfetched so a later pass can retry
     } finally {
       abortControllersRef.current.delete(controller)
     }
   }, [])
 
   const loadForViewport = useCallback(async () => {
-    const map = mapRef.current?.getMap()
+    const map = mapRefStable.current.current?.getMap()
     if (!map || processingRef.current) return
 
     const bounds = map.getBounds()
@@ -112,9 +124,13 @@ export const useViewportNightlifeGeoJson = (
       LONDON_CENTER
     )
 
-    if (pending.length === 0) return
+    if (pending.length === 0) {
+      setHasSettledInitial(true)
+      return
+    }
 
     processingRef.current = true
+    setIsFetching(true)
     const limit = osmGridFetchLimitForZoom(zoom)
     const batch = pending.slice(0, limit)
 
@@ -124,6 +140,8 @@ export const useViewportNightlifeGeoJson = (
       }
     } finally {
       processingRef.current = false
+      setIsFetching(false)
+      setHasSettledInitial(true)
     }
 
     const remaining = pending.length - batch.length
@@ -132,12 +150,15 @@ export const useViewportNightlifeGeoJson = (
         void loadForViewport()
       }, BATCH_GAP_MS)
     }
-  }, [fetchGridCell, mapRef])
+  }, [fetchGridCell])
+
+  const loadForViewportRef = useRef(loadForViewport)
+  loadForViewportRef.current = loadForViewport
 
   useEffect(() => {
     if (!enabled) return
 
-    const map = mapRef.current?.getMap()
+    const map = mapRefStable.current.current?.getMap()
     if (!map) return
 
     let timeout: ReturnType<typeof setTimeout> | undefined
@@ -145,7 +166,7 @@ export const useViewportNightlifeGeoJson = (
     const scheduleLoad = () => {
       if (timeout) clearTimeout(timeout)
       timeout = setTimeout(() => {
-        void loadForViewport()
+        void loadForViewportRef.current()
       }, DEBOUNCE_MS)
     }
 
@@ -160,7 +181,7 @@ export const useViewportNightlifeGeoJson = (
       }
       abortControllersRef.current.clear()
     }
-  }, [enabled, loadForViewport, mapRef])
+  }, [enabled])
 
-  return geoJson
+  return { geoJson, isFetching, hasSettledInitial }
 }
