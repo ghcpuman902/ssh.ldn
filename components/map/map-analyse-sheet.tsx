@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState, type Ref } from "react"
+import { useEffect, useState, type Ref } from "react"
 import { Drawer } from "vaul"
 
 import {
@@ -17,15 +17,10 @@ import {
 import type { NearbyNoisyPoiSummary } from "@/lib/map/google-nearby-noisy-poi"
 import { cn } from "@/lib/utils"
 
-/** Fully off-screen — selecting this snap means the user dismissed the sheet. */
-const SNAP_CLOSED = 0
 const SNAP_PEEK = "9.5rem"
 const SNAP_HALF = 0.5
 const SNAP_FULL = 0.92
-const SNAP_POINTS = [SNAP_CLOSED, SNAP_PEEK, SNAP_HALF, SNAP_FULL] as const
-
-const isClosedSnap = (point: number | string | null | undefined) =>
-  point === SNAP_CLOSED || point === null
+const SNAP_POINTS = [SNAP_PEEK, SNAP_HALF, SNAP_FULL] as const
 
 type MapAnalyseSheetProps = {
   open: boolean
@@ -49,156 +44,102 @@ export const MapAnalyseSheet = ({
   onNoisyPoiFocus,
 }: MapAnalyseSheetProps) => {
   const [snap, setSnap] = useState<number | string | null>(SNAP_HALF)
-  const contentRef = useRef<HTMLDivElement | null>(null)
-  const dismissRef = useRef(false)
-  const onCloseRef = useRef(onClose)
-  onCloseRef.current = onClose
-
   const primaryBorough = resolveAnalysePrimaryBorough(state)
   const isAnalysing = state.status === "analysing"
 
-  const handleDismiss = () => {
-    if (dismissRef.current) return
-    dismissRef.current = true
-    setSnap(SNAP_CLOSED)
-    onCloseRef.current()
-  }
-
   useEffect(() => {
-    if (!open) {
-      dismissRef.current = false
-      return
-    }
+    if (!open) return
     setSnap(SNAP_HALF)
   }, [open])
 
   const handleSnapChange = (point: number | string | null) => {
-    if (isClosedSnap(point)) {
-      handleDismiss()
+    // Dismiss is close-button only — ignore null / out-of-range snap attempts.
+    if (point === null || !SNAP_POINTS.includes(point as (typeof SNAP_POINTS)[number])) {
       return
     }
     setSnap(point)
   }
 
-  const handleOpenChange = (nextOpen: boolean) => {
-    if (nextOpen) return
-    handleDismiss()
-  }
-
-  // Vaul with snap points can translate the sheet off-screen on drag without
-  // always calling closeDrawer. If it settles mostly below the viewport, treat
-  // that as a dismiss so pin + URL clear with the UI.
-  useEffect(() => {
-    if (!open) return
-
-    const content = contentRef.current
-    if (!content) return
-
-    const maybeDismissFromTransform = () => {
-      if (dismissRef.current) return
-
-      const transform = getComputedStyle(content).transform
-      if (!transform || transform === "none") return
-
-      const match = /matrix(?:3d)?\((.+)\)/.exec(transform)
-      if (!match) return
-
-      const parts = match[1].split(",").map((part) => Number(part.trim()))
-      const translateY = parts.length === 16 ? parts[13] : parts[5]
-      if (!Number.isFinite(translateY)) return
-
-      const height = content.getBoundingClientRect().height || window.innerHeight
-      if (translateY > height * 0.85) {
-        handleDismiss()
-      }
-    }
-
-    const handlePointerUp = () => {
-      window.requestAnimationFrame(maybeDismissFromTransform)
-    }
-
-    content.addEventListener("pointerup", handlePointerUp)
-    content.addEventListener("touchend", handlePointerUp)
-    content.addEventListener("transitionend", maybeDismissFromTransform)
-
-    return () => {
-      content.removeEventListener("pointerup", handlePointerUp)
-      content.removeEventListener("touchend", handlePointerUp)
-      content.removeEventListener("transitionend", maybeDismissFromTransform)
-    }
-  }, [open])
-
   return (
     <Drawer.Root
       open={open}
-      onOpenChange={handleOpenChange}
-      onClose={handleDismiss}
-      onAnimationEnd={(nextOpen) => {
+      // Swipe-dismiss is intentionally off; close via the header X only.
+      onOpenChange={(nextOpen) => {
         if (nextOpen) return
-        handleDismiss()
+        // Block Vaul from closing via gesture / escape — keep analyse state.
       }}
       modal={false}
-      dismissible
+      dismissible={false}
+      handleOnly
       snapPoints={[...SNAP_POINTS]}
       activeSnapPoint={snap}
       setActiveSnapPoint={handleSnapChange}
-      snapToSequentialPoint={false}
+      snapToSequentialPoint
       repositionInputs={false}
     >
       <Drawer.Portal>
         <Drawer.Content
-          ref={contentRef}
+          // Full-height snap panel would otherwise steal map hits above the
+          // visible sheet. Pass events through; only the painted card captures.
           className={cn(
-            "fixed inset-x-0 bottom-0 z-40 flex h-[92svh] flex-col outline-none",
-            "rounded-t-4xl border border-border/60 bg-background md:hidden"
+            "pointer-events-none fixed inset-x-0 bottom-0 z-40 flex h-[92svh] flex-col outline-none",
+            "md:hidden"
           )}
+          onOpenAutoFocus={(event) => event.preventDefault()}
         >
-          <Drawer.Handle className="mx-auto mt-2 mb-1 h-1.5 w-12 rounded-full bg-muted" />
-          <Drawer.Description className="sr-only">
-            Address noise analysis sheet. Drag the handle to expand or collapse.
-          </Drawer.Description>
-
           <div
-            className="shrink-0 px-3 pb-2"
-            onFocusCapture={() => setSnap(SNAP_FULL)}
+            className={cn(
+              "pointer-events-auto flex min-h-0 flex-1 flex-col overflow-hidden",
+              "rounded-t-4xl border border-border/60 bg-background"
+            )}
           >
-            <MapSearchBar
-              ref={searchBarRef}
-              variant="docked"
-              instanceId="mobile-docked"
-              {...searchBarProps}
-              onExpandedChange={(expanded) => {
-                searchBarProps.onExpandedChange?.(expanded)
-                if (expanded) {
-                  setSnap(SNAP_FULL)
-                }
-              }}
-            />
-          </div>
+            <Drawer.Handle className="mx-auto mt-2 mb-1 h-1.5 w-12 shrink-0 rounded-full bg-muted" />
+            <Drawer.Title className="sr-only">Address analysis</Drawer.Title>
+            <Drawer.Description className="sr-only">
+              Drag the handle to resize. Use the close button to dismiss.
+            </Drawer.Description>
 
-          {isAnalysing ? (
-            <>
-              <AnalyseHeader
-                state={state}
-                onClose={handleDismiss}
-                primaryBorough={primaryBorough}
-                AddressHeading={Drawer.Title}
-                className="shrink-0 border-border/60"
+            <div
+              className="shrink-0 px-3 pb-2"
+              onFocusCapture={() => setSnap(SNAP_FULL)}
+            >
+              <MapSearchBar
+                ref={searchBarRef}
+                variant="docked"
+                instanceId="mobile-docked"
+                {...searchBarProps}
+                onExpandedChange={(expanded) => {
+                  searchBarProps.onExpandedChange?.(expanded)
+                  if (expanded) {
+                    setSnap(SNAP_FULL)
+                  }
+                }}
               />
-              <div
-                data-vaul-no-drag=""
-                className="flex min-h-0 flex-1 flex-col overflow-hidden"
-              >
-                <AnalyseBody
+            </div>
+
+            {isAnalysing ? (
+              <>
+                <AnalyseHeader
                   state={state}
+                  onClose={onClose}
                   primaryBorough={primaryBorough}
-                  focusedNoisyPoiId={focusedNoisyPoiId}
-                  onNoisyPoiHover={onNoisyPoiHover}
-                  onNoisyPoiFocus={onNoisyPoiFocus}
+                  className="shrink-0 border-border/60"
                 />
-              </div>
-            </>
-          ) : null}
+                <div
+                  data-vaul-no-drag=""
+                  className="flex min-h-0 flex-1 flex-col overflow-hidden"
+                >
+                  <AnalyseBody
+                    state={state}
+                    primaryBorough={primaryBorough}
+                    focusedNoisyPoiId={focusedNoisyPoiId}
+                    onNoisyPoiHover={onNoisyPoiHover}
+                    onNoisyPoiFocus={onNoisyPoiFocus}
+                  />
+                </div>
+              </>
+            ) : null}
+          </div>
         </Drawer.Content>
       </Drawer.Portal>
     </Drawer.Root>
