@@ -1,4 +1,14 @@
-import type { LngLatBoundsLike, StyleSpecification } from "maplibre-gl"
+import type { LngLatBoundsLike } from "maplibre-gl"
+
+export {
+  BASEMAP_LABELS_LAYER_ID,
+  getMapStyle,
+  MAP_TILE_STYLES,
+  NOISE_OVERLAY_SLOT_ID,
+  RAIL_UNDERLAY_SLOT_ID,
+  TRANSIT_OVERLAY_SLOT_ID,
+  type MapTheme,
+} from "@/lib/map/basemap-style"
 
 export const LONDON_CENTER = {
   longitude: -0.118,
@@ -38,107 +48,13 @@ export const isWithinLondonBounds = (latitude: number, longitude: number) =>
   latitude <= LONDON_BBOX.north
 
 const OSM_ATTRIBUTION =
-  "© OpenStreetMap contributors · © CARTO"
+  "© OpenStreetMap contributors · © OpenFreeMap"
 
-/**
- * High-zoom label overlay kicks in here — below this, small street labels stay
- * under heatmaps as part of the full basemap.
- */
-export const BASEMAP_LABEL_OVERLAY_MIN_ZOOM = 14
-
-/** Shared opacity for the high-zoom label overlay. */
-export const BASEMAP_LABEL_OVERLAY_OPACITY = 0.7
-
-/** Insert noise/POI layers before this id so labels stay on top. */
-export const BASEMAP_LABELS_LAYER_ID = "basemap-labels"
-
-const BASEMAP_PAINT = {
-  light: {
-    "raster-contrast": 0.08,
-    "raster-fade-duration": 0,
-  },
-  dark: {
-    "raster-contrast": 0.06,
-    "raster-fade-duration": 0,
-  },
-} as const
-
-/** CARTO bakes halos/shadows into label tiles — only fade + opacity here. */
-const BASEMAP_LABELS_PAINT = {
-  "raster-opacity": BASEMAP_LABEL_OVERLAY_OPACITY,
-  "raster-fade-duration": 0,
-} as const
-
-const createBasemapStyle = (
-  allTiles: string[],
-  labelTiles: string[],
-  name: string,
-  theme: "light" | "dark"
-): StyleSpecification => ({
-  version: 8,
-  name,
-  sources: {
-    basemap: {
-      type: "raster",
-      tiles: allTiles,
-      tileSize: 256,
-      attribution: OSM_ATTRIBUTION,
-    },
-    "basemap-labels-src": {
-      type: "raster",
-      tiles: labelTiles,
-      tileSize: 256,
-      attribution: OSM_ATTRIBUTION,
-    },
-  },
-  layers: [
-    {
-      id: "basemap",
-      type: "raster",
-      source: "basemap",
-      minzoom: 0,
-      maxzoom: 20,
-      paint: BASEMAP_PAINT[theme],
-    },
-    {
-      id: BASEMAP_LABELS_LAYER_ID,
-      type: "raster",
-      source: "basemap-labels-src",
-      minzoom: BASEMAP_LABEL_OVERLAY_MIN_ZOOM,
-      maxzoom: 20,
-      paint: BASEMAP_LABELS_PAINT,
-    },
-  ],
-})
-
-/**
- * Full Positron / Dark Matter basemap with a high-zoom label overlay above heatmaps.
- * Positron/Dark Matter label tiles ship with subtle baked-in halos — no extra passes.
- */
-export const MAP_TILE_STYLES = {
-  light: createBasemapStyle(
-    ["https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"],
-    ["https://basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png"],
-    "positron-quiet",
-    "light"
-  ),
-  dark: createBasemapStyle(
-    ["https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"],
-    ["https://basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png"],
-    "dark-matter-quiet",
-    "dark"
-  ),
-} as const
-
-export type MapTheme = keyof typeof MAP_TILE_STYLES
-
-export const getMapStyle = (theme: MapTheme = "light") => MAP_TILE_STYLES[theme]
-
-/** Retina-aware canvas scale; capped to balance sharpness and GPU cost. */
+/** Retina-aware canvas scale; cap at 2× so first paint stays sharp without 3× tile cost. */
 export const getMapPixelRatio = () => {
   if (typeof window === "undefined") return 1
 
-  return Math.min(Math.max(window.devicePixelRatio || 1, 1), 3)
+  return Math.min(Math.max(window.devicePixelRatio || 1, 1), 2)
 }
 
 export const MAP_CONFIG = {

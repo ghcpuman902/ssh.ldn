@@ -1,3 +1,5 @@
+import { getCache } from "@vercel/functions";
+
 import {
   NOISE_TILE_MAX_ZOOM,
   NOISE_TILE_MIN_ZOOM,
@@ -23,6 +25,46 @@ const tileSource = (): "local" | "live" | "auto" => {
 };
 
 const TILE_SIZE = 256;
+const TILE_RUNTIME_TTL_SECONDS = 86_400;
+
+const tileRuntimeKey = (
+  kind: DefraMapKind,
+  period: DefraNoisePeriod,
+  z: number,
+  x: number,
+  y: number
+) => `${kind}:${period}:${z}:${x}:${y}`;
+
+const readTileRuntimeCache = async (key: string) => {
+  try {
+    const cached = await getCache({ namespace: "defra-tiles" }).get(key);
+    if (typeof cached !== "string" || cached.length === 0) return null;
+
+    const buffer = Buffer.from(cached, "base64");
+    return buffer.buffer.slice(
+      buffer.byteOffset,
+      buffer.byteOffset + buffer.byteLength
+    );
+  } catch {
+    return null;
+  }
+};
+
+const writeTileRuntimeCache = async (key: string, data: ArrayBuffer) => {
+  try {
+    await getCache({ namespace: "defra-tiles" }).set(
+      key,
+      Buffer.from(data).toString("base64"),
+      {
+        ttl: TILE_RUNTIME_TTL_SECONDS,
+        tags: ["defra-tile"],
+        name: key,
+      }
+    );
+  } catch {
+    // Runtime Cache unavailable locally — disk / WMS still serve the tile.
+  }
+};
 
 export const fetchDefraWmsTile = async ({
   kind,
@@ -44,6 +86,7 @@ export const fetchDefraWmsTile = async ({
   }
 
   const source = tileSource();
+  const runtimeKey = tileRuntimeKey(kind, period, z, x, y);
 
   if (source !== "live") {
     const local = await readLocalNoiseTile({ kind, period, z, x, y });
@@ -52,6 +95,9 @@ export const fetchDefraWmsTile = async ({
       throw new Error(`Local noise tile missing: ${kind}/${period}/${z}/${x}/${y}`);
     }
   }
+
+  const fromRuntime = await readTileRuntimeCache(runtimeKey);
+  if (fromRuntime) return fromRuntime;
 
   const dataset = DEFRA_MAP_LAYERS[kind];
   const wms = resolveDefraWmsConfig(kind, period);
@@ -93,6 +139,8 @@ export const fetchDefraWmsTile = async ({
   if (z > NOISE_TILE_PRECACHE_MAX_ZOOM) {
     void writeLocalNoiseTile({ kind, period, z, x, y }, buffer);
   }
+
+  void writeTileRuntimeCache(runtimeKey, buffer);
 
   return buffer;
 };

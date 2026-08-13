@@ -6,11 +6,11 @@ import type { MapRef } from "react-map-gl/maplibre"
 import type {
   GreenSpaceFeatureCollection,
   RailLineFeatureCollection,
-  RailStationFeatureCollection,
   TubeLineFeatureCollection,
   TubeStationFeatureCollection,
 } from "@/lib/map/geojson-types"
 import type { VisualLayerVisibility } from "@/lib/map/visual-layers"
+import { isStationSketchLines } from "@/lib/map/transit-sketch"
 import {
   useStaticGeoJson,
   useViewportOsmGeoJson,
@@ -23,7 +23,6 @@ type TransitGeometryBundle = {
 
 export type VisualLayerData = {
   railLines: RailLineFeatureCollection | null
-  railStations: RailStationFeatureCollection | null
   tubeLines: TubeLineFeatureCollection | null
   tubeStations: TubeStationFeatureCollection | null
   overgroundLines: TubeLineFeatureCollection | null
@@ -37,13 +36,27 @@ export type VisualLayerData = {
   greenSpaces: GreenSpaceFeatureCollection | null
 }
 
-const TRANSIT_PREFETCH_STAGGER_MS = 450
+const PREVIEW_STAGGER_MS = 140
+const FULL_STAGGER_MS = 380
+
+const TRANSIT_PREVIEW_URLS = {
+  tube: "/api/map/tube-geometry?lod=preview&v=3",
+  overground: "/api/map/overground-geometry?lod=preview&v=3",
+  elizabeth: "/api/map/elizabeth-geometry?lod=preview&v=3",
+  dlr: "/api/map/dlr-geometry?lod=preview&v=3",
+  tram: "/api/map/tram-geometry?lod=preview&v=3",
+} as const
+
+const TRANSIT_FULL_URLS = {
+  tube: "/api/map/tube-geometry",
+  overground: "/api/map/overground-geometry",
+  elizabeth: "/api/map/elizabeth-geometry",
+  dlr: "/api/map/dlr-geometry",
+  tram: "/api/map/tram-geometry",
+} as const
 
 const buildRailLinesUrl = (row: number, col: number) =>
   `/api/discovery/osm/rail-visual?row=${row}&col=${col}&layer=lines`
-
-const buildRailStationsUrl = (row: number, col: number) =>
-  `/api/discovery/osm/rail-visual?row=${row}&col=${col}&layer=stations`
 
 const buildGreenSpacesUrl = (row: number, col: number) =>
   `/api/discovery/osm/green-spaces?row=${row}&col=${col}`
@@ -52,132 +65,204 @@ const getRailLineFeatureId = (
   feature: RailLineFeatureCollection["features"][number]
 ) => String(feature.id ?? feature.properties.name)
 
-const getRailStationFeatureId = (
-  feature: RailStationFeatureCollection["features"][number]
-) => feature.properties.featureId
-
 const getGreenSpaceFeatureId = (
   feature: GreenSpaceFeatureCollection["features"][number]
 ) => feature.properties.featureId
 
+const pickTransitLayer = (
+  preview: TransitGeometryBundle | null,
+  full: TransitGeometryBundle | null,
+  visible: boolean
+) => {
+  if (!visible) {
+    return { lines: null, stations: null }
+  }
+
+  return {
+    lines:
+      full?.lines ??
+      (isStationSketchLines(preview?.lines) ? null : (preview?.lines ?? null)),
+    stations: full?.stations ?? preview?.stations ?? null,
+  }
+}
+
+type UseVisualLayerDataOptions = {
+  backgroundPrefetch: boolean
+  lineUpgrade: boolean
+}
+
 /**
- * Visual layers are hidden by default. Once `backgroundPrefetch` turns on
- * (quiet-gated in MapShell after nightlife settles), data warms in the
- * background so toggles render quickly. Transit geometry URLs are staggered
- * so they do not all hit the network at once.
+ * First view fetches station dots + one low-poly spine per line.
+ * Higher-res unique-track geometry replaces it after `lineUpgrade`.
  */
 export const useVisualLayerData = (
   mapRef: RefObject<MapRef | null>,
   enabled: boolean,
   visibility: VisualLayerVisibility,
-  backgroundPrefetch: boolean,
+  { backgroundPrefetch, lineUpgrade }: UseVisualLayerDataOptions
 ): VisualLayerData => {
-  /** 0 = none; 1..5 unlock tube → overground → elizabeth → dlr → tram prefetch. */
-  const [transitPrefetchSlot, setTransitPrefetchSlot] = useState(0)
+  const [previewSlot, setPreviewSlot] = useState(0)
+  const [fullSlot, setFullSlot] = useState(0)
 
   useEffect(() => {
-    if (!backgroundPrefetch) {
-      setTransitPrefetchSlot(0)
+    if (!enabled) {
+      setPreviewSlot(0)
       return
     }
 
-    setTransitPrefetchSlot(1)
+    setPreviewSlot(1)
     const timers = [2, 3, 4, 5].map((slot, index) =>
       window.setTimeout(
-        () => setTransitPrefetchSlot(slot),
-        (index + 1) * TRANSIT_PREFETCH_STAGGER_MS
+        () => setPreviewSlot(slot),
+        (index + 1) * PREVIEW_STAGGER_MS
       )
     )
 
     return () => {
       for (const timer of timers) window.clearTimeout(timer)
     }
-  }, [backgroundPrefetch])
+  }, [enabled])
+
+  useEffect(() => {
+    if (!lineUpgrade) {
+      setFullSlot(0)
+      return
+    }
+
+    setFullSlot(1)
+    const timers = [2, 3, 4, 5].map((slot, index) =>
+      window.setTimeout(
+        () => setFullSlot(slot),
+        (index + 1) * FULL_STAGGER_MS
+      )
+    )
+
+    return () => {
+      for (const timer of timers) window.clearTimeout(timer)
+    }
+  }, [lineUpgrade])
+
+  const deferOsmCells = enabled && (lineUpgrade || backgroundPrefetch)
 
   const railLines = useViewportOsmGeoJson<RailLineFeatureCollection>({
     mapRef,
-    enabled: enabled && (visibility.rail || backgroundPrefetch),
+    enabled: deferOsmCells,
     buildUrl: buildRailLinesUrl,
     getFeatureId: getRailLineFeatureId,
   })
 
-  const railStations = useViewportOsmGeoJson<RailStationFeatureCollection>({
-    mapRef,
-    enabled: enabled && (visibility.rail || backgroundPrefetch),
-    buildUrl: buildRailStationsUrl,
-    getFeatureId: getRailStationFeatureId,
-  })
-
   const greenSpaces = useViewportOsmGeoJson<GreenSpaceFeatureCollection>({
     mapRef,
-    enabled: enabled && (visibility.greenSpaces || backgroundPrefetch),
+    enabled: deferOsmCells && (visibility.greenSpaces || backgroundPrefetch),
     buildUrl: buildGreenSpacesUrl,
     getFeatureId: getGreenSpaceFeatureId,
   })
 
-  const tubeGeometry = useStaticGeoJson<TransitGeometryBundle>(
-    "/api/map/tube-geometry",
-    enabled && (visibility.tube || transitPrefetchSlot >= 1),
+  const tubePreview = useStaticGeoJson<TransitGeometryBundle>(
+    TRANSIT_PREVIEW_URLS.tube,
+    enabled && previewSlot >= 1 && (visibility.tube || backgroundPrefetch),
+    "high"
+  )
+  const overgroundPreview = useStaticGeoJson<TransitGeometryBundle>(
+    TRANSIT_PREVIEW_URLS.overground,
+    enabled && previewSlot >= 2 && (visibility.overground || backgroundPrefetch)
+  )
+  const elizabethPreview = useStaticGeoJson<TransitGeometryBundle>(
+    TRANSIT_PREVIEW_URLS.elizabeth,
+    enabled && previewSlot >= 3 && (visibility.elizabeth || backgroundPrefetch)
+  )
+  const dlrPreview = useStaticGeoJson<TransitGeometryBundle>(
+    TRANSIT_PREVIEW_URLS.dlr,
+    enabled && previewSlot >= 4 && (visibility.dlr || backgroundPrefetch)
+  )
+  const tramPreview = useStaticGeoJson<TransitGeometryBundle>(
+    TRANSIT_PREVIEW_URLS.tram,
+    enabled && previewSlot >= 5 && (visibility.tram || backgroundPrefetch)
   )
 
-  const overgroundGeometry = useStaticGeoJson<TransitGeometryBundle>(
-    "/api/map/overground-geometry",
-    enabled && (visibility.overground || transitPrefetchSlot >= 2),
+  const tubeFull = useStaticGeoJson<TransitGeometryBundle>(
+    TRANSIT_FULL_URLS.tube,
+    enabled &&
+      lineUpgrade &&
+      fullSlot >= 1 &&
+      (visibility.tube || backgroundPrefetch),
+    "low"
+  )
+  const overgroundFull = useStaticGeoJson<TransitGeometryBundle>(
+    TRANSIT_FULL_URLS.overground,
+    enabled &&
+      lineUpgrade &&
+      fullSlot >= 2 &&
+      (visibility.overground || backgroundPrefetch),
+    "low"
+  )
+  const elizabethFull = useStaticGeoJson<TransitGeometryBundle>(
+    TRANSIT_FULL_URLS.elizabeth,
+    enabled &&
+      lineUpgrade &&
+      fullSlot >= 3 &&
+      (visibility.elizabeth || backgroundPrefetch),
+    "low"
+  )
+  const dlrFull = useStaticGeoJson<TransitGeometryBundle>(
+    TRANSIT_FULL_URLS.dlr,
+    enabled &&
+      lineUpgrade &&
+      fullSlot >= 4 &&
+      (visibility.dlr || backgroundPrefetch),
+    "low"
+  )
+  const tramFull = useStaticGeoJson<TransitGeometryBundle>(
+    TRANSIT_FULL_URLS.tram,
+    enabled &&
+      lineUpgrade &&
+      fullSlot >= 5 &&
+      (visibility.tram || backgroundPrefetch),
+    "low"
   )
 
-  const elizabethGeometry = useStaticGeoJson<TransitGeometryBundle>(
-    "/api/map/elizabeth-geometry",
-    enabled && (visibility.elizabeth || transitPrefetchSlot >= 3),
+  const tube = pickTransitLayer(tubePreview, tubeFull, visibility.tube)
+  const overground = pickTransitLayer(
+    overgroundPreview,
+    overgroundFull,
+    visibility.overground
   )
-
-  const dlrGeometry = useStaticGeoJson<TransitGeometryBundle>(
-    "/api/map/dlr-geometry",
-    enabled && (visibility.dlr || transitPrefetchSlot >= 4),
+  const elizabeth = pickTransitLayer(
+    elizabethPreview,
+    elizabethFull,
+    visibility.elizabeth
   )
-
-  const tramGeometry = useStaticGeoJson<TransitGeometryBundle>(
-    "/api/map/tram-geometry",
-    enabled && (visibility.tram || transitPrefetchSlot >= 5),
-  )
+  const dlr = pickTransitLayer(dlrPreview, dlrFull, visibility.dlr)
+  const tram = pickTransitLayer(tramPreview, tramFull, visibility.tram)
 
   return useMemo(
     () => ({
       railLines,
-      railStations,
-      tubeLines: visibility.tube ? (tubeGeometry?.lines ?? null) : null,
-      tubeStations: visibility.tube ? (tubeGeometry?.stations ?? null) : null,
-      overgroundLines: visibility.overground
-        ? (overgroundGeometry?.lines ?? null)
-        : null,
-      overgroundStations: visibility.overground
-        ? (overgroundGeometry?.stations ?? null)
-        : null,
-      elizabethLines: visibility.elizabeth
-        ? (elizabethGeometry?.lines ?? null)
-        : null,
-      elizabethStations: visibility.elizabeth
-        ? (elizabethGeometry?.stations ?? null)
-        : null,
-      dlrLines: visibility.dlr ? (dlrGeometry?.lines ?? null) : null,
-      dlrStations: visibility.dlr ? (dlrGeometry?.stations ?? null) : null,
-      tramLines: visibility.tram ? (tramGeometry?.lines ?? null) : null,
-      tramStations: visibility.tram ? (tramGeometry?.stations ?? null) : null,
+      tubeLines: tube.lines,
+      tubeStations: tube.stations,
+      overgroundLines: overground.lines,
+      overgroundStations: overground.stations,
+      elizabethLines: elizabeth.lines,
+      elizabethStations: elizabeth.stations,
+      dlrLines: dlr.lines,
+      dlrStations: dlr.stations,
+      tramLines: tram.lines,
+      tramStations: tram.stations,
       greenSpaces,
     }),
     [
-      dlrGeometry,
-      elizabethGeometry,
+      dlr.lines,
+      dlr.stations,
+      elizabeth.lines,
+      elizabeth.stations,
       greenSpaces,
-      overgroundGeometry,
+      overground.lines,
+      overground.stations,
       railLines,
-      railStations,
-      tramGeometry,
-      tubeGeometry,
-      visibility.dlr,
-      visibility.elizabeth,
-      visibility.overground,
-      visibility.tram,
-      visibility.tube,
-    ],
+      tram.lines,
+      tram.stations,
+      tube.lines,
+      tube.stations,
+    ]
   )
 }

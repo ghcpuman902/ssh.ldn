@@ -194,7 +194,7 @@ const VisualLayerStrike = () => (
   </span>
 )
 
-const TransitLayersToggle = ({
+const TubeLayerToggle = ({
   active,
   onToggle,
 }: {
@@ -211,28 +211,20 @@ const TransitLayersToggle = ({
           aria-pressed={active}
           aria-label={
             active
-              ? "Hide rail and TfL layers"
-              : "Show rail and TfL layers"
+              ? "Hide Tube, Overground, Elizabeth, DLR, and tram layers"
+              : "Show Tube, Overground, Elizabeth, DLR, and tram layers"
           }
           onClick={() => onToggle(!active)}
           {...pressHandlers}
-          className="relative flex h-8 w-auto cursor-pointer touch-manipulation select-none items-center justify-center rounded-full p-0"
+          className="relative flex size-8 cursor-pointer touch-manipulation select-none items-center justify-center rounded-full p-0"
         >
           <span
-            className={toggleSurfaceClass(
-              active,
-              pressed,
-              "gap-1 rounded-full px-2.5"
-            )}
+            className={toggleSurfaceClass(active, pressed, "rounded-full")}
           >
             <span
-              className="relative z-10 flex items-center gap-1"
+              className="relative z-10 flex items-center justify-center"
               aria-hidden="true"
             >
-              {VISUAL_LAYER_ICON.rail}
-              <span className="text-[11px] font-medium leading-none text-foreground">
-                &
-              </span>
               {VISUAL_LAYER_ICON.tube}
             </span>
             {!active ? <VisualLayerStrike /> : null}
@@ -240,7 +232,7 @@ const TransitLayersToggle = ({
         </button>
       </TooltipTrigger>
       <MapTooltipContent side="bottom" className="whitespace-nowrap">
-        Rail & all TfL
+        Tube, Overground, Elizabeth, DLR & tram
       </MapTooltipContent>
     </Tooltip>
   )
@@ -297,13 +289,13 @@ const getAudioTooltipText = (
 ) => {
   if (audioEnabled) {
     return audioSampleMode === "center"
-      ? "Sound preview on — pan the map under the crosshair."
-      : "Sound preview on — move over visible noise layers."
+      ? "On. Sound follows the map centre."
+      : "On. Sound follows the cursor."
   }
 
   return audioSampleMode === "center"
-    ? "Turn representative sound preview on — samples map centre."
-    : "Turn representative sound preview on — samples cursor position."
+    ? "Hear a rough mix from the map centre."
+    : "Hear a rough mix under the cursor."
 }
 
 export const NoiseLayerControls = ({
@@ -402,7 +394,7 @@ export const NoiseLayerControls = ({
             side="bottom"
             className="max-w-56 flex-col items-start whitespace-normal"
           >
-            Strategic DEFRA maps — annual averages, not live measurement.
+            Yearly DEFRA averages, not live readings.
           </MapTooltipContent>
         </Tooltip>
       </div>
@@ -461,7 +453,7 @@ export const NoiseLayerControls = ({
             side="bottom"
             className="max-w-56 flex-col items-start whitespace-normal"
           >
-            Context overlays for transport and greenery — not noise measurements.
+            TfL lines and greenery. Not noise.
           </MapTooltipContent>
         </Tooltip>
       </div>
@@ -471,7 +463,7 @@ export const NoiseLayerControls = ({
         aria-label="Visual layer visibility"
         className="pointer-events-auto flex w-fit flex-row gap-1"
       >
-        <TransitLayersToggle
+        <TubeLayerToggle
           active={transitLayersActive}
           onToggle={handleTransitToggle}
         />

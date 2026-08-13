@@ -1,14 +1,9 @@
 import { type NextRequest } from "next/server"
 
 import { LONDON_BBOX } from "@/lib/map/config"
-import { osmGridCellBbox } from "@/lib/map/osm-grid"
 import { parseLatLng } from "@/lib/server/geo"
 import { osmCellCacheHeaders } from "@/lib/server/http-cache"
-import {
-  getNightlifeGeoJson,
-  getNightlifeGeoJsonForBbox,
-  getNightlifeGeoJsonForCell,
-} from "@/lib/server/osm-nightlife"
+import { streamOsmStaticCell } from "@/lib/server/static-osm-cells"
 
 const NIGHTLIFE_HEADERS = osmCellCacheHeaders("nightlife")
 
@@ -64,22 +59,12 @@ export const GET = async (request: NextRequest) => {
       return Response.json({ error: "row and col must be integers" }, { status: 400 })
     }
 
-    try {
-      const cell = osmGridCellBbox(parsedRow, parsedCol)
-      const geojson = await getNightlifeGeoJsonForCell(cell)
-      return Response.json(geojson, { headers: NIGHTLIFE_HEADERS })
-    } catch (error) {
-      return Response.json(
-        {
-          error:
-            error instanceof Error
-              ? error.message
-              : "OSM local noise grid lookup failed",
-        },
-        { status: 502 }
-      )
-    }
+    return streamOsmStaticCell("nightlife", parsedRow, parsedCol)
   }
+
+  const { getNightlifeGeoJson, getNightlifeGeoJsonForBbox } = await import(
+    "@/lib/server/osm-nightlife"
+  )
 
   const bbox = parseBbox(request)
   if (bbox && !bbox.ok) {

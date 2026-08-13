@@ -1,3 +1,8 @@
+/**
+ * Offline rebuild of transit geometry (Overpass + TfL).
+ * Map GET routes must not import this file — they stream `data/transit/*.json`.
+ * Rebuild: fetch into data/osm-cache, then `pnpm snapshot-transit`.
+ */
 import { withTubeLineOffsets } from "@/lib/map/tube-line-offsets";
 import {
   dedupeConsecutiveCoords,
@@ -20,7 +25,6 @@ import {
   type OverpassRelation,
   type OverpassWay,
 } from "@/lib/server/osm-overpass";
-import { withOsmCache } from "@/lib/server/osm-cache";
 
 const LONDON_BBOX = "51.24,-0.57,51.73,0.36";
 const TFL_API = "https://api.tfl.gov.uk";
@@ -36,6 +40,9 @@ export type TransitGeometryBundle = {
   lines: TubeLineFeatureCollection;
   stations: TubeStationFeatureCollection;
 };
+
+/** @deprecated Use TransitGeometryBundle */
+export type TubeGeometryBundle = TransitGeometryBundle;
 
 type CoordPair = [number, number];
 type StationFeature = TubeStationFeatureCollection["features"][number];
@@ -176,6 +183,17 @@ const fetchRouteSequence = (lineId: string) =>
   fetchJson<TflRouteSequence>(
     `${TFL_API}/Line/${lineId}/Route/Sequence/inbound?serviceTypes=Regular`,
   );
+
+const collectTflSequences = async (tflMode: string) => {
+  const lineIds = await fetchLineIdsByMode(tflMode);
+
+  return Promise.all(
+    lineIds.map(async (lineId) => ({
+      lineId,
+      sequence: await fetchRouteSequence(lineId),
+    })),
+  );
+};
 
 const upsertStation = (
   stationMap: Map<string, StationFeature>,
@@ -348,13 +366,7 @@ const lineFeaturesFromSequence = (
 };
 
 const fetchStationsFromTfl = async (tflMode: string, filterLabel: string) => {
-  const lineIds = await fetchLineIdsByMode(tflMode);
-  const sequences = await Promise.all(
-    lineIds.map(async (lineId) => ({
-      lineId,
-      sequence: await fetchRouteSequence(lineId),
-    })),
-  );
+  const sequences = await collectTflSequences(tflMode);
 
   const stationMap = new Map<
     string,
@@ -382,13 +394,7 @@ const fetchStationsFromTfl = async (tflMode: string, filterLabel: string) => {
 };
 
 const fetchLinesFromTfl = async (tflMode: string, filterLabel: string) => {
-  const lineIds = await fetchLineIdsByMode(tflMode);
-  const sequences = await Promise.all(
-    lineIds.map(async (lineId) => ({
-      lineId,
-      sequence: await fetchRouteSequence(lineId),
-    })),
-  );
+  const sequences = await collectTflSequences(tflMode);
 
   const lineFeatures: TubeLineFeatureCollection["features"] = [];
 
@@ -644,26 +650,5 @@ const buildTransitGeometry = async (
   });
 };
 
-export const getTransitGeometryGeoJson = async (
-  mode: TransitMode,
-): Promise<TransitGeometryBundle> => {
-  const config = TRANSIT_MODE_CONFIG[mode];
-
-  return withOsmCache(
-    `${mode}-geometry`,
-    [config.cacheKey],
-    () => buildTransitGeometry(mode),
-    30 * 24 * 60 * 60 * 1000,
-  );
-};
-
-export const getTubeGeometryGeoJson = () => getTransitGeometryGeoJson("tube");
-export const getOvergroundGeometryGeoJson = () =>
-  getTransitGeometryGeoJson("overground");
-export const getElizabethGeometryGeoJson = () =>
-  getTransitGeometryGeoJson("elizabeth");
-export const getDlrGeometryGeoJson = () => getTransitGeometryGeoJson("dlr");
-export const getTramGeometryGeoJson = () => getTransitGeometryGeoJson("tram");
-
-/** @deprecated Use TransitGeometryBundle */
-export type TubeGeometryBundle = TransitGeometryBundle;
+/** Live Overpass/TfL rebuild — snapshot into data/transit, never call from a route. */
+export const buildLiveTransitGeometry = buildTransitGeometry;

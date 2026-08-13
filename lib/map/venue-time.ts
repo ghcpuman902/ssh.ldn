@@ -1,6 +1,6 @@
 import opening_hours from "opening_hours"
 
-import type { NoiseTimeSlot } from "@/lib/map/noise-time"
+import { ALL_NOISE_TIME_SLOTS, type NoiseTimeSlot } from "@/lib/map/noise-time"
 
 export type LocalNoiseAmenity =
   "pub" | "bar" | "nightclub" | "music_venue" | "hospital"
@@ -215,4 +215,39 @@ export const computeLocalNoiseSourceScore = (
   }, 0)
 
   return Math.min(100, Math.round(raw))
+}
+
+export type LocalNoiseTimeProfile = {
+  overall: number
+  day: number
+  night: number
+}
+
+/** Peak local-source score across every weekday/weekend × day/night slot. */
+export const computeLocalNoiseTimeProfile = (
+  features: Array<{
+    amenity: string | null
+    openingHours?: string | null
+    distanceMeters: number
+  }>
+): LocalNoiseTimeProfile => {
+  const scores = ALL_NOISE_TIME_SLOTS().map((slot) => ({
+    part: slot.part,
+    score: computeLocalNoiseSourceScore(features, slot),
+  }))
+
+  const day = Math.max(
+    0,
+    ...scores.filter((item) => item.part === "day").map((item) => item.score)
+  )
+  const night = Math.max(
+    0,
+    ...scores.filter((item) => item.part === "night").map((item) => item.score)
+  )
+
+  return {
+    overall: Math.max(day, night),
+    day,
+    night,
+  }
 }

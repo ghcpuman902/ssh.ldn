@@ -1,5 +1,4 @@
 export type VisualLayerKey =
-  | "rail"
   | "tube"
   | "overground"
   | "elizabeth"
@@ -9,9 +8,8 @@ export type VisualLayerKey =
 
 export type VisualLayerVisibility = Record<VisualLayerKey, boolean>
 
-/** Rail + all TfL modes — toggled together in the map UI. */
+/** Coloured TfL overlays — Underground roundel toggles all of these. Rail is a permanent base layer. */
 export const TRANSIT_VISUAL_LAYER_KEYS = [
-  "rail",
   "tube",
   "overground",
   "elizabeth",
@@ -22,7 +20,6 @@ export const TRANSIT_VISUAL_LAYER_KEYS = [
 export type TransitVisualLayerKey = (typeof TRANSIT_VISUAL_LAYER_KEYS)[number]
 
 export const DEFAULT_VISUAL_LAYER_VISIBILITY: VisualLayerVisibility = {
-  rail: true,
   tube: true,
   overground: true,
   elizabeth: true,
@@ -38,12 +35,6 @@ export type VisualLayerMeta = {
 }
 
 export const VISUAL_LAYER_META: Record<VisualLayerKey, VisualLayerMeta> = {
-  rail: {
-    label: "Railways & stations",
-    description:
-      "Overground rail lines and station stops from OpenStreetMap — excludes underground segments.",
-    datasetUrl: "https://www.openstreetmap.org/copyright",
-  },
   tube: {
     label: "Tube lines & stations",
     description:
@@ -83,7 +74,6 @@ export const VISUAL_LAYER_META: Record<VisualLayerKey, VisualLayerMeta> = {
 }
 
 export const VISUAL_LAYER_ORDER: VisualLayerKey[] = [
-  "rail",
   "tube",
   "overground",
   "elizabeth",

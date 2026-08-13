@@ -11,6 +11,8 @@ import {
 } from "@/lib/server/osm-overpass";
 import { withOsmCache } from "@/lib/server/osm-cache";
 
+/** Offline Overpass rebuild helpers. Map cell GET routes stream data/osm-static. */
+
 const bboxFragment = (
   south: number,
   west: number,

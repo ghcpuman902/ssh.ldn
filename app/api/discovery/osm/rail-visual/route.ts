@@ -1,11 +1,6 @@
 import { type NextRequest } from "next/server";
 
-import { osmGridCellBbox } from "@/lib/map/osm-grid";
-import { osmCellCacheHeaders } from "@/lib/server/http-cache";
-import {
-  getRailLinesGeoJsonForCell,
-  getRailStationsGeoJsonForCell,
-} from "@/lib/server/osm-rail-visual";
+import { streamOsmStaticCell } from "@/lib/server/static-osm-cells";
 
 export const GET = async (request: NextRequest) => {
   const row = request.nextUrl.searchParams.get("row");
@@ -25,23 +20,5 @@ export const GET = async (request: NextRequest) => {
 
   const namespace = layer === "stations" ? "rail-stations" : "rail-lines";
 
-  try {
-    const cell = osmGridCellBbox(parsedRow, parsedCol);
-    const geojson =
-      layer === "stations"
-        ? await getRailStationsGeoJsonForCell(cell)
-        : await getRailLinesGeoJsonForCell(cell);
-
-    return Response.json(geojson, {
-      headers: osmCellCacheHeaders(namespace),
-    });
-  } catch (error) {
-    return Response.json(
-      {
-        error:
-          error instanceof Error ? error.message : "OSM rail visual lookup failed",
-      },
-      { status: 502 },
-    );
-  }
+  return streamOsmStaticCell(namespace, parsedRow, parsedCol);
 };

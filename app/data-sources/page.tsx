@@ -2,9 +2,10 @@ import Link from "next/link"
 
 import { TRANSIT_LOGO_SOURCES } from "@/components/map/transit-mode-icon"
 import {
-  CARTO_BASEMAP_CREDIT,
+  OPENFREEMAP_BASEMAP_CREDIT,
   MAP_STRATEGIC_DISCLAIMER,
   NOISE_DATA_CREDITS,
+  OSM_RAIL_CREDIT,
   type DataCredit,
   VISUAL_DATA_CREDITS,
 } from "@/lib/map/data-credits"
@@ -108,16 +109,7 @@ export default function DataSourcesPage() {
             <p className="mt-2 text-sm text-muted-foreground md:text-base">
               Full dataset declarations for the ssh-ldn London noise map. Map
               tooltips show layer names only; this page holds the detailed
-              source information. An unindexed reference prototype for Tube
-              interior-noise mapping (FOI-backed, not open data) lives at{" "}
-              <Link
-                href="/maps/public-noise-data"
-                className="text-foreground underline-offset-2 hover:underline"
-              >
-                /maps/public-noise-data
-              </Link>
-              — useful to show what a section map can look like before we
-              collect our own measurements.
+              source information.
             </p>
           </div>
         </header>
@@ -141,8 +133,8 @@ export default function DataSourcesPage() {
 
         <CreditSection
           title="Basemap"
-          description="Background map tiles beneath all overlays."
-          credits={[CARTO_BASEMAP_CREDIT]}
+          description="Background map tiles and above-ground railway geometry beneath noise overlays."
+          credits={[OPENFREEMAP_BASEMAP_CREDIT, OSM_RAIL_CREDIT]}
         />
 
         <section id="trademarks" className="space-y-4 scroll-mt-8">

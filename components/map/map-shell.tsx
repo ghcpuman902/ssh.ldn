@@ -19,6 +19,7 @@ import { useMapZoomControlStyles } from "@/hooks/use-map-zoom-control-styles"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useShiftDragRotate } from "@/hooks/use-shift-drag-rotate"
 import { useViewportNightlifeGeoJson } from "@/hooks/use-viewport-nightlife-geojson"
+import { useNoiseReveal } from "@/hooks/use-noise-reveal"
 import type { AnalyseState } from "@/components/map/map-analyse-panel"
 // Voice mode is temporarily unwired so ElevenLabs stays off the map load path.
 // import { VoiceModeButton } from "@/components/map/voice-mode-button"
@@ -187,16 +188,23 @@ export const MapShell = () => {
   } = useMapWindowClip()
   const layoutGridRef = useRef<HTMLDivElement>(null)
   const applyZoomControlStyles = useMapZoomControlStyles(mapRef)
+  const noiseReveal = useNoiseReveal(mapRef, mounted && mapReady)
   const {
     geoJson: nightlifeGeoJson,
     isFetching: nightlifeIsFetching,
     hasSettledInitial: nightlifeHasSettledInitial,
-  } = useViewportNightlifeGeoJson(mapRef, mounted && mapReady)
+  } = useViewportNightlifeGeoJson(
+    mapRef,
+    mounted && mapReady && noiseReveal.stage === "complete"
+  )
   const visualLayerData = useVisualLayerData(
     mapRef,
-    mounted && mapReady,
+    mounted,
     visualLayerVisibility,
-    backgroundPrefetchReady,
+    {
+      backgroundPrefetch: backgroundPrefetchReady,
+      lineUpgrade: noiseReveal.lineUpgrade,
+    }
   )
   const mapTheme = resolveMapTheme(resolvedTheme)
   const audioSampleMode = isMobile ? "center" : "cursor"
@@ -342,7 +350,6 @@ export const MapShell = () => {
             latitude,
             longitude,
             zoom,
-            timeSlot,
             nightlifeGeoJson,
           })
 
@@ -519,7 +526,7 @@ export const MapShell = () => {
         }
       }
     },
-    [nightlifeGeoJson, timeSlot]
+    [nightlifeGeoJson]
   )
 
   const handleCloseAnalyse = useCallback(() => {
@@ -1032,6 +1039,9 @@ export const MapShell = () => {
                 visibility={layerVisibility}
                 timeSlot={timeSlot}
                 nightlifeGeoJson={nightlifeGeoJson}
+                revealStage={noiseReveal.stage}
+                coverageBounds={noiseReveal.coverageBounds}
+                rasterFadeMs={noiseReveal.rasterFadeMs}
               />
               <VisualMapLayers
                 visibility={visualLayerVisibility}

@@ -69,7 +69,7 @@ export const OSM_RAIL_CREDIT: DataCredit = {
   datasetUrl: "https://www.openstreetmap.org/copyright",
   version: "Live Overpass extract",
   attribution: "© OpenStreetMap contributors · ODbL",
-  notes: "Overground rail lines and stations; tube/tunnel segments excluded.",
+  notes: "Above-ground rail only; tube and tunnel segments excluded. Always shown under noise overlays.",
 }
 
 export const OSM_GREEN_SPACES_CREDIT: DataCredit = {
@@ -106,19 +106,6 @@ export const OSM_TUBE_GEOMETRY_CREDIT: DataCredit = {
   version: "Live Overpass extract",
   attribution: "© OpenStreetMap contributors · Tube track geometry · ODbL",
   notes: "London Underground route relations — dense track-following polylines.",
-}
-
-export const PUBLIC_TUBE_NOISE_CREDIT: DataCredit = {
-  id: "public-tube-interior-noise",
-  title: "Public Tube interior / in-cab noise surveys (reference prototype)",
-  provider: "TfL FOI releases, academic papers, OSM geometry",
-  licence: "Mixed — FOI unknown / CC BY / ODbL — not a redistributable open dataset",
-  licenceUrl: "/maps/public-noise-data",
-  datasetUrl: "/maps/public-noise-data",
-  version: "Compiled 2026-07 · unindexed demo",
-  attribution: "Public Tube noise surveys · FOI not open data unless stated",
-  notes:
-    "Unindexed reference map for what section-level Tube noise mapping can look like. Passenger and cab LAeq by station section. FOI attachments without an explicit open licence are marked “Not open data / permission required”. Intended as a demo for our own open measurement collection, not as published open data.",
 }
 
 export const OSM_OVERGROUND_GEOMETRY_CREDIT: DataCredit = {
@@ -158,15 +145,17 @@ export const OSM_NIGHTLIFE_CREDIT: DataCredit = {
     "Pubs, bars, clubs, music venues, and hospitals. Opening hours are partial; time-slot activity uses heuristics when hours are missing.",
 }
 
-export const CARTO_BASEMAP_CREDIT: DataCredit = {
-  id: "carto-basemap",
-  title: "CARTO basemap (Positron / Dark Matter)",
-  provider: "CARTO · OpenStreetMap contributors",
+export const OPENFREEMAP_BASEMAP_CREDIT: DataCredit = {
+  id: "openfreemap-basemap",
+  title: "OpenFreeMap basemap (Positron / Dark Matter)",
+  provider: "OpenFreeMap · OpenMapTiles · OpenStreetMap contributors",
   licence: "BSD / ODbL (OSM data)",
-  licenceUrl: "https://carto.com/legal/",
-  datasetUrl: "https://basemaps.cartocdn.com/",
-  version: "Raster tiles",
-  attribution: "© CARTO · © OpenStreetMap contributors",
+  licenceUrl: "https://openfreemap.org/",
+  datasetUrl: "https://tiles.openfreemap.org/",
+  version: "Vector tiles",
+  attribution: "© OpenStreetMap contributors · © OpenFreeMap",
+  notes:
+    "Vector Positron/Dark Matter via OpenFreeMap. Labels sit above noise overlays; roads stay under them.",
 }
 
 export const DATA_SOURCES_PAGE_CREDIT: DataCredit = {
@@ -207,12 +196,10 @@ export const NATIONAL_RAIL_TRADEMARK_CREDIT: DataCredit = {
 export const NOISE_DATA_CREDITS: DataCredit[] = [
   ...Object.values(DEFRA_NOISE_CREDITS),
   OSM_NIGHTLIFE_CREDIT,
-  PUBLIC_TUBE_NOISE_CREDIT,
 ]
 
 /** Visual-layer datasets documented on the data-sources page. */
 export const VISUAL_DATA_CREDITS: DataCredit[] = [
-  OSM_RAIL_CREDIT,
   OSM_TUBE_GEOMETRY_CREDIT,
   OSM_OVERGROUND_GEOMETRY_CREDIT,
   OSM_ELIZABETH_GEOMETRY_CREDIT,
@@ -222,10 +209,9 @@ export const VISUAL_DATA_CREDITS: DataCredit[] = [
 
 /** All credits shown on the map page — deduped by id. */
 export const MAP_DATA_CREDITS: DataCredit[] = [
-  CARTO_BASEMAP_CREDIT,
+  OPENFREEMAP_BASEMAP_CREDIT,
   ...Object.values(DEFRA_NOISE_CREDITS),
   OSM_NIGHTLIFE_CREDIT,
-  PUBLIC_TUBE_NOISE_CREDIT,
   OSM_RAIL_CREDIT,
   OSM_GREEN_SPACES_CREDIT,
   OSM_TUBE_GEOMETRY_CREDIT,

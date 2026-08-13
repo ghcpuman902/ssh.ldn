@@ -27,7 +27,6 @@ const TRANSIT_LOGO_PATH = {
   overground: "/transit-logos/overground-roundel.svg",
   dlr: "/transit-logos/dlr-roundel.svg",
   tram: "/transit-logos/tram-roundel.svg",
-  rail: "/transit-logos/national-rail.svg",
 } as const
 
 const TransitLogoIcon = ({
@@ -44,16 +43,8 @@ const TransitLogoIcon = ({
 )
 
 const ROUNDEL_ICON_CLASS = "h-[20px] w-auto max-w-none"
-const NATIONAL_RAIL_ICON_CLASS = "h-[15px] w-auto max-w-none"
 
 export const VISUAL_LAYER_ICON: Record<VisualLayerKey, ReactNode> = {
-  rail: (
-    <TransitLogoIcon
-      src={TRANSIT_LOGO_PATH.rail}
-      alt="National Rail"
-      className={NATIONAL_RAIL_ICON_CLASS}
-    />
-  ),
   tube: (
     <TransitLogoIcon
       src={TRANSIT_LOGO_PATH.tube}

@@ -142,8 +142,11 @@ const TimeSlotButton = ({
           </div>
         </button>
       </TooltipTrigger>
-      <MapTooltipContent side={slot.part === "day" ? "top" : "bottom"}>
-        {WEEK_SEGMENT_LABELS[slot.week]} {partLabel.toLowerCase()} · {hours}
+      <MapTooltipContent
+        side={slot.part === "day" ? "top" : "bottom"}
+        className="whitespace-nowrap"
+      >
+        {WEEK_SEGMENT_LABELS[slot.week]} · {hours}
       </MapTooltipContent>
     </Tooltip>
   );
@@ -153,8 +156,8 @@ export const NoiseTimeGrid = ({ value, onChange }: NoiseTimeGridProps) => {
   const selectedId = encodeNoiseTimeSlot(value);
 
   return (
-    <div className="pointer-events-auto w-fit space-y-1 border-b border-border/50 pb-2">
-      <div className="flex w-fit items-center justify-end gap-0.5">
+    <div className="pointer-events-auto flex w-fit flex-col items-end space-y-1 border-b border-border/50 pb-2">
+      <div className="flex w-fit items-center gap-0.5">
         <p className="text-xs font-medium text-foreground">When</p>
         <Tooltip>
           <TooltipTrigger asChild>
@@ -167,7 +170,8 @@ export const NoiseTimeGrid = ({ value, onChange }: NoiseTimeGridProps) => {
             </button>
           </TooltipTrigger>
           <MapTooltipContent
-            side="right"
+            side="bottom"
+            align="end"
             className="max-w-56 flex-col items-start whitespace-normal"
           >
             {DEFRA_TIME_SLOT_NOTE}

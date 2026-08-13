@@ -76,9 +76,9 @@ export const formatNoiseTimeSlot = ({ week, part }: NoiseTimeSlot) => {
   return `${weekLabel} ${partLabel}`
 }
 
-/** DEFRA Round 4 is annual average — week segment is for story/modifiers, not separate rasters. */
+/** DEFRA Round 4 is a yearly average. Weekday/weekend only changes local modifiers, not the raster. */
 export const DEFRA_TIME_SLOT_NOTE =
-  "Official DEFRA maps are annual averages. Day/night switches Lday/Lnight; weekday vs weekend adjusts local source and traffic modifiers."
+  "DEFRA maps are yearly averages. Day and night switch the official layers. Weekday vs weekend only changes local sources and traffic."
 
 export const isWeekendNight = ({ week, part }: NoiseTimeSlot) =>
   week === "weekend" && part === "night"

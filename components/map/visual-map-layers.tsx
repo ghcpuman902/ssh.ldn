@@ -4,7 +4,11 @@ import type { ExpressionSpecification } from "maplibre-gl"
 import { Layer, Source } from "react-map-gl/maplibre"
 
 import type { VisualLayerData } from "@/hooks/use-visual-layer-data"
-import { BASEMAP_LABELS_LAYER_ID } from "@/lib/map/config"
+import {
+  BASEMAP_LABELS_LAYER_ID,
+  RAIL_UNDERLAY_SLOT_ID,
+  TRANSIT_OVERLAY_SLOT_ID,
+} from "@/lib/map/config"
 import type {
   TubeLineFeatureCollection,
   TubeStationFeatureCollection,
@@ -178,38 +182,20 @@ const TransitLineOverlay = ({
 }
 
 export const VisualMapLayers = ({ visibility, data }: VisualMapLayersProps) => {
-  const showRail =
-    visibility.rail &&
-    ((data.railLines?.features.length ?? 0) > 0 ||
-      (data.railStations?.features.length ?? 0) > 0)
+  const showRail = (data.railLines?.features.length ?? 0) > 0
   const showGreen =
     visibility.greenSpaces && (data.greenSpaces?.features.length ?? 0) > 0
 
   return (
     <>
-      {showGreen && data.greenSpaces ? (
-        <Source id="green-spaces" type="geojson" data={data.greenSpaces}>
-          <Layer
-            id="green-spaces-fill"
-            type="fill"
-            beforeId={BASEMAP_LABELS_LAYER_ID}
-            layout={{ visibility: layerVisibility(visibility.greenSpaces) }}
-            paint={{
-              "fill-color": "rgba(74, 222, 128, 0.18)",
-              "fill-outline-color": "rgba(34, 197, 94, 0.35)",
-            }}
-          />
-        </Source>
-      ) : null}
-
       {showRail && data.railLines ? (
         <Source id="rail-lines" type="geojson" data={data.railLines}>
           <Layer
             id="rail-lines-stroke"
             type="line"
-            beforeId={BASEMAP_LABELS_LAYER_ID}
+            beforeId={RAIL_UNDERLAY_SLOT_ID}
             layout={{
-              visibility: layerVisibility(visibility.rail),
+              visibility: "visible",
               "line-join": "round",
               "line-cap": "round",
             }}
@@ -232,30 +218,16 @@ export const VisualMapLayers = ({ visibility, data }: VisualMapLayersProps) => {
         </Source>
       ) : null}
 
-      {showRail && data.railStations ? (
-        <Source id="rail-stations" type="geojson" data={data.railStations}>
+      {showGreen && data.greenSpaces ? (
+        <Source id="green-spaces" type="geojson" data={data.greenSpaces}>
           <Layer
-            id="rail-stations-circle"
-            type="circle"
-            beforeId={BASEMAP_LABELS_LAYER_ID}
-            minzoom={11}
-            layout={{ visibility: layerVisibility(visibility.rail) }}
+            id="green-spaces-fill"
+            type="fill"
+            beforeId={TRANSIT_OVERLAY_SLOT_ID}
+            layout={{ visibility: layerVisibility(visibility.greenSpaces) }}
             paint={{
-              "circle-radius": [
-                "interpolate",
-                ["linear"],
-                ["zoom"],
-                11,
-                2.5,
-                14,
-                4,
-                16,
-                5,
-              ],
-              "circle-color": "#ffffff",
-              "circle-stroke-color": "#475569",
-              "circle-stroke-width": 1.5,
-              "circle-opacity": 0.95,
+              "fill-color": "rgba(74, 222, 128, 0.18)",
+              "fill-outline-color": "rgba(34, 197, 94, 0.35)",
             }}
           />
         </Source>

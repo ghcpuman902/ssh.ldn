@@ -7,7 +7,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/api/voice/", "/maps/public-noise-data", "/dev/"],
+      disallow: ["/api/voice/", "/dev/"],
     },
     sitemap: `${SITE_URL}/sitemap.xml`,
     host: SITE_URL,

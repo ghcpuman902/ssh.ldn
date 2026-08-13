@@ -1,8 +1,6 @@
 import { type NextRequest } from "next/server";
 
-import { osmGridCellBbox } from "@/lib/map/osm-grid";
-import { osmCellCacheHeaders } from "@/lib/server/http-cache";
-import { getGreenSpacesGeoJsonForCell } from "@/lib/server/osm-green-spaces";
+import { streamOsmStaticCell } from "@/lib/server/static-osm-cells";
 
 export const GET = async (request: NextRequest) => {
   const row = request.nextUrl.searchParams.get("row");
@@ -19,21 +17,5 @@ export const GET = async (request: NextRequest) => {
     return Response.json({ error: "row and col must be integers" }, { status: 400 });
   }
 
-  try {
-    const cell = osmGridCellBbox(parsedRow, parsedCol);
-    const geojson = await getGreenSpacesGeoJsonForCell(cell);
-    return Response.json(geojson, {
-      headers: osmCellCacheHeaders("green-spaces"),
-    });
-  } catch (error) {
-    return Response.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "OSM green spaces lookup failed",
-      },
-      { status: 502 },
-    );
-  }
+  return streamOsmStaticCell("green-spaces", parsedRow, parsedCol);
 };

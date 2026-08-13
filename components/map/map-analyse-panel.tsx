@@ -141,11 +141,6 @@ const TIME_PROFILE_META: {
 
 const formatSourceLabel = (source: string) => getNoiseContributorMeta(source).label
 
-/**
- * Poetic, human-readable read of the noise score — mirrors the same score
- * thresholds as `bandFromScore` in `lib/server/score.ts` / `lib/map/client-noise-score.ts`,
- * but trades the clinical band label for language that maps intuitively onto quietness.
- */
 const revealValue = (target: number, progress: number) =>
   Math.round(target * progress)
 
@@ -169,7 +164,7 @@ const NoiseScoreCard = ({
         style={{ backgroundColor: scoreColor }}
       />
       <div className="relative z-10">
-        <p className="text-xs text-muted-foreground">Noise score</p>
+        <p className="text-xs text-muted-foreground">Overall noise score</p>
         <div className="flex items-end justify-between gap-3">
           <p className="flex items-baseline gap-0.5 leading-none">
             <span
@@ -329,22 +324,14 @@ const renderRating = (rating: number | null, reviewCount: number | null) => {
   )
 }
 
-/** Open = green (weekday) / teal (weekend); closed = muted text grey so the full 12h track reads clearly. */
 const COVERAGE_OPEN_WEEKDAY = "#16a34a"
 const COVERAGE_OPEN_WEEKEND = "#0d9488"
 const COVERAGE_CLOSED = "var(--muted-foreground)"
 
-/** w-1.5 (6px) matches `NoiseTimeGrid`'s bar width so the two widgets read as one family. */
 const DAY_BAR_WIDTH_CLASS = "w-1.5"
 const DAY_BAR_GAP_CLASS = "gap-[3px]"
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
-/**
- * Hard-edged bands: top = earlier time, bottom = later time within the block.
- * Grid stacks midnight→midday (top row) above midday→midnight (bottom row),
- * so reading straight down the whole widget always moves forward in time —
- * 12am at the very top, noon in the middle, 12am again at the very bottom.
- */
 const buildSteppedGradient = (samples: boolean[], openColor: string) => {
   if (samples.length === 0) {
     return COVERAGE_CLOSED
@@ -392,18 +379,13 @@ const DayCoverageBar = ({
           style={{ background: buildSteppedGradient(samples, openColor) }}
         />
       </TooltipTrigger>
-      <MapTooltipContent side="top" className="max-w-44 text-center">
-        <span className="block font-medium">{dayLabel}</span>
-        <span className="block text-muted-foreground">{hoursText}</span>
-        <span className="mt-0.5 block text-[10px] text-muted-foreground/80">
-          {blockLabel}
-        </span>
+      <MapTooltipContent side="top" className="whitespace-nowrap">
+        {dayLabel} · {hoursText}
       </MapTooltipContent>
     </Tooltip>
   )
 }
 
-/** One thin vertical bar per calendar day, banded by its own open/closed samples. */
 const DayCoverageBars = ({
   samplesByDay,
   dayIndices,
@@ -433,7 +415,6 @@ const DayCoverageBars = ({
   </div>
 )
 
-/** Compact weekday/weekend opening grid — top row midnight→midday, bottom row midday→midnight (noon in the middle). */
 const OpeningCoverageGrid = ({ coverage }: { coverage: OpeningCoverage }) => (
   <div
     role="group"

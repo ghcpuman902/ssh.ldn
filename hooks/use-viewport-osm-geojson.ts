@@ -11,6 +11,8 @@ import {
   prioritizeOsmGridCells,
 } from "@/lib/map/osm-grid"
 
+type FetchPriority = "high" | "low" | "auto"
+
 const DEBOUNCE_MS = 350
 const BATCH_GAP_MS = 150
 
@@ -121,9 +123,9 @@ export const useViewportOsmGeoJson = <T extends FeatureCollection>({
     const batch = pending.slice(0, limit)
 
     try {
-      for (const cell of batch) {
-        await fetchGridCell(cell.row, cell.col)
-      }
+      await Promise.all(
+        batch.map((cell) => fetchGridCell(cell.row, cell.col))
+      )
     } finally {
       processingRef.current = false
     }
@@ -175,7 +177,10 @@ export const useViewportOsmGeoJson = <T extends FeatureCollection>({
 const staticGeoJsonCache = new Map<string, unknown>()
 const staticGeoJsonInflight = new Map<string, Promise<unknown>>()
 
-const loadStaticGeoJson = async <T>(url: string): Promise<T | null> => {
+const loadStaticGeoJson = async <T>(
+  url: string,
+  priority: FetchPriority = "auto"
+): Promise<T | null> => {
   if (staticGeoJsonCache.has(url)) {
     return staticGeoJsonCache.get(url) as T
   }
@@ -185,7 +190,10 @@ const loadStaticGeoJson = async <T>(url: string): Promise<T | null> => {
   if (!request) {
     request = (async () => {
       try {
-        const response = await fetch(url)
+        const response = await fetch(url, {
+          credentials: "omit",
+          priority,
+        })
         if (!response.ok) return null
         const data = (await response.json()) as T
         staticGeoJsonCache.set(url, data)
@@ -202,7 +210,11 @@ const loadStaticGeoJson = async <T>(url: string): Promise<T | null> => {
 }
 
 /** Fetch once, cache in memory. Prefetch when `prefetch` is true. */
-export const useStaticGeoJson = <T>(url: string, prefetch: boolean) => {
+export const useStaticGeoJson = <T>(
+  url: string,
+  prefetch: boolean,
+  priority: FetchPriority = "auto"
+) => {
   const [data, setData] = useState<T | null>(
     () => (staticGeoJsonCache.get(url) as T | undefined) ?? null,
   )
@@ -217,14 +229,14 @@ export const useStaticGeoJson = <T>(url: string, prefetch: boolean) => {
 
     let cancelled = false
 
-    void loadStaticGeoJson<T>(url).then((next) => {
+    void loadStaticGeoJson<T>(url, priority).then((next) => {
       if (!cancelled && next) setData(next)
     })
 
     return () => {
       cancelled = true
     }
-  }, [prefetch, url])
+  }, [prefetch, priority, url])
 
   return data
 }

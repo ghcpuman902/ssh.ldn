@@ -1,22 +1,4 @@
-import { geometryCacheHeaders } from "@/lib/server/http-cache";
-import { getElizabethGeometryGeoJson } from "@/lib/server/tfl-transit-geometry";
+import { transitGeometryGet } from "@/lib/server/transit-geometry-response";
 
-export const GET = async () => {
-  try {
-    const geometry = await getElizabethGeometryGeoJson();
-
-    return Response.json(geometry, {
-      headers: geometryCacheHeaders("elizabeth"),
-    });
-  } catch (error) {
-    return Response.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Elizabeth line geometry lookup failed",
-      },
-      { status: 502 },
-    );
-  }
-};
+export const GET = async (request: Request) =>
+  transitGeometryGet("elizabeth", request);

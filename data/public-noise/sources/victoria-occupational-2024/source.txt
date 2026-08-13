@@ -1,4 +1,0 @@
-Title: See sources/manifest.json id=victoria-occupational-2024
-Rights status: unknown or restricted — Not open data / permission required (except where noted in manifest)
-Status: Catalogued for provenance; not fully machine-extracted into section GeoJSON in v1.
-Retrieved: 2026-07-15

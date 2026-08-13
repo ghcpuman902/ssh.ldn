@@ -1,0 +1,45 @@
+{
+  "description": "Static OSM map cells. Discovery cell APIs stream these files; do not fetch Overpass at request time.",
+  "snapshottedAt": "2026-08-13T17:58:28.834Z",
+  "grid": {
+    "west": -0.57,
+    "south": 51.24,
+    "east": 0.36,
+    "north": 51.73,
+    "cellDeg": 0.04
+  },
+  "namespaces": [
+    {
+      "namespace": "nightlife",
+      "sourceFiles": 287,
+      "uniqueFeatures": 4739,
+      "cellsWritten": 127,
+      "gridCells": 312,
+      "bytes": 1136312
+    },
+    {
+      "namespace": "rail-lines",
+      "sourceFiles": 56,
+      "uniqueFeatures": 8664,
+      "cellsWritten": 79,
+      "gridCells": 312,
+      "bytes": 3611986
+    },
+    {
+      "namespace": "rail-stations",
+      "sourceFiles": 63,
+      "uniqueFeatures": 290,
+      "cellsWritten": 57,
+      "gridCells": 312,
+      "bytes": 65894
+    },
+    {
+      "namespace": "green-spaces",
+      "sourceFiles": 55,
+      "uniqueFeatures": 41177,
+      "cellsWritten": 88,
+      "gridCells": 312,
+      "bytes": 23061227
+    }
+  ]
+}

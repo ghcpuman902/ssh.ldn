@@ -8,7 +8,7 @@ import {
 } from "@/lib/map/visual-layers"
 
 const NOISE_LAYER_VISIBILITY_KEY = "ssh.ldn.noise-layer-visibility"
-const VISUAL_LAYER_VISIBILITY_KEY = "ssh.ldn.visual-layer-visibility.v2"
+const VISUAL_LAYER_VISIBILITY_KEY = "ssh.ldn.visual-layer-visibility.v3"
 
 const readBooleanRecord = <T extends Record<string, boolean>>(
   raw: string | null,

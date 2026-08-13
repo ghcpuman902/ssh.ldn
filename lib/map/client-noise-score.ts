@@ -1,7 +1,6 @@
 import { fetchNightlifeCell } from "@/lib/client/nightlife-cell-cache";
-import { defraPeriodFromDayPart, type DefraMapKind } from "@/lib/map/defra-layers";
+import type { DefraMapKind, DefraNoisePeriod } from "@/lib/map/defra-layers";
 import type { NightlifeFeatureCollection } from "@/lib/map/geojson-types";
-import type { NoiseTimeSlot } from "@/lib/map/noise-time";
 import {
   buildContributors,
   combineLoudness,
@@ -11,7 +10,7 @@ import {
 import { osmGridCellForLatLng } from "@/lib/map/osm-grid";
 import { sampleDefraRasterIntensity } from "@/lib/map/raster-pixel-sampler";
 import {
-  computeLocalNoiseSourceScore,
+  computeLocalNoiseTimeProfile,
   isLocalNoiseAmenity,
 } from "@/lib/map/venue-time";
 import { haversineMeters } from "@/lib/server/geo";
@@ -42,7 +41,7 @@ const sampleTransportIntensity = async ({
   zoom,
 }: {
   kind: DefraMapKind;
-  period: ReturnType<typeof defraPeriodFromDayPart> | "evening";
+  period: DefraNoisePeriod;
   latitude: number;
   longitude: number;
   zoom: number;
@@ -109,50 +108,23 @@ export const estimateClientNoiseScore = async ({
   latitude,
   longitude,
   zoom,
-  timeSlot,
   nightlifeGeoJson,
 }: {
   latitude: number;
   longitude: number;
   zoom: number;
-  timeSlot: NoiseTimeSlot;
   nightlifeGeoJson: NightlifeFeatureCollection | null;
 }): Promise<ClientNoiseScoreSummary> => {
-  const activePeriod = defraPeriodFromDayPart(timeSlot.part);
-
   const [
-    roadIntensity,
-    railIntensity,
-    airportIntensity,
     localFeatures,
     roadDayIntensity,
     roadEveningIntensity,
     roadNightIntensity,
+    railDayIntensity,
     railNightIntensity,
     airportDayIntensity,
     airportNightIntensity,
   ] = await Promise.all([
-    sampleTransportIntensity({
-      kind: "road",
-      period: activePeriod,
-      latitude,
-      longitude,
-      zoom,
-    }),
-    sampleTransportIntensity({
-      kind: "rail",
-      period: activePeriod,
-      latitude,
-      longitude,
-      zoom,
-    }),
-    sampleTransportIntensity({
-      kind: "airport",
-      period: activePeriod,
-      latitude,
-      longitude,
-      zoom,
-    }),
     collectLocalFeatures(latitude, longitude, nightlifeGeoJson),
     sampleTransportIntensity({
       kind: "road",
@@ -171,6 +143,13 @@ export const estimateClientNoiseScore = async ({
     sampleTransportIntensity({
       kind: "road",
       period: "night",
+      latitude,
+      longitude,
+      zoom,
+    }),
+    sampleTransportIntensity({
+      kind: "rail",
+      period: "day",
       latitude,
       longitude,
       zoom,
@@ -198,37 +177,41 @@ export const estimateClientNoiseScore = async ({
     }),
   ]);
 
-  const localScoreInputs = localFeatures.map((feature) => ({
-    amenity: feature.amenity,
-    openingHours: feature.openingHours,
-    distanceMeters: feature.distanceMeters,
-  }));
+  const localNoise = computeLocalNoiseTimeProfile(
+    localFeatures.map((feature) => ({
+      amenity: feature.amenity,
+      openingHours: feature.openingHours,
+      distanceMeters: feature.distanceMeters,
+    }))
+  );
 
-  const localNoiseDayScore = computeLocalNoiseSourceScore(localScoreInputs, {
-    week: timeSlot.week,
-    part: "day",
-  });
-  const localNoiseNightScore = computeLocalNoiseSourceScore(localScoreInputs, {
-    week: timeSlot.week,
-    part: "night",
-  });
-  const localNoiseScore =
-    timeSlot.part === "day" ? localNoiseDayScore : localNoiseNightScore;
+  const roadDayScore = scoreFromRasterIntensity(roadDayIntensity, "road");
+  const roadEveningScore = scoreFromRasterIntensity(roadEveningIntensity, "road");
+  const roadNightScore = scoreFromRasterIntensity(roadNightIntensity, "road");
+  const railDayScore = scoreFromRasterIntensity(railDayIntensity, "rail");
+  const railNightScore = scoreFromRasterIntensity(railNightIntensity, "rail");
+  const airportDayScore = scoreFromRasterIntensity(airportDayIntensity, "airport");
+  const airportNightScore = scoreFromRasterIntensity(
+    airportNightIntensity,
+    "airport"
+  );
 
   const scoreByKind = {
-    road: scoreFromRasterIntensity(roadIntensity, "road"),
-    rail: scoreFromRasterIntensity(railIntensity, "rail"),
-    airport: scoreFromRasterIntensity(airportIntensity, "airport"),
-    nightlife: localNoiseScore,
+    road: Math.max(roadDayScore, roadEveningScore, roadNightScore),
+    rail: Math.max(railDayScore, railNightScore),
+    airport: Math.max(airportDayScore, airportNightScore),
+    nightlife: localNoise.overall,
   };
 
   const noiseScore = Math.round(combineLoudness(scoreByKind));
   const confidenceScore = Math.round(
     clamp(
       50 +
-        (roadIntensity > 0 ? 12 : 0) +
-        (railIntensity > 0 ? 12 : 0) +
-        (airportIntensity >= 0.12 ? 10 : 0) +
+        (roadDayIntensity + roadEveningIntensity + roadNightIntensity > 0
+          ? 12
+          : 0) +
+        (railDayIntensity + railNightIntensity > 0 ? 12 : 0) +
+        (Math.max(airportDayIntensity, airportNightIntensity) >= 0.12 ? 10 : 0) +
         (localFeatures.length > 0 ? 8 : 0),
       0,
       85
@@ -247,19 +230,15 @@ export const estimateClientNoiseScore = async ({
     contributors,
     timeProfile: {
       day: Math.round(
-        Math.max(
-          scoreFromRasterIntensity(roadDayIntensity, "road"),
-          scoreFromRasterIntensity(airportDayIntensity, "airport"),
-          localNoiseDayScore
-        )
+        Math.max(roadDayScore, railDayScore, airportDayScore, localNoise.day)
       ),
-      evening: Math.round(scoreFromRasterIntensity(roadEveningIntensity, "road")),
+      evening: Math.round(roadEveningScore),
       night: Math.round(
         Math.max(
-          scoreFromRasterIntensity(roadNightIntensity, "road"),
-          scoreFromRasterIntensity(railNightIntensity, "rail"),
-          scoreFromRasterIntensity(airportNightIntensity, "airport"),
-          localNoiseNightScore
+          roadNightScore,
+          railNightScore,
+          airportNightScore,
+          localNoise.night
         )
       ),
     },
@@ -267,7 +246,7 @@ export const estimateClientNoiseScore = async ({
       "Preview score from map tiles and nearby venues — planning and traffic load separately.",
     ],
     recommendedChecks: [
-      "Visit during the active period if nearby venues or rail metrics are elevated.",
+      "Visit at the loudest time in the profile if nearby venues or rail metrics are elevated.",
     ],
   };
 };

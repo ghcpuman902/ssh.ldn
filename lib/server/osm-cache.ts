@@ -108,3 +108,19 @@ export const withOsmCache = async <T>(
 
   return fresh;
 };
+
+/** Read a cache entry without running the producer on miss. */
+export const peekOsmCache = async <T>(
+  namespace: string,
+  keyParts: Array<string | number>,
+  ttlMs: number = DEFAULT_TTL_MS
+): Promise<T | undefined> => {
+  const hash = cacheKeyHash(keyParts);
+  const runtimeKey = `${namespace}:${hash}`;
+  const filePath = cacheFilePath(namespace, hash);
+
+  const fromRuntime = await readRuntimeCache<T>(runtimeKey);
+  if (fromRuntime !== undefined) return fromRuntime;
+
+  return readDiskCache<T>(filePath, ttlMs);
+};

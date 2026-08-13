@@ -1,0 +1,56 @@
+{
+  "description": "Static TfL/OSM transit geometry. Map API streams these files; do not fetch TfL at request time.",
+  "snapshottedAt": "2026-08-13T18:07:12.558Z",
+  "modes": [
+    {
+      "mode": "tube",
+      "source": "data/osm-cache/tube-geometry/8b90968bb6da762110f12dcaee1ae02a762844d2.json",
+      "stations": 270,
+      "fullLines": 31,
+      "previewLines": 28,
+      "fullBytes": 134026,
+      "previewBytes": 91155,
+      "lineSource": "osm-route-network"
+    },
+    {
+      "mode": "overground",
+      "source": "data/osm-cache/overground-geometry/f645d39431cc8c09cab6378b6438db26239929b1.json",
+      "stations": 112,
+      "fullLines": 12,
+      "previewLines": 12,
+      "fullBytes": 52078,
+      "previewBytes": 35684,
+      "lineSource": "osm-route-network"
+    },
+    {
+      "mode": "elizabeth",
+      "source": "data/osm-cache/elizabeth-geometry/65c9f24647063a5690d4fc48d939d4764a3e4da2.json",
+      "stations": 41,
+      "fullLines": 4,
+      "previewLines": 4,
+      "fullBytes": 19945,
+      "previewBytes": 13502,
+      "lineSource": "osm-route-network"
+    },
+    {
+      "mode": "dlr",
+      "source": "data/osm-cache/dlr-geometry/60e467744f1acd637fda6f618ed294a8b7212725.json",
+      "stations": 45,
+      "fullLines": 4,
+      "previewLines": 4,
+      "fullBytes": 16091,
+      "previewBytes": 12734,
+      "lineSource": "osm-route-network"
+    },
+    {
+      "mode": "tram",
+      "source": "data/osm-cache/tram-geometry/e0c09e3bcab8000676e0e20c1fab3aad6a200889.json",
+      "stations": 38,
+      "fullLines": 3,
+      "previewLines": 3,
+      "fullBytes": 16488,
+      "previewBytes": 11924,
+      "lineSource": "osm-route-network"
+    }
+  ]
+}

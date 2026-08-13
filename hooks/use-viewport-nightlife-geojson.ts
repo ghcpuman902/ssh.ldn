@@ -135,9 +135,9 @@ export const useViewportNightlifeGeoJson = (
     const batch = pending.slice(0, limit)
 
     try {
-      for (const cell of batch) {
-        await fetchGridCell(cell.row, cell.col)
-      }
+      await Promise.all(
+        batch.map((cell) => fetchGridCell(cell.row, cell.col))
+      )
     } finally {
       processingRef.current = false
       setIsFetching(false)

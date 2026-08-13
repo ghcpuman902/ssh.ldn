@@ -7,7 +7,7 @@ import {
   buildEvidenceBundleFromCoordinates,
 } from "@/lib/server/bundle"
 import {
-  computeLocalNoiseSourceScore,
+  computeLocalNoiseTimeProfile,
   isLocalNoiseAmenity,
 } from "@/lib/map/venue-time"
 import {
@@ -161,21 +161,13 @@ export const scoreFromBundle = async ({
   const localNoiseFeatures = bundle.sources.osm.features.filter((feature) =>
     isLocalNoiseAmenity(feature.amenity)
   )
-  const localNoiseScoreInputs = localNoiseFeatures.map((feature) => ({
-    amenity: feature.amenity,
-    openingHours: feature.openingHours,
-    distanceMeters: feature.distanceMeters,
-  }))
-  const localNoiseDayScore = computeLocalNoiseSourceScore(
-    localNoiseScoreInputs,
-    { week: timeSlot.week, part: "day" }
+  const localNoise = computeLocalNoiseTimeProfile(
+    localNoiseFeatures.map((feature) => ({
+      amenity: feature.amenity,
+      openingHours: feature.openingHours,
+      distanceMeters: feature.distanceMeters,
+    }))
   )
-  const localNoiseNightScore = computeLocalNoiseSourceScore(
-    localNoiseScoreInputs,
-    { week: timeSlot.week, part: "night" }
-  )
-  const localNoiseScore =
-    timeSlot.part === "day" ? localNoiseDayScore : localNoiseNightScore
 
   const roadScore = presenceToScore("road", dbToPresence(road, "road"))
   const railScore = presenceToScore("rail", dbToPresence(rail, "rail"))
@@ -191,7 +183,7 @@ export const scoreFromBundle = async ({
     road: roadScore,
     rail: railScore,
     airport: airportScore,
-    nightlife: localNoiseScore,
+    nightlife: localNoise.overall,
   }
 
   const acousticScore = combineLoudness(scoreByKind)
@@ -244,7 +236,7 @@ export const scoreFromBundle = async ({
             "airport",
             dbToPresence(bundle.sources.airport.airportLday as number | null, "airport")
           ),
-          localNoiseDayScore
+          localNoise.day
         )
       ),
       evening: Math.round(
@@ -267,7 +259,7 @@ export const scoreFromBundle = async ({
             "airport",
             dbToPresence(bundle.sources.airport.airportLnight as number | null, "airport")
           ),
-          localNoiseNightScore
+          localNoise.night
         )
       ),
     },
@@ -276,7 +268,7 @@ export const scoreFromBundle = async ({
     planningApplications: presentPlanningApplications(planningApplications),
     caveats: bundle.warnings,
     recommendedChecks: [
-      "Visit during the active period if nearby venues, hospitals, or rail metrics are elevated.",
+      "Visit at the loudest time in the profile if nearby venues, hospitals, or rail metrics are elevated.",
       "Confirm floor and street-facing orientation before relying on the score.",
     ],
   }

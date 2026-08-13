@@ -1,5 +1,4 @@
 import type { OsmGridCell } from "@/lib/map/osm-grid"
-import { osmGridCellKey } from "@/lib/map/osm-grid"
 import {
   buildNightlifeBboxQuery,
   buildNightlifeRadiusQuery,
@@ -108,17 +107,9 @@ export type OsmNightlifeBboxInput = {
   north: number
 }
 
+/** Map cells are served from data/osm-static. This remains for offline rebuilds. */
 export const getNightlifeGeoJsonForCell = async (cell: OsmGridCell) =>
-  withOsmCache(
-    "nightlife",
-    [
-      NIGHTLIFE_CACHE_VERSION,
-      osmGridCellKey(cell.row, cell.col),
-      cell.west.toFixed(4),
-      cell.south.toFixed(4),
-    ],
-    () => fetchNightlifeGeoJsonForBbox(cell)
-  )
+  fetchNightlifeGeoJsonForBbox(cell)
 
 export const getNightlifeGeoJsonForBbox = async (bbox: OsmNightlifeBboxInput) =>
   withOsmCache(
