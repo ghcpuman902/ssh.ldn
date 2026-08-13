@@ -8,7 +8,6 @@ import Map, {
   type MapLayerMouseEvent,
   type MapRef,
 } from "react-map-gl/maplibre"
-import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useTheme } from "next-themes"
 import { toast } from "sonner"
 import { useCursorNoise } from "@/hooks/use-cursor-noise"
@@ -142,10 +141,23 @@ const buildShareQuery = ({
   return params.toString()
 }
 
+const getShareSearchParams = () =>
+  new URLSearchParams(typeof window === "undefined" ? "" : window.location.search)
+
+const replaceShareUrl = (query: string) => {
+  if (typeof window === "undefined") return
+
+  const nextUrl = query
+    ? `${window.location.pathname}?${query}`
+    : window.location.pathname
+  const currentUrl = `${window.location.pathname}${window.location.search}`
+
+  if (currentUrl === nextUrl) return
+
+  window.history.replaceState(window.history.state, "", nextUrl)
+}
+
 export const MapShell = () => {
-  const router = useRouter()
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
   const { resolvedTheme } = useTheme()
   const isMobile = useIsMobile()
   const [mounted, setMounted] = useState(false)
@@ -539,10 +551,10 @@ export const MapShell = () => {
     setSearchQuery("")
     setSearchExpanded(false)
     // Clear share params immediately so dismiss does not wait on the sync effect.
-    if (searchParams.toString().length > 0) {
-      router.replace(pathname, { scroll: false })
+    if (getShareSearchParams().toString().length > 0) {
+      replaceShareUrl("")
     }
-  }, [pathname, router, searchParams])
+  }, [])
 
   const urlAddress =
     analyseState.status === "analysing" ? analyseState.address : null
@@ -562,13 +574,14 @@ export const MapShell = () => {
 
     hasHydratedFromUrlRef.current = true
 
-    const address = searchParams.get("address")?.trim() ?? ""
+    const shareSearchParams = getShareSearchParams()
+    const address = shareSearchParams.get("address")?.trim() ?? ""
     const coordinates = parseShareCoordinates(
-      searchParams.get("lat"),
-      searchParams.get("lng")
+      shareSearchParams.get("lat"),
+      shareSearchParams.get("lng")
     )
     const decodedTimeSlot = decodeNoiseTimeSlot(
-      searchParams.get("timeSlot") ?? ""
+      shareSearchParams.get("timeSlot") ?? ""
     )
 
     if (decodedTimeSlot) {
@@ -622,7 +635,7 @@ export const MapShell = () => {
         ),
       })
     }
-  }, [handleSearch, mapReady, mounted, searchParams])
+  }, [handleSearch, mapReady, mounted])
 
   useEffect(() => {
     if (!mounted || !mapReady || !hasHydratedFromUrlRef.current) return
@@ -645,22 +658,17 @@ export const MapShell = () => {
           })
         : ""
 
-    const currentQuery = searchParams.toString()
+    const currentQuery = getShareSearchParams().toString()
 
     if (nextQuery === currentQuery) {
       return
     }
 
-    router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, {
-      scroll: false,
-    })
+    replaceShareUrl(nextQuery)
   }, [
     analyseState.status,
     mounted,
     mapReady,
-    pathname,
-    router,
-    searchParams,
     timeSlot,
     urlAddress,
     urlLatitude,

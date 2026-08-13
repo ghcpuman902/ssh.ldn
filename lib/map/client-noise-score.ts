@@ -7,11 +7,20 @@ import {
   rasterToPresence,
   transportPresenceToScore,
 } from "@/lib/map/noise-score-model";
+import {
+  buildSlotScoreCells,
+  type NoiseSlotScoreCell,
+} from "@/lib/map/noise-slot-profile";
 import { osmGridCellForLatLng } from "@/lib/map/osm-grid";
 import { sampleDefraRasterIntensity } from "@/lib/map/raster-pixel-sampler";
 import {
-  computeLocalNoiseTimeProfile,
+  summarizeLocalAmenities,
+  type LocalAmenityHint,
+} from "@/lib/map/noise-contributor-copy";
+import {
+  computeLocalNoiseSlotScores,
   isLocalNoiseAmenity,
+  type LocalNoiseAmenity,
 } from "@/lib/map/venue-time";
 import { haversineMeters } from "@/lib/server/geo";
 
@@ -84,7 +93,7 @@ const collectLocalFeatures = async (
     .map((feature) => {
       const [lng, lat] = feature.geometry.coordinates;
       return {
-        amenity: feature.properties.amenity,
+        amenity: feature.properties.amenity as LocalNoiseAmenity,
         openingHours: feature.properties.openingHours,
         distanceMeters: haversineMeters(latitude, longitude, lat, lng),
       };
@@ -99,7 +108,8 @@ export type ClientNoiseScoreSummary = {
   confidenceBand: string;
   dominantSources: string[];
   contributors: Array<{ source: string; weight: number; score: number }>;
-  timeProfile: { day: number; evening: number; night: number };
+  localAmenities: LocalAmenityHint[];
+  timeProfile: NoiseSlotScoreCell[];
   caveats: string[];
   recommendedChecks: string[];
 };
@@ -121,8 +131,10 @@ export const estimateClientNoiseScore = async ({
     roadEveningIntensity,
     roadNightIntensity,
     railDayIntensity,
+    railEveningIntensity,
     railNightIntensity,
     airportDayIntensity,
+    airportEveningIntensity,
     airportNightIntensity,
   ] = await Promise.all([
     collectLocalFeatures(latitude, longitude, nightlifeGeoJson),
@@ -156,6 +168,13 @@ export const estimateClientNoiseScore = async ({
     }),
     sampleTransportIntensity({
       kind: "rail",
+      period: "evening",
+      latitude,
+      longitude,
+      zoom,
+    }),
+    sampleTransportIntensity({
+      kind: "rail",
       period: "night",
       latitude,
       longitude,
@@ -170,6 +189,13 @@ export const estimateClientNoiseScore = async ({
     }),
     sampleTransportIntensity({
       kind: "airport",
+      period: "evening",
+      latitude,
+      longitude,
+      zoom,
+    }),
+    sampleTransportIntensity({
+      kind: "airport",
       period: "night",
       latitude,
       longitude,
@@ -177,7 +203,7 @@ export const estimateClientNoiseScore = async ({
     }),
   ]);
 
-  const localNoise = computeLocalNoiseTimeProfile(
+  const localBySlot = computeLocalNoiseSlotScores(
     localFeatures.map((feature) => ({
       amenity: feature.amenity,
       openingHours: feature.openingHours,
@@ -185,22 +211,56 @@ export const estimateClientNoiseScore = async ({
     }))
   );
 
+  const eveningOrDay = (evening: number, day: number) =>
+    evening > 0 ? evening : day;
+
   const roadDayScore = scoreFromRasterIntensity(roadDayIntensity, "road");
   const roadEveningScore = scoreFromRasterIntensity(roadEveningIntensity, "road");
   const roadNightScore = scoreFromRasterIntensity(roadNightIntensity, "road");
   const railDayScore = scoreFromRasterIntensity(railDayIntensity, "rail");
+  const railEveningScore = scoreFromRasterIntensity(
+    eveningOrDay(railEveningIntensity, railDayIntensity),
+    "rail"
+  );
   const railNightScore = scoreFromRasterIntensity(railNightIntensity, "rail");
   const airportDayScore = scoreFromRasterIntensity(airportDayIntensity, "airport");
+  const airportEveningScore = scoreFromRasterIntensity(
+    eveningOrDay(airportEveningIntensity, airportDayIntensity),
+    "airport"
+  );
   const airportNightScore = scoreFromRasterIntensity(
     airportNightIntensity,
     "airport"
   );
 
+  const timeProfile = buildSlotScoreCells({
+    transportByPart: {
+      day: {
+        road: roadDayScore,
+        rail: railDayScore,
+        airport: airportDayScore,
+      },
+      evening: {
+        road: roadEveningScore,
+        rail: railEveningScore,
+        airport: airportEveningScore,
+      },
+      night: {
+        road: roadNightScore,
+        rail: railNightScore,
+        airport: airportNightScore,
+      },
+    },
+    localBySlot,
+  });
+
+  const nightlifeOverall = Math.max(0, ...Object.values(localBySlot));
+
   const scoreByKind = {
     road: Math.max(roadDayScore, roadEveningScore, roadNightScore),
-    rail: Math.max(railDayScore, railNightScore),
-    airport: Math.max(airportDayScore, airportNightScore),
-    nightlife: localNoise.overall,
+    rail: Math.max(railDayScore, railEveningScore, railNightScore),
+    airport: Math.max(airportDayScore, airportEveningScore, airportNightScore),
+    nightlife: nightlifeOverall,
   };
 
   const noiseScore = Math.round(combineLoudness(scoreByKind));
@@ -228,20 +288,8 @@ export const estimateClientNoiseScore = async ({
       confidenceScore >= 75 ? "High" : confidenceScore >= 55 ? "Medium" : "Low",
     dominantSources: contributors.slice(0, 2).map((item) => item.source),
     contributors,
-    timeProfile: {
-      day: Math.round(
-        Math.max(roadDayScore, railDayScore, airportDayScore, localNoise.day)
-      ),
-      evening: Math.round(roadEveningScore),
-      night: Math.round(
-        Math.max(
-          roadNightScore,
-          railNightScore,
-          airportNightScore,
-          localNoise.night
-        )
-      ),
-    },
+    localAmenities: summarizeLocalAmenities(localFeatures),
+    timeProfile,
     caveats: [
       "Preview score from map tiles and nearby venues — planning and traffic load separately.",
     ],

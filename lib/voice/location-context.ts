@@ -2,10 +2,11 @@ import type { AnalyseState } from "@/components/map/map-analyse-panel"
 import { getNoiseContributorMeta } from "@/lib/map/noise-contributor-meta"
 import {
   encodeNoiseTimeSlot,
+  formatNoiseAnalysisSlot,
+  formatNoiseTimeSlot,
   type NoiseTimeSlot,
-  WEEK_SEGMENT_LABELS,
-  NOISE_DAY_PARTS,
 } from "@/lib/map/noise-time"
+import type { NoiseSlotScoreCell } from "@/lib/map/noise-slot-profile"
 
 export type LocationContributor = {
   source: string
@@ -13,11 +14,7 @@ export type LocationContributor = {
   score: number
 }
 
-export type LocationTimeProfile = {
-  day: number
-  evening: number
-  night: number
-}
+export type LocationTimeProfile = NoiseSlotScoreCell[]
 
 export type LocationPlanningApplication = {
   reference: string | null
@@ -82,13 +79,6 @@ const formatSourceLabel = (source: string) => {
     default:
       return source
   }
-}
-
-const formatTimeSlotLabel = ({ week, part }: NoiseTimeSlot) => {
-  const weekLabel = WEEK_SEGMENT_LABELS[week]
-  const partLabel =
-    NOISE_DAY_PARTS.find((entry) => entry.part === part)?.label ?? part
-  return `${weekLabel} ${partLabel}`
 }
 
 export const resolvePrimaryAddress = (
@@ -212,7 +202,7 @@ export const toDynamicVariables = (
       enriched.dominantSources.length > 0
         ? enriched.dominantSources.map(formatSourceLabel).join(", ")
         : "none identified",
-    time_slot: formatTimeSlotLabel(enriched.timeSlot),
+    time_slot: formatNoiseTimeSlot(enriched.timeSlot),
     context_session_id: contextSessionId,
   }
 }
@@ -275,8 +265,13 @@ export const buildLocationContextPrompt = (context: LocationContext) => {
         )
       : ["  - No per-source breakdown available"]
 
-  const timeProfileLine = enriched.timeProfile
-    ? `- Noise by time of day: day ${enriched.timeProfile.day}, evening ${enriched.timeProfile.evening}, night ${enriched.timeProfile.night}`
+  const timeProfileLine = enriched.timeProfile?.length
+    ? `- Noise by time: ${enriched.timeProfile
+        .map(
+          (cell) =>
+            `${formatNoiseAnalysisSlot(cell)} ${cell.score}`
+        )
+        .join("; ")}`
     : "- Noise by time of day: unavailable"
 
   const planningLines =
@@ -329,7 +324,7 @@ export const buildLocationContextPrompt = (context: LocationContext) => {
     `- Postcode: ${enriched.postcode ?? "unknown"}`,
     `- Coordinates: ${enriched.latitude.toFixed(5)}, ${enriched.longitude.toFixed(5)}`,
     `- Coordinate precision: ${enriched.coordinatePrecision.replaceAll("_", " ")}`,
-    `- Time slot analysed: ${formatTimeSlotLabel(enriched.timeSlot)} (${encodeNoiseTimeSlot(enriched.timeSlot)})`,
+    `- Time slot analysed: ${formatNoiseTimeSlot(enriched.timeSlot)} (${encodeNoiseTimeSlot(enriched.timeSlot)})`,
     `- Noise score: ${enriched.noiseScore ?? "unavailable"}`,
     `- Noise band: ${enriched.noiseBand ?? "unavailable"}`,
     `- Confidence score: ${enriched.confidenceScore ?? "unavailable"}`,

@@ -7,7 +7,7 @@ import {
   buildEvidenceBundleFromCoordinates,
 } from "@/lib/server/bundle"
 import {
-  computeLocalNoiseTimeProfile,
+  computeLocalNoiseSlotScores,
   isLocalNoiseAmenity,
 } from "@/lib/map/venue-time"
 import {
@@ -21,6 +21,10 @@ import {
   planningScoreNudge,
   presenceToScore,
 } from "@/lib/map/noise-score-model"
+import {
+  buildSlotScoreCells,
+  maxScoreForPart,
+} from "@/lib/map/noise-slot-profile"
 import { parsePlanningDate } from "@/lib/server/planning"
 import {
   presentPlanningApplications,
@@ -161,13 +165,71 @@ export const scoreFromBundle = async ({
   const localNoiseFeatures = bundle.sources.osm.features.filter((feature) =>
     isLocalNoiseAmenity(feature.amenity)
   )
-  const localNoise = computeLocalNoiseTimeProfile(
+  const localBySlot = computeLocalNoiseSlotScores(
     localNoiseFeatures.map((feature) => ({
       amenity: feature.amenity,
       openingHours: feature.openingHours,
       distanceMeters: feature.distanceMeters,
     }))
   )
+  const nightlifeOverall = Math.max(0, ...Object.values(localBySlot))
+
+  const scoreFromDb = (
+    kind: "road" | "rail" | "airport",
+    db: number | null
+  ) => presenceToScore(kind, dbToPresence(db, kind))
+
+  const roadDayScore = scoreFromDb("road", bundle.sources.road.roadLday as number | null)
+  const roadEveningScore = scoreFromDb(
+    "road",
+    bundle.sources.road.roadEvening as number | null
+  )
+  const roadNightScore = scoreFromDb(
+    "road",
+    bundle.sources.road.roadLnight as number | null
+  )
+  const railDayScore = scoreFromDb("rail", bundle.sources.rail.railLday as number | null)
+  const railEveningScore = scoreFromDb(
+    "rail",
+    bundle.sources.rail.railEvening as number | null
+  )
+  const railNightScore = scoreFromDb(
+    "rail",
+    bundle.sources.rail.railLnight as number | null
+  )
+  const airportDayScore = scoreFromDb(
+    "airport",
+    bundle.sources.airport.airportLday as number | null
+  )
+  const airportEveningScore = scoreFromDb(
+    "airport",
+    bundle.sources.airport.airportEvening as number | null
+  )
+  const airportNightScore = scoreFromDb(
+    "airport",
+    bundle.sources.airport.airportLnight as number | null
+  )
+
+  const timeProfile = buildSlotScoreCells({
+    transportByPart: {
+      day: {
+        road: roadDayScore,
+        rail: railDayScore,
+        airport: airportDayScore,
+      },
+      evening: {
+        road: roadEveningScore,
+        rail: railEveningScore || railDayScore,
+        airport: airportEveningScore || airportDayScore,
+      },
+      night: {
+        road: roadNightScore,
+        rail: railNightScore,
+        airport: airportNightScore,
+      },
+    },
+    localBySlot,
+  })
 
   const roadScore = presenceToScore("road", dbToPresence(road, "road"))
   const railScore = presenceToScore("rail", dbToPresence(rail, "rail"))
@@ -183,7 +245,7 @@ export const scoreFromBundle = async ({
     road: roadScore,
     rail: railScore,
     airport: airportScore,
-    nightlife: localNoise.overall,
+    nightlife: nightlifeOverall,
   }
 
   const acousticScore = combineLoudness(scoreByKind)
@@ -228,41 +290,7 @@ export const scoreFromBundle = async ({
     confidenceBand:
       confidenceScore >= 75 ? "High" : confidenceScore >= 55 ? "Medium" : "Low",
     contributors,
-    timeProfile: {
-      day: Math.round(
-        Math.max(
-          presenceToScore("road", dbToPresence(bundle.sources.road.roadLday as number | null, "road")),
-          presenceToScore(
-            "airport",
-            dbToPresence(bundle.sources.airport.airportLday as number | null, "airport")
-          ),
-          localNoise.day
-        )
-      ),
-      evening: Math.round(
-        presenceToScore(
-          "road",
-          dbToPresence(bundle.sources.road.roadEvening as number | null, "road")
-        )
-      ),
-      night: Math.round(
-        Math.max(
-          presenceToScore(
-            "road",
-            dbToPresence(bundle.sources.road.roadLnight as number | null, "road")
-          ),
-          presenceToScore(
-            "rail",
-            dbToPresence(bundle.sources.rail.railLnight as number | null, "rail")
-          ),
-          presenceToScore(
-            "airport",
-            dbToPresence(bundle.sources.airport.airportLnight as number | null, "airport")
-          ),
-          localNoise.night
-        )
-      ),
-    },
+    timeProfile,
     dominantSources: contributors.slice(0, 2).map((item) => item.source),
     evidenceRows: bundle.sources.osm.features.slice(0, 8),
     planningApplications: presentPlanningApplications(planningApplications),
@@ -288,7 +316,8 @@ export const explainFromScore = async (input: ScoreInput) => {
     summary,
     why: `Official DEFRA baselines and nearby OSM features indicate ${dominant} as the main exposure drivers for this coordinate.`,
     whenItMatters:
-      score.timeProfile.night > score.timeProfile.day
+      maxScoreForPart(score.timeProfile, "night") >
+      maxScoreForPart(score.timeProfile, "day")
         ? "Night-time risk is higher than daytime; evenings and late visits are most revealing."
         : "Daytime transport exposure dominates; rush-hour visits are most revealing.",
     confidenceExplanation: `Confidence is ${score.confidenceBand.toLowerCase()} (${score.confidenceScore}/100) because floor=${input.floor ?? 0}, facing=${input.facing ?? "unknown"}, and source coverage vary.`,

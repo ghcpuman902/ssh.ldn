@@ -28,6 +28,42 @@ export const NOISE_DAY_PARTS: Array<{
   { part: "night", label: "Night", hours: "23:00–07:00" },
 ]
 
+/** DEFRA Lday / Leve / Lnight windows — used by the address panel, not the map toggle. */
+export type NoiseAnalysisPart = "day" | "evening" | "night"
+
+export type NoiseAnalysisSlot = {
+  week: NoiseWeekSegment
+  part: NoiseAnalysisPart
+}
+
+export const ANALYSIS_DAY_PARTS: Array<{
+  part: NoiseAnalysisPart
+  label: string
+  hours: string
+  durationHours: number
+}> = [
+  { part: "day", label: "Day", hours: "07:00–19:00", durationHours: 12 },
+  { part: "evening", label: "Evening", hours: "19:00–23:00", durationHours: 4 },
+  { part: "night", label: "Night", hours: "23:00–07:00", durationHours: 8 },
+]
+
+export const WEEK_SEGMENTS: NoiseWeekSegment[] = ["weekday", "weekend"]
+
+export const encodeNoiseAnalysisSlot = ({ week, part }: NoiseAnalysisSlot) =>
+  `${week}-${part}`
+
+export const formatNoiseAnalysisSlot = ({ week, part }: NoiseAnalysisSlot) => {
+  const partLabel =
+    ANALYSIS_DAY_PARTS.find((item) => item.part === part)?.label.toLowerCase() ??
+    part
+  return `${WEEK_SEGMENT_LABELS[week]} ${partLabel}`
+}
+
+export const ALL_NOISE_ANALYSIS_SLOTS = (): NoiseAnalysisSlot[] =>
+  WEEK_SEGMENTS.flatMap((week) =>
+    ANALYSIS_DAY_PARTS.map(({ part }) => ({ week, part }))
+  )
+
 export const DEFAULT_NOISE_TIME_SLOT: NoiseTimeSlot = {
   week: "weekday",
   part: "day",
@@ -82,8 +118,3 @@ export const DEFRA_TIME_SLOT_NOTE =
 
 export const isWeekendNight = ({ week, part }: NoiseTimeSlot) =>
   week === "weekend" && part === "night"
-
-export const ALL_NOISE_TIME_SLOTS = (): NoiseTimeSlot[] =>
-  (["weekday", "weekend"] as const).flatMap((week) =>
-    NOISE_DAY_PARTS.map(({ part }) => ({ week, part }))
-  )

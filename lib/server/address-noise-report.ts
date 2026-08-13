@@ -3,6 +3,10 @@ import {
   decodeNoiseTimeSlot,
   encodeNoiseTimeSlot,
 } from "@/lib/map/noise-time"
+import {
+  maxScoreForPart,
+  type NoiseSlotScoreCell,
+} from "@/lib/map/noise-slot-profile"
 import { geocodeAddress } from "@/lib/server/geocode"
 import { scoreFromBundle, type ScoreInput } from "@/lib/server/score"
 
@@ -35,11 +39,7 @@ export type AddressNoiseReport = {
     confidenceScore: number
     confidenceBand: string
     contributors: Array<{ source: string; weight: number; score: number }>
-    timeProfile: {
-      day: number
-      evening: number
-      night: number
-    }
+    timeProfile: NoiseSlotScoreCell[]
     dominantSources: string[]
   }
   explanation: {
@@ -69,7 +69,8 @@ const buildExplanation = (
     summary: `${score.noiseBand} location with noise score ${score.noiseScore}/100. Dominant contributors: ${dominant}.`,
     why: `Official DEFRA baselines and nearby OSM features indicate ${dominant} as the main exposure drivers for this coordinate.`,
     whenItMatters:
-      score.timeProfile.night > score.timeProfile.day
+      maxScoreForPart(score.timeProfile, "night") >
+      maxScoreForPart(score.timeProfile, "day")
         ? "Night-time risk is higher than daytime; evenings and late visits are most revealing."
         : "Daytime transport exposure dominates; rush-hour visits are most revealing.",
     confidenceExplanation: `Confidence is ${score.confidenceBand.toLowerCase()} (${score.confidenceScore}/100) because floor=${scoreInput.floor ?? 0}, facing=${scoreInput.facing ?? "unknown"}, and source coverage vary.`,

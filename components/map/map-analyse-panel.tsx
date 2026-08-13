@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, type ElementType, type RefObject } from "react"
+import { Fragment, useEffect, useRef, type ElementType, type RefObject } from "react"
 
 import { useRevealProgress } from "@/hooks/use-reveal-progress"
 import {
@@ -9,13 +9,9 @@ import {
 import {
   ExternalLink,
   Loader2,
-  Martini,
-  MoonStar,
   Music2,
   Star,
-  Sun,
   X,
-  type LucideIcon,
 } from "lucide-react"
 
 import { BoroughLogo } from "@/components/map/borough-logo"
@@ -35,8 +31,24 @@ import {
   type OpeningCoverage,
 } from "@/lib/map/google-nearby-noisy-poi"
 import { hasGooglePlacesClientKey } from "@/lib/map/google-places"
+import {
+  describeContributor,
+  type LocalAmenityHint,
+} from "@/lib/map/noise-contributor-copy"
 import { getNoiseContributorMeta } from "@/lib/map/noise-contributor-meta"
-import { WEEK_SEGMENT_LETTERS } from "@/lib/map/noise-time"
+import {
+  ANALYSIS_DAY_PARTS,
+  WEEK_SEGMENT_LETTERS,
+  WEEK_SEGMENTS,
+  formatNoiseAnalysisSlot,
+  type NoiseAnalysisPart,
+  type NoiseWeekSegment,
+} from "@/lib/map/noise-time"
+import {
+  cellForSlot,
+  findLoudestSlot,
+  type NoiseSlotScoreCell,
+} from "@/lib/map/noise-slot-profile"
 import type { GeocodeResult } from "@/lib/server/geocode-types"
 import { Tooltip, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
@@ -47,11 +59,7 @@ type ScoreContributor = {
   score: number
 }
 
-type ScoreTimeProfile = {
-  day: number
-  evening: number
-  night: number
-}
+type ScoreTimeProfile = NoiseSlotScoreCell[]
 
 type ScorePlanningApplication = {
   applicationId: string | null
@@ -75,6 +83,7 @@ type ScoreSummary = {
   confidenceBand: string
   dominantSources: string[]
   contributors: ScoreContributor[]
+  localAmenities?: LocalAmenityHint[]
   timeProfile: ScoreTimeProfile
   caveats: string[]
   recommendedChecks: string[]
@@ -107,54 +116,97 @@ type MapAnalysePanelProps = {
   onNoisyPoiFocus?: (poi: NearbyNoisyPoiSummary) => void
 }
 
-const clampPercent = (value: number) => Math.min(100, Math.max(0, value))
-
-const TIME_PROFILE_META: {
-  key: keyof ScoreTimeProfile
-  label: string
-  Icon: LucideIcon
-  className: string
-  iconClassName: string
-}[] = [
-  {
-    key: "day",
-    label: "Day",
-    Icon: Sun,
-    className: "bg-amber-50",
-    iconClassName: "text-amber-300/80",
-  },
-  {
-    key: "evening",
-    label: "Evening",
-    Icon: Martini,
-    className: "bg-orange-50",
-    iconClassName: "text-orange-300/80",
-  },
-  {
-    key: "night",
-    label: "Night",
-    Icon: MoonStar,
-    className: "bg-indigo-50",
-    iconClassName: "text-indigo-300/80",
-  },
-]
-
 const formatSourceLabel = (source: string) => getNoiseContributorMeta(source).label
+
+const contributorCardLabel = (source: string) =>
+  source === "nightlife" ? "Local noise" : formatSourceLabel(source)
 
 const revealValue = (target: number, progress: number) =>
   Math.round(target * progress)
 
+const SCORE_BAR_COUNT: Record<NoiseWeekSegment, number> = {
+  weekday: 5,
+  weekend: 2,
+}
+
+const SCORE_BAR_WIDTH_CLASS = "w-1.5"
+const SCORE_BAR_GAP_CLASS = "gap-[3px]"
+const SCORE_BAR_ROW_CLASS = cn("flex items-stretch", SCORE_BAR_GAP_CLASS)
+const SCORE_GROUP_GAP_CLASS = "gap-x-1.5 gap-y-1"
+
+/** Inner bar height: 2px per hour of the DEFRA window (12 / 4 / 8). */
+const SCORE_PART_BAR_HEIGHT: Record<NoiseAnalysisPart, string> = {
+  day: "h-6",
+  evening: "h-2",
+  night: "h-4",
+}
+
+const SlotScoreCellView = ({
+  cell,
+  progress,
+}: {
+  cell: NoiseSlotScoreCell
+  progress: number
+}) => {
+  const score = revealValue(cell.score, progress)
+  const fill = getNoiseScoreColor(cell.score)
+  const partMeta = ANALYSIS_DAY_PARTS.find((item) => item.part === cell.part)
+  const hours = partMeta?.hours ?? ""
+  const sourceLabel = formatSourceLabel(cell.dominantSource)
+  const slotLabel = formatNoiseAnalysisSlot(cell)
+  const barCount = SCORE_BAR_COUNT[cell.week]
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          tabIndex={0}
+          aria-label={`${slotLabel}, ${hours}, score ${score}, ${sourceLabel}`}
+          className="inline-flex w-fit items-center justify-center rounded-lg p-1"
+          style={{
+            backgroundColor: `color-mix(in oklch, ${fill} 50%, transparent)`,
+          }}
+        >
+          <div
+            className={cn(SCORE_PART_BAR_HEIGHT[cell.part], SCORE_BAR_ROW_CLASS)}
+            aria-hidden="true"
+            style={{ opacity: Math.max(0.35, progress) }}
+          >
+            {Array.from({ length: barCount }, (_, index) => (
+              <span
+                key={index}
+                className={cn(SCORE_BAR_WIDTH_CLASS, "rounded-sm bg-background/50")}
+              />
+            ))}
+          </div>
+        </button>
+      </TooltipTrigger>
+      <MapTooltipContent
+        side={cell.part === "day" ? "top" : "bottom"}
+        className="whitespace-nowrap"
+      >
+        {slotLabel} · {hours} · {score}
+        <span className="mt-0.5 block text-muted-foreground">{sourceLabel}</span>
+      </MapTooltipContent>
+    </Tooltip>
+  )
+}
+
 const NoiseScoreCard = ({
   score,
   animationKey,
+  nearbyVenues = [],
 }: {
   score: ScoreSummary
   animationKey: string
+  nearbyVenues?: NearbyNoisyPoiSummary[]
 }) => {
   const progress = useRevealProgress(animationKey)
   const animatedNoiseScore = revealValue(score.noiseScore, progress)
   const animatedConfidence = revealValue(score.confidenceScore, progress)
   const scoreColor = getNoiseScoreColor(animatedNoiseScore)
+  const loudest = findLoudestSlot(score.timeProfile)
 
   return (
     <div className="relative overflow-hidden rounded-3xl bg-muted/60 p-4">
@@ -165,8 +217,8 @@ const NoiseScoreCard = ({
       />
       <div className="relative z-10">
         <p className="text-xs text-muted-foreground">Overall noise score</p>
-        <div className="flex items-end justify-between gap-3">
-          <p className="flex items-baseline gap-0.5 leading-none">
+        <div className="flex items-center justify-between gap-3">
+          <p className="leading-none">
             <span
               className="text-5xl font-semibold tracking-tight tabular-nums"
               style={{ color: scoreColor }}
@@ -177,90 +229,115 @@ const NoiseScoreCard = ({
               /100
             </span>
           </p>
-          <div className="flex h-12 flex-col justify-between text-right">
-            <p className="text-base font-medium leading-none text-foreground">
+          <div className="text-right leading-none">
+            <p className="text-base font-medium text-foreground">
               {describeNoiseScore(score.noiseScore)}
             </p>
-            <p className="text-sm leading-none text-muted-foreground">
+            <p className="mt-1 text-sm text-muted-foreground">
               Confidence {animatedConfidence} · {score.confidenceBand}
             </p>
           </div>
         </div>
 
-      {score.dominantSources.length > 0 ? (
-        <p className="mt-3 text-xs text-muted-foreground">
-          Top drivers:{" "}
-          {score.dominantSources
-            .map((source) => formatSourceLabel(source))
-            .join(", ")}
-        </p>
-      ) : null}
+      <div className="mt-4 flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="font-mono text-sm font-bold tracking-tight text-foreground">
+            who should ssssssssh?
+          </p>
+          <p className="mt-0.5 font-mono text-sm font-bold tracking-tight text-muted-foreground">
+            {describeSshTargets(score.contributors, score.localAmenities)}
+          </p>
+          {loudest && loudest.score > 0 ? (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Loudest: {formatNoiseAnalysisSlot(loudest)}
+              {loudest.dominantSource
+                ? ` · ${formatSourceLabel(loudest.dominantSource)}`
+                : ""}
+            </p>
+          ) : null}
+        </div>
+
+        <div
+          role="group"
+          aria-label="Noise by weekday or weekend and time of day"
+          className={cn(
+            "grid w-fit shrink-0 grid-cols-[auto_auto_auto] items-center",
+            SCORE_GROUP_GAP_CLASS
+          )}
+        >
+          <div aria-hidden="true" />
+          {WEEK_SEGMENTS.map((week) => (
+            <p
+              key={week}
+              className="text-center text-[9px] font-medium leading-none tracking-[-0.06em] text-muted-foreground"
+            >
+              {WEEK_SEGMENT_LETTERS[week].replaceAll(" ", "")}
+            </p>
+          ))}
+
+          {ANALYSIS_DAY_PARTS.map(({ part, label }) => (
+            <Fragment key={part}>
+              <p className="pr-0.5 text-[10px] font-medium text-muted-foreground">
+                {label}
+              </p>
+              {WEEK_SEGMENTS.map((week) => {
+                const cell = cellForSlot(score.timeProfile, { week, part })
+                return (
+                  <SlotScoreCellView
+                    key={`${week}-${part}`}
+                    cell={cell}
+                    progress={progress}
+                  />
+                )
+              })}
+            </Fragment>
+          ))}
+        </div>
+      </div>
 
       {score.contributors.length > 0 ? (
-        <div className="mt-4 space-y-2.5">
+        <div className="mt-4 space-y-2">
           {score.contributors.map((contributor) => {
             const meta = getNoiseContributorMeta(contributor.source)
-            const animatedScore = revealValue(contributor.score, progress)
+            const { band, sentence } = describeContributor({
+              source: contributor.source,
+              score: contributor.score,
+              localAmenities: score.localAmenities,
+              nearbyVenues,
+            })
+            const bandColor = getNoiseScoreColor(contributor.score)
+
             return (
               <div
                 key={contributor.source}
-                className="flex items-center gap-2.5"
+                role="group"
+                aria-label={`${contributorCardLabel(contributor.source)}, ${band}. ${sentence}`}
+                className="rounded-2xl px-3 py-2.5"
+                style={{
+                  backgroundColor: `color-mix(in oklch, ${meta.strokeColor} 14%, transparent)`,
+                }}
               >
-                <span
-                  className="w-5 shrink-0 text-center text-sm"
-                  aria-hidden="true"
-                >
-                  {meta.emoji}
-                </span>
-                <p className="w-24 shrink-0 text-xs font-medium text-foreground">
-                  {meta.label}
-                </p>
-                <div className="h-3 flex-1 overflow-hidden rounded-full bg-muted">
-                  <div
-                    className="h-full rounded-full"
-                    style={{
-                      width: `${clampPercent(contributor.score * progress)}%`,
-                      backgroundColor: meta.strokeColor,
-                    }}
-                  />
+                <div className="flex items-baseline justify-between gap-2">
+                  <p className="text-[10px] font-medium text-muted-foreground">
+                    <span aria-hidden="true">{meta.emoji}</span>{" "}
+                    {contributorCardLabel(contributor.source)}
+                  </p>
+                  <p
+                    className={cn(
+                      "text-xs font-medium",
+                      band === "Low" && "text-muted-foreground"
+                    )}
+                    style={band === "Low" ? undefined : { color: bandColor }}
+                  >
+                    {band}
+                  </p>
                 </div>
-                <p className="w-9 shrink-0 text-right text-xs font-medium tabular-nums text-foreground">
-                  {animatedScore}%
-                </p>
+                <p className="mt-0.5 text-sm text-foreground">{sentence}</p>
               </div>
             )
           })}
         </div>
       ) : null}
-
-      <div className="mt-4 grid grid-cols-3 gap-2">
-        {TIME_PROFILE_META.map(
-          ({ key, label, Icon, className, iconClassName }) => (
-            <div
-              key={key}
-              className={cn(
-                "relative overflow-hidden rounded-xl p-2",
-                className
-              )}
-            >
-              <p className="relative z-10 text-xs text-muted-foreground">
-                {label}
-              </p>
-              <p className="relative z-10 text-sm font-medium tabular-nums text-foreground">
-                {revealValue(score.timeProfile[key], progress)}
-              </p>
-              <Icon
-                aria-hidden="true"
-                className={cn(
-                  "pointer-events-none absolute -right-2 -bottom-3 size-16",
-                  iconClassName
-                )}
-                strokeWidth={1.25}
-              />
-            </div>
-          )
-        )}
-      </div>
       </div>
     </div>
   )
@@ -268,15 +345,55 @@ const NoiseScoreCard = ({
 
 const describeNoiseScore = (score: number) => {
   if (score >= 75) {
-    return "Rarely a quiet moment"
+    return "ssh has left the chat"
   }
   if (score >= 55) {
-    return "Seldom truly still"
+    return "ssh is a suggestion"
   }
   if (score >= 35) {
-    return "A calm hum, most days"
+    return "ssh-able, most days"
   }
-  return "Peacefully quiet"
+  return "a rare London hush"
+}
+
+const describeSshTargets = (
+  contributors: ScoreContributor[],
+  localAmenities: LocalAmenityHint[] = []
+) => {
+  const loud = contributors.filter((contributor) => contributor.score >= 25)
+  if (loud.length === 0) {
+    return "nobody. go forth and nap."
+  }
+
+  const drinkingCount = localAmenities
+    .filter((hint) => hint.amenity === "pub" || hint.amenity === "bar")
+    .reduce((total, hint) => total + hint.count, 0)
+  const hospital = localAmenities.find((hint) => hint.amenity === "hospital")
+  const club = localAmenities.find(
+    (hint) => hint.amenity === "nightclub" || hint.amenity === "music_venue"
+  )
+
+  const nameFor = (source: string) => {
+    if (source === "nightlife") {
+      if (hospital && hospital.nearestMeters < 120) return "the hospital"
+      if (club) return "the 2am crowd"
+      if (drinkingCount >= 3) return "every pub on the street"
+      if (drinkingCount > 0) return "the pub"
+      return "the neighbours"
+    }
+    if (source === "road") return "the traffic"
+    if (source === "rail") return "the trains"
+    if (source === "airport") return "the flight path"
+    if (source === "planning") return "the builders"
+    if (source === "traffic") return "the buses"
+    return source
+  }
+
+  const names = loud.slice(0, 2).map((contributor) => nameFor(contributor.source))
+  if (names.length === 1) {
+    return `${names[0]}.`
+  }
+  return `${names[0]}. ${names[1]}.`
 }
 
 const getPlanningLinkHint = (linkKind: ScorePlanningApplication["linkKind"]) => {
@@ -854,6 +971,9 @@ export const AnalyseBody = ({
           <NoiseScoreCard
             score={state.score.data}
             animationKey={`${state.address}-${state.score.data.noiseScore}`}
+            nearbyVenues={
+              state.noisyPois.status === "done" ? state.noisyPois.data : []
+            }
           />
 
           {state.score.data.recommendedChecks.length > 0 ? (
