@@ -23,6 +23,7 @@ import type { AnalyseState } from "@/components/map/map-analyse-panel"
 // Voice mode is temporarily unwired so ElevenLabs stays off the map load path.
 // import { VoiceModeButton } from "@/components/map/voice-mode-button"
 import { NoiseMapLayers } from "@/components/map/noise-map-layers"
+import { MapCenterCrosshair } from "@/components/map/map-center-crosshair"
 import { MapDataCredits } from "@/components/map/map-data-credits"
 import { MapSearchBar, type MapSearchBarHandle, type MapSearchSelection } from "@/components/map/map-search-bar"
 import { NoiseLayerControls } from "@/components/map/noise-layer-controls"
@@ -175,6 +176,7 @@ export const MapShell = () => {
   const [audioEnabled, setAudioEnabled] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [searchExpanded, setSearchExpanded] = useState(false)
+  const [mapCenterHintVisible, setMapCenterHintVisible] = useState(false)
   const desktopSearchRef = useRef<MapSearchBarHandle>(null)
   const mobileFloatingSearchRef = useRef<MapSearchBarHandle>(null)
   const mobileDockedSearchRef = useRef<MapSearchBarHandle>(null)
@@ -550,6 +552,7 @@ export const MapShell = () => {
     setFocusedNoisyPoiId(null)
     setSearchQuery("")
     setSearchExpanded(false)
+    setMapCenterHintVisible(false)
     // Clear share params immediately so dismiss does not wait on the sync effect.
     if (getShareSearchParams().toString().length > 0) {
       replaceShareUrl("")
@@ -798,6 +801,10 @@ export const MapShell = () => {
 
   const handleMapLongPress = useCallback(
     ({ latitude, longitude }: { latitude: number; longitude: number }) => {
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur()
+      }
+      setMapCenterHintVisible(false)
       void handleMapLocationPicked(latitude, longitude)
     },
     [handleMapLocationPicked]
@@ -916,6 +923,9 @@ export const MapShell = () => {
     onExpandedChange: setSearchExpanded,
   }
 
+  const showMapCenterCrosshair =
+    mapCenterHintVisible || (isMobile && audioEnabled)
+
   const activeSearchRef = isMobile
     ? analyseOpen
       ? mobileDockedSearchRef
@@ -984,6 +994,9 @@ export const MapShell = () => {
           variant={analyseOpen ? "docked" : "floating"}
           instanceId="desktop"
           {...searchBarProps}
+          onMapCenterHintChange={
+            isMobile ? undefined : setMapCenterHintVisible
+          }
         />
       </div>
 
@@ -1127,16 +1140,7 @@ export const MapShell = () => {
               aria-hidden
               className="pointer-events-none absolute inset-0 bg-linear-to-b from-background/10 via-transparent to-background/20"
             />
-            {isMobile && audioEnabled ? (
-              <div
-                aria-hidden="true"
-                className="pointer-events-none absolute left-1/2 top-1/2 z-20 flex size-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center"
-              >
-                <span className="absolute h-px w-9 rounded-full bg-foreground/80 shadow-[0_0_0_1px_rgba(255,255,255,0.85)]" />
-                <span className="absolute h-9 w-px rounded-full bg-foreground/80 shadow-[0_0_0_1px_rgba(255,255,255,0.85)]" />
-                <span className="size-2 rounded-full border border-white bg-primary shadow-sm" />
-              </div>
-            ) : null}
+            {showMapCenterCrosshair ? <MapCenterCrosshair /> : null}
           </div>
 
           <div className="pointer-events-none absolute inset-0 z-10">
@@ -1166,7 +1170,7 @@ export const MapShell = () => {
             <div
               className={cn(
                 "pointer-events-auto absolute right-4 top-4 z-20 md:hidden",
-                analyseOpen && "pointer-events-none opacity-0"
+                analyseOpen && "pointer-events-none hidden opacity-0"
               )}
             >
               <MapSearchBar
@@ -1174,6 +1178,9 @@ export const MapShell = () => {
                 variant="floating"
                 instanceId="mobile-floating"
                 {...searchBarProps}
+                onMapCenterHintChange={
+                  analyseOpen ? undefined : setMapCenterHintVisible
+                }
               />
             </div>
 
@@ -1225,7 +1232,10 @@ export const MapShell = () => {
           open={analyseOpen}
           state={analyseState}
           onClose={handleCloseAnalyse}
-          searchBarProps={searchBarProps}
+          searchBarProps={{
+            ...searchBarProps,
+            onMapCenterHintChange: setMapCenterHintVisible,
+          }}
           searchBarRef={mobileDockedSearchRef}
           focusedNoisyPoiId={focusedNoisyPoiId}
           onNoisyPoiHover={setHoveredNoisyPoiId}
