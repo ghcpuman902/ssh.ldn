@@ -44,6 +44,7 @@ type MapSearchBarProps = {
   onSelectFromMap?: () => void
   onUseCurrentLocation?: () => void
   onUseMapCenter?: () => void
+  onMapCenterHintChange?: (visible: boolean) => void
   isSearching?: boolean
   variant?: "floating" | "docked"
   instanceId?: string
@@ -67,6 +68,7 @@ export const MapSearchBar = forwardRef<MapSearchBarHandle, MapSearchBarProps>(
       onSelectFromMap,
       onUseCurrentLocation,
       onUseMapCenter,
+      onMapCenterHintChange,
       isSearching = false,
       variant = "floating",
       instanceId = "search",
@@ -441,6 +443,14 @@ export const MapSearchBar = forwardRef<MapSearchBarHandle, MapSearchBarProps>(
       visibleSuggestions.length > 0 ||
       isLoadingSuggestions ||
       (!placesAvailable && query.trim().length >= 2))
+  const mapCenterHintVisible = listVisible && Boolean(onUseMapCenter)
+
+  useEffect(() => {
+    const instanceVisible = containerRef.current?.offsetParent !== null
+    onMapCenterHintChange?.(mapCenterHintVisible && instanceVisible)
+
+    return () => onMapCenterHintChange?.(false)
+  }, [mapCenterHintVisible, onMapCenterHintChange])
 
   return (
     <div

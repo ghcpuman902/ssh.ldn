@@ -1,7 +1,14 @@
 "use client"
 
-import { useEffect, useState, type Ref } from "react"
-import { Drawer } from "vaul"
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type PointerEvent,
+  type Ref,
+} from "react"
 
 import {
   AnalyseBody,
@@ -15,12 +22,15 @@ import {
   type MapSearchBarProps,
 } from "@/components/map/map-search-bar"
 import type { NearbyNoisyPoiSummary } from "@/lib/map/google-nearby-noisy-poi"
+import {
+  clampAnalyseSheetHeight,
+  getAnalyseSheetSnapHeights,
+  nextAnalyseSheetSnap,
+  resolveAnalyseSheetReleaseSnap,
+  type AnalyseSheetSnap,
+  type AnalyseSheetSnapHeights,
+} from "@/lib/map/analyse-sheet-snap"
 import { cn } from "@/lib/utils"
-
-const SNAP_PEEK = "9.5rem"
-const SNAP_HALF = 0.5
-const SNAP_FULL = 0.92
-const SNAP_POINTS = [SNAP_PEEK, SNAP_HALF, SNAP_FULL] as const
 
 type MapAnalyseSheetProps = {
   open: boolean
@@ -33,6 +43,21 @@ type MapAnalyseSheetProps = {
   onNoisyPoiFocus?: (poi: NearbyNoisyPoiSummary) => void
 }
 
+const SNAP_LABEL: Record<AnalyseSheetSnap, string> = {
+  peek: "Peek height",
+  half: "Half height",
+  full: "Full height",
+}
+
+const getViewportHeight = () =>
+  window.visualViewport?.height ?? window.innerHeight
+
+const getRootFontSizePx = () =>
+  Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
+
+const getSnapHeights = (): AnalyseSheetSnapHeights =>
+  getAnalyseSheetSnapHeights(getViewportHeight(), getRootFontSizePx())
+
 export const MapAnalyseSheet = ({
   open,
   state,
@@ -43,105 +68,215 @@ export const MapAnalyseSheet = ({
   onNoisyPoiHover,
   onNoisyPoiFocus,
 }: MapAnalyseSheetProps) => {
-  const [snap, setSnap] = useState<number | string | null>(SNAP_HALF)
+  const [snap, setSnap] = useState<AnalyseSheetSnap>("half")
+  const [heights, setHeights] = useState<AnalyseSheetSnapHeights>(() =>
+    getAnalyseSheetSnapHeights(800, 16)
+  )
+  const [dragHeight, setDragHeight] = useState<number | null>(null)
+  const dragRef = useRef<{
+    pointerId: number
+    startY: number
+    startHeight: number
+    lastY: number
+    lastTime: number
+    velocity: number
+  } | null>(null)
+
   const primaryBorough = resolveAnalysePrimaryBorough(state)
   const isAnalysing = state.status === "analysing"
+  const sheetHeight = dragHeight ?? heights[snap]
+  const isDragging = dragHeight !== null
+
+  useEffect(() => {
+    if (!open) {
+      setDragHeight(null)
+      return
+    }
+
+    setSnap("half")
+    setDragHeight(null)
+    setHeights(getSnapHeights())
+  }, [open])
 
   useEffect(() => {
     if (!open) return
-    setSnap(SNAP_HALF)
+
+    const handleResize = () => {
+      setHeights(getSnapHeights())
+    }
+
+    handleResize()
+    window.addEventListener("resize", handleResize)
+    window.visualViewport?.addEventListener("resize", handleResize)
+
+    return () => {
+      window.removeEventListener("resize", handleResize)
+      window.visualViewport?.removeEventListener("resize", handleResize)
+    }
   }, [open])
 
-  const handleSnapChange = (point: number | string | null) => {
-    // Dismiss is close-button only — ignore null / out-of-range snap attempts.
-    if (point === null || !SNAP_POINTS.includes(point as (typeof SNAP_POINTS)[number])) {
-      return
+  const handleSearchFocus = useCallback(() => {
+    setSnap((current) => (current === "full" ? current : "half"))
+  }, [])
+
+  const handlePointerDown = (event: PointerEvent<HTMLButtonElement>) => {
+    if (event.button !== 0) return
+
+    const pointerId = event.pointerId
+    const now = performance.now()
+    dragRef.current = {
+      pointerId,
+      startY: event.clientY,
+      startHeight: sheetHeight,
+      lastY: event.clientY,
+      lastTime: now,
+      velocity: 0,
     }
-    setSnap(point)
+    setDragHeight(sheetHeight)
+    event.currentTarget.setPointerCapture(pointerId)
+    event.preventDefault()
   }
 
-  return (
-    <Drawer.Root
-      open={open}
-      // Swipe-dismiss is intentionally off; close via the header X only.
-      onOpenChange={(nextOpen) => {
-        if (nextOpen) return
-        // Block Vaul from closing via gesture / escape — keep analyse state.
-      }}
-      modal={false}
-      dismissible={false}
-      handleOnly
-      snapPoints={[...SNAP_POINTS]}
-      activeSnapPoint={snap}
-      setActiveSnapPoint={handleSnapChange}
-      snapToSequentialPoint
-      repositionInputs={false}
-    >
-      <Drawer.Portal>
-        <Drawer.Content
-          // Full-height snap panel would otherwise steal map hits above the
-          // visible sheet. Pass events through; only the painted card captures.
-          className={cn(
-            "pointer-events-none fixed inset-x-0 bottom-0 z-40 flex h-[92svh] flex-col outline-none",
-            "md:hidden"
-          )}
-          onOpenAutoFocus={(event) => event.preventDefault()}
-        >
-          <div
-            className={cn(
-              "pointer-events-auto flex min-h-0 flex-1 flex-col overflow-hidden",
-              "rounded-t-4xl border border-border/60 bg-background"
-            )}
-          >
-            <Drawer.Handle className="mx-auto mt-2 mb-1 h-1.5 w-12 shrink-0 rounded-full bg-muted" />
-            <Drawer.Title className="sr-only">Address analysis</Drawer.Title>
-            <Drawer.Description className="sr-only">
-              Drag the handle to resize. Use the close button to dismiss.
-            </Drawer.Description>
+  const handlePointerMove = (event: PointerEvent<HTMLButtonElement>) => {
+    const drag = dragRef.current
+    if (!drag || drag.pointerId !== event.pointerId) return
 
-            <div
-              className="shrink-0 px-3 pb-2"
-              onFocusCapture={() => setSnap(SNAP_FULL)}
-            >
-              <MapSearchBar
-                ref={searchBarRef}
-                variant="docked"
-                instanceId="mobile-docked"
-                {...searchBarProps}
-                onExpandedChange={(expanded) => {
-                  searchBarProps.onExpandedChange?.(expanded)
-                  if (expanded) {
-                    setSnap(SNAP_FULL)
-                  }
-                }}
+    const now = performance.now()
+    const elapsed = now - drag.lastTime
+    const deltaFromStart = drag.startY - event.clientY
+    const nextHeight = clampAnalyseSheetHeight(
+      drag.startHeight + deltaFromStart,
+      heights
+    )
+
+    if (elapsed > 0) {
+      drag.velocity = (event.clientY - drag.lastY) / elapsed
+    }
+    drag.lastY = event.clientY
+    drag.lastTime = now
+    setDragHeight(nextHeight)
+  }
+
+  const handlePointerEnd = (event: PointerEvent<HTMLButtonElement>) => {
+    const drag = dragRef.current
+    if (!drag || drag.pointerId !== event.pointerId) return
+
+    const nextSnap = resolveAnalyseSheetReleaseSnap({
+      height: dragHeight ?? drag.startHeight,
+      velocityPxPerMs: drag.velocity,
+      heights,
+    })
+
+    dragRef.current = null
+    setSnap(nextSnap)
+    setDragHeight(null)
+
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId)
+    }
+  }
+
+  const handleHandleKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
+    if (event.key === "ArrowUp") {
+      event.preventDefault()
+      setSnap((current) => nextAnalyseSheetSnap(current, 1))
+      return
+    }
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault()
+      setSnap((current) => nextAnalyseSheetSnap(current, -1))
+      return
+    }
+
+    if (event.key === "Home") {
+      event.preventDefault()
+      setSnap("full")
+      return
+    }
+
+    if (event.key === "End") {
+      event.preventDefault()
+      setSnap("peek")
+    }
+  }
+
+  if (!open) return null
+
+  return (
+    <section
+      role="dialog"
+      aria-modal="false"
+      aria-label="Address analysis"
+      className="pointer-events-none fixed inset-x-0 bottom-0 z-40 md:hidden"
+    >
+      <div
+        className={cn(
+          "pointer-events-auto flex flex-col overflow-hidden rounded-t-4xl border border-border/60 bg-background",
+          !isDragging && "transition-[height] duration-300 ease-out"
+        )}
+        style={{ height: sheetHeight }}
+      >
+        <button
+          type="button"
+          aria-label="Resize analysis panel"
+          aria-valuetext={SNAP_LABEL[snap]}
+          className="flex h-7 w-full shrink-0 touch-none items-center justify-center"
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerEnd}
+          onPointerCancel={handlePointerEnd}
+          onKeyDown={handleHandleKeyDown}
+        >
+          <span
+            aria-hidden="true"
+            className="h-1.5 w-12 rounded-full bg-muted"
+          />
+        </button>
+
+        <p className="sr-only">
+          Drag the handle or use arrow keys to resize. Close with the dismiss
+          button to leave analysis.
+        </p>
+
+        <div
+          className="relative z-10 shrink-0 px-3 pb-2"
+          onFocusCapture={handleSearchFocus}
+        >
+          <MapSearchBar
+            ref={searchBarRef}
+            variant="docked"
+            instanceId="mobile-docked"
+            {...searchBarProps}
+            onExpandedChange={(expanded) => {
+              searchBarProps.onExpandedChange?.(expanded)
+              if (expanded) {
+                handleSearchFocus()
+              }
+            }}
+          />
+        </div>
+
+        {isAnalysing ? (
+          <>
+            <AnalyseHeader
+              state={state}
+              onClose={onClose}
+              primaryBorough={primaryBorough}
+              className="shrink-0 border-border/60"
+            />
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden overscroll-contain">
+              <AnalyseBody
+                state={state}
+                primaryBorough={primaryBorough}
+                focusedNoisyPoiId={focusedNoisyPoiId}
+                onNoisyPoiHover={onNoisyPoiHover}
+                onNoisyPoiFocus={onNoisyPoiFocus}
               />
             </div>
-
-            {isAnalysing ? (
-              <>
-                <AnalyseHeader
-                  state={state}
-                  onClose={onClose}
-                  primaryBorough={primaryBorough}
-                  className="shrink-0 border-border/60"
-                />
-                <div
-                  data-vaul-no-drag=""
-                  className="flex min-h-0 flex-1 flex-col overflow-hidden"
-                >
-                  <AnalyseBody
-                    state={state}
-                    primaryBorough={primaryBorough}
-                    focusedNoisyPoiId={focusedNoisyPoiId}
-                    onNoisyPoiHover={onNoisyPoiHover}
-                    onNoisyPoiFocus={onNoisyPoiFocus}
-                  />
-                </div>
-              </>
-            ) : null}
-          </div>
-        </Drawer.Content>
-      </Drawer.Portal>
-    </Drawer.Root>
+          </>
+        ) : null}
+      </div>
+    </section>
   )
 }
