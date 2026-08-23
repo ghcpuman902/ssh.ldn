@@ -13,7 +13,7 @@ const LLMS_TXT = `# ${SITE_NAME}
 ## Product
 
 - [Home map](${SITE_URL}/): Search a London address and inspect road, rail, aircraft, pub, and club noise by weekday/weekend and day/night.
-- [Data sources](${SITE_URL}/data-sources): Dataset attributions, licences, and trademark declarations.
+- [Data sources](${SITE_URL}/data-sources): Dataset attributions and licences.
 
 ## API
 

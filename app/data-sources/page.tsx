@@ -1,6 +1,5 @@
 import Link from "next/link"
 
-import { TRANSIT_LOGO_SOURCES } from "@/components/map/transit-mode-icon"
 import {
   OPENFREEMAP_BASEMAP_CREDIT,
   MAP_STRATEGIC_DISCLAIMER,
@@ -14,7 +13,7 @@ import { DEFRA_TIME_SLOT_NOTE } from "@/lib/map/noise-time"
 export const metadata = {
   title: "Data sources — ssh-ldn",
   description:
-    "Dataset attributions, licences, and trademark declarations for the ssh-ldn London noise map.",
+    "Dataset attributions and licences for the ssh-ldn London noise map.",
 }
 
 const CreditCard = ({ credit }: { credit: DataCredit }) => (
@@ -136,119 +135,6 @@ export default function DataSourcesPage() {
           description="Background map tiles and above-ground railway geometry beneath noise overlays."
           credits={[OPENFREEMAP_BASEMAP_CREDIT, OSM_RAIL_CREDIT]}
         />
-
-        <section id="trademarks" className="space-y-4 scroll-mt-8">
-          <div>
-            <h2 className="text-lg font-semibold text-foreground">
-              Trademarks &amp; logos
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Transport logos used in the visual-layer controls are sourced from
-              Wikimedia Commons.
-            </p>
-          </div>
-          <div className="space-y-3 rounded-xl border border-border bg-background p-4 text-sm text-muted-foreground">
-            <p>
-              The London Underground, Overground, Elizabeth line, DLR, and Tram
-              roundel icons are from{" "}
-              <a
-                href={TRANSIT_LOGO_SOURCES.underground}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline-offset-2 hover:text-primary hover:underline"
-              >
-                Wikimedia Commons
-              </a>
-              . The{" "}
-              <strong className="font-medium text-foreground">
-                TfL roundel is a registered trademark of Transport for London
-              </strong>
-              . This application is not affiliated with, endorsed by, or
-              sponsored by Transport for London.
-            </p>
-            <p>
-              The National Rail double-arrow icon is from{" "}
-              <a
-                href={TRANSIT_LOGO_SOURCES.nationalRail}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline-offset-2 hover:text-primary hover:underline"
-              >
-                Wikimedia Commons
-              </a>
-              . The{" "}
-              <strong className="font-medium text-foreground">
-                National Rail double-arrow is a registered trademark of its
-                respective owners
-              </strong>{" "}
-              (Rail Delivery Group / Department for Transport). This application
-              is not affiliated with, endorsed by, or sponsored by those
-              organisations.
-            </p>
-            <ul className="list-inside list-disc space-y-1 text-xs">
-              <li>
-                <a
-                  href={TRANSIT_LOGO_SOURCES.underground}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline-offset-2 hover:text-primary hover:underline"
-                >
-                  Underground.svg
-                </a>
-              </li>
-              <li>
-                <a
-                  href={TRANSIT_LOGO_SOURCES.overground}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline-offset-2 hover:text-primary hover:underline"
-                >
-                  Overground_roundel.svg
-                </a>
-              </li>
-              <li>
-                <a
-                  href={TRANSIT_LOGO_SOURCES.elizabeth}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline-offset-2 hover:text-primary hover:underline"
-                >
-                  Elizabeth_line_roundel.svg
-                </a>
-              </li>
-              <li>
-                <a
-                  href={TRANSIT_LOGO_SOURCES.dlr}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline-offset-2 hover:text-primary hover:underline"
-                >
-                  DLR_roundel.svg
-                </a>
-              </li>
-              <li>
-                <a
-                  href={TRANSIT_LOGO_SOURCES.tram}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline-offset-2 hover:text-primary hover:underline"
-                >
-                  Tramlink_roundel.svg
-                </a>
-              </li>
-              <li>
-                <a
-                  href={TRANSIT_LOGO_SOURCES.nationalRail}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline-offset-2 hover:text-primary hover:underline"
-                >
-                  National_Rail_logo.svg
-                </a>
-              </li>
-            </ul>
-          </div>
-        </section>
       </div>
     </main>
   )

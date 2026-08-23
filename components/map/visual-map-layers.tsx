@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo } from "react"
 import type { ExpressionSpecification } from "maplibre-gl"
 import { Layer, Source } from "react-map-gl/maplibre"
 
@@ -9,10 +10,16 @@ import {
   RAIL_UNDERLAY_SLOT_ID,
   TRANSIT_OVERLAY_SLOT_ID,
 } from "@/lib/map/config"
+import type { MapTheme } from "@/lib/map/config"
 import type {
   TubeLineFeatureCollection,
   TubeStationFeatureCollection,
 } from "@/lib/map/geojson-types"
+import {
+  mixTransitLineColors,
+  railStrokeColor,
+  transitCasingColor,
+} from "@/lib/map/line-paint"
 import type { VisualLayerVisibility } from "@/lib/map/visual-layers"
 
 const layerVisibility = (visible: boolean): "visible" | "none" =>
@@ -63,11 +70,13 @@ const TRANSIT_LABEL_SIZE: ExpressionSpecification = [
 type VisualMapLayersProps = {
   visibility: VisualLayerVisibility
   data: VisualLayerData
+  theme: MapTheme
 }
 
 type TransitLineOverlayProps = {
   idPrefix: string
   visible: boolean
+  theme: MapTheme
   lines: TubeLineFeatureCollection | null
   stations: TubeStationFeatureCollection | null
 }
@@ -75,18 +84,23 @@ type TransitLineOverlayProps = {
 const TransitLineOverlay = ({
   idPrefix,
   visible,
+  theme,
   lines,
   stations,
 }: TransitLineOverlayProps) => {
-  const showLines = visible && (lines?.features.length ?? 0) > 0
+  const paintedLines = useMemo(
+    () => (lines ? mixTransitLineColors(lines, theme) : null),
+    [lines, theme]
+  )
+  const showLines = visible && (paintedLines?.features.length ?? 0) > 0
   const showStations = visible && (stations?.features.length ?? 0) > 0
 
   if (!showLines && !showStations) return null
 
   return (
     <>
-      {showLines && lines ? (
-        <Source id={`${idPrefix}-lines`} type="geojson" data={lines}>
+      {showLines && paintedLines ? (
+        <Source id={`${idPrefix}-lines`} type="geojson" data={paintedLines}>
           <Layer
             id={`${idPrefix}-lines-casing`}
             type="line"
@@ -97,10 +111,10 @@ const TransitLineOverlay = ({
               "line-cap": "round",
             }}
             paint={{
-              "line-color": "#ffffff",
+              "line-color": transitCasingColor(theme),
               "line-width": TRANSIT_LINE_WIDTH,
               "line-offset": TRANSIT_LINE_OFFSET,
-              "line-opacity": 0.92,
+              "line-opacity": 1,
             }}
           />
           <Layer
@@ -116,7 +130,7 @@ const TransitLineOverlay = ({
               "line-color": ["coalesce", ["get", "color"], "#6366f1"],
               "line-width": TRANSIT_INNER_WIDTH,
               "line-offset": TRANSIT_LINE_OFFSET,
-              "line-opacity": 0.95,
+              "line-opacity": 1,
             }}
           />
         </Source>
@@ -145,7 +159,7 @@ const TransitLineOverlay = ({
               "circle-color": "#ffffff",
               "circle-stroke-color": "#111827",
               "circle-stroke-width": 1.4,
-              "circle-opacity": 0.98,
+              "circle-opacity": 1,
             }}
           />
           <Layer
@@ -155,12 +169,7 @@ const TransitLineOverlay = ({
             minzoom={12}
             layout={{
               visibility: layerVisibility(visible),
-              "text-field": [
-                "coalesce",
-                ["get", "label"],
-                ["get", "name"],
-                "",
-              ],
+              "text-field": ["coalesce", ["get", "label"], ["get", "name"], ""],
               "text-size": TRANSIT_LABEL_SIZE,
               "text-offset": [0, 1.15],
               "text-anchor": "top",
@@ -170,8 +179,8 @@ const TransitLineOverlay = ({
               "text-padding": 2,
             }}
             paint={{
-              "text-color": "#111827",
-              "text-halo-color": "#ffffff",
+              "text-color": theme === "dark" ? "#f4f4f5" : "#111827",
+              "text-halo-color": theme === "dark" ? "#18181b" : "#ffffff",
               "text-halo-width": 1.6,
             }}
           />
@@ -181,7 +190,11 @@ const TransitLineOverlay = ({
   )
 }
 
-export const VisualMapLayers = ({ visibility, data }: VisualMapLayersProps) => {
+export const VisualMapLayers = ({
+  visibility,
+  data,
+  theme,
+}: VisualMapLayersProps) => {
   const showRail = (data.railLines?.features.length ?? 0) > 0
   const showGreen =
     visibility.greenSpaces && (data.greenSpaces?.features.length ?? 0) > 0
@@ -200,7 +213,7 @@ export const VisualMapLayers = ({ visibility, data }: VisualMapLayersProps) => {
               "line-cap": "round",
             }}
             paint={{
-              "line-color": "#475569",
+              "line-color": railStrokeColor(theme),
               "line-width": [
                 "interpolate",
                 ["linear"],
@@ -212,7 +225,7 @@ export const VisualMapLayers = ({ visibility, data }: VisualMapLayersProps) => {
                 16,
                 3.2,
               ],
-              "line-opacity": 0.85,
+              "line-opacity": 1,
             }}
           />
         </Source>
@@ -236,6 +249,7 @@ export const VisualMapLayers = ({ visibility, data }: VisualMapLayersProps) => {
       <TransitLineOverlay
         idPrefix="tube"
         visible={visibility.tube}
+        theme={theme}
         lines={data.tubeLines}
         stations={data.tubeStations}
       />
@@ -243,6 +257,7 @@ export const VisualMapLayers = ({ visibility, data }: VisualMapLayersProps) => {
       <TransitLineOverlay
         idPrefix="overground"
         visible={visibility.overground}
+        theme={theme}
         lines={data.overgroundLines}
         stations={data.overgroundStations}
       />
@@ -250,6 +265,7 @@ export const VisualMapLayers = ({ visibility, data }: VisualMapLayersProps) => {
       <TransitLineOverlay
         idPrefix="elizabeth"
         visible={visibility.elizabeth}
+        theme={theme}
         lines={data.elizabethLines}
         stations={data.elizabethStations}
       />
@@ -257,6 +273,7 @@ export const VisualMapLayers = ({ visibility, data }: VisualMapLayersProps) => {
       <TransitLineOverlay
         idPrefix="dlr"
         visible={visibility.dlr}
+        theme={theme}
         lines={data.dlrLines}
         stations={data.dlrStations}
       />
@@ -264,6 +281,7 @@ export const VisualMapLayers = ({ visibility, data }: VisualMapLayersProps) => {
       <TransitLineOverlay
         idPrefix="tram"
         visible={visibility.tram}
+        theme={theme}
         lines={data.tramLines}
         stations={data.tramStations}
       />

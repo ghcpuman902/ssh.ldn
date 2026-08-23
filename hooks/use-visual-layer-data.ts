@@ -9,6 +9,7 @@ import type {
   TubeLineFeatureCollection,
   TubeStationFeatureCollection,
 } from "@/lib/map/geojson-types"
+import { withTransitGeometryCache } from "@/lib/map/transit-geometry-cache"
 import type { VisualLayerVisibility } from "@/lib/map/visual-layers"
 import { isStationSketchLines } from "@/lib/map/transit-sketch"
 import {
@@ -40,19 +41,23 @@ const PREVIEW_STAGGER_MS = 140
 const FULL_STAGGER_MS = 380
 
 const TRANSIT_PREVIEW_URLS = {
-  tube: "/api/map/tube-geometry?lod=preview&v=3",
-  overground: "/api/map/overground-geometry?lod=preview&v=3",
-  elizabeth: "/api/map/elizabeth-geometry?lod=preview&v=3",
-  dlr: "/api/map/dlr-geometry?lod=preview&v=3",
-  tram: "/api/map/tram-geometry?lod=preview&v=3",
+  tube: withTransitGeometryCache("/api/map/tube-geometry?lod=preview"),
+  overground: withTransitGeometryCache(
+    "/api/map/overground-geometry?lod=preview"
+  ),
+  elizabeth: withTransitGeometryCache(
+    "/api/map/elizabeth-geometry?lod=preview"
+  ),
+  dlr: withTransitGeometryCache("/api/map/dlr-geometry?lod=preview"),
+  tram: withTransitGeometryCache("/api/map/tram-geometry?lod=preview"),
 } as const
 
 const TRANSIT_FULL_URLS = {
-  tube: "/api/map/tube-geometry",
-  overground: "/api/map/overground-geometry",
-  elizabeth: "/api/map/elizabeth-geometry",
-  dlr: "/api/map/dlr-geometry",
-  tram: "/api/map/tram-geometry",
+  tube: withTransitGeometryCache("/api/map/tube-geometry"),
+  overground: withTransitGeometryCache("/api/map/overground-geometry"),
+  elizabeth: withTransitGeometryCache("/api/map/elizabeth-geometry"),
+  dlr: withTransitGeometryCache("/api/map/dlr-geometry"),
+  tram: withTransitGeometryCache("/api/map/tram-geometry"),
 } as const
 
 const buildRailLinesUrl = (row: number, col: number) =>
@@ -131,10 +136,7 @@ export const useVisualLayerData = (
 
     setFullSlot(1)
     const timers = [2, 3, 4, 5].map((slot, index) =>
-      window.setTimeout(
-        () => setFullSlot(slot),
-        (index + 1) * FULL_STAGGER_MS
-      )
+      window.setTimeout(() => setFullSlot(slot), (index + 1) * FULL_STAGGER_MS)
     )
 
     return () => {

@@ -1,7 +1,4 @@
-import {
-  NOISE_TILE_MAX_ZOOM,
-  NOISE_TILE_MIN_ZOOM,
-} from "@/lib/map/config"
+import { NOISE_TILE_MAX_ZOOM, NOISE_TILE_MIN_ZOOM } from "@/lib/map/config"
 import type { DefraMapKind, DefraNoisePeriod } from "@/lib/map/defra-layers"
 import {
   defraRasterPixelToIntensity,
@@ -50,7 +47,7 @@ const loadTilePixels = async (url: string): Promise<TilePixels> => {
   const canvas = createCanvas()
   const context = canvas.getContext("2d", { willReadFrequently: true })
 
-  if (!context) {
+  if (!context || !("drawImage" in context) || !("getImageData" in context)) {
     throw new Error("Could not create tile sampling canvas")
   }
 
@@ -97,7 +94,12 @@ export const sampleDefraRasterIntensity = async ({
   zoom,
 }: SampleInput) => {
   const z = clampTileZoom(zoom)
-  const tile = lngLatToTilePixel({ longitude, latitude, z, tileSize: TILE_SIZE })
+  const tile = lngLatToTilePixel({
+    longitude,
+    latitude,
+    z,
+    tileSize: TILE_SIZE,
+  })
   const { imageData } = await getTilePixels({
     kind,
     period,

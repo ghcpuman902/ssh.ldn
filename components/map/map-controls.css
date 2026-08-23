@@ -1,5 +1,17 @@
 /* Loaded after maplibre-gl.css so these overrides win over MapLibre defaults. */
 
+@media (max-width: 767px) {
+  .maplibregl-map .maplibregl-ctrl-bottom-right {
+    right: auto;
+    left: 0;
+    bottom: 1.25rem;
+  }
+
+  .maplibregl-map .maplibregl-ctrl-bottom-right .maplibregl-ctrl {
+    margin: 0 0 10px 10px;
+  }
+}
+
 .maplibregl-map .maplibregl-ctrl-group:not(:empty) {
   box-shadow: none !important;
 }

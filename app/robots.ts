@@ -6,8 +6,8 @@ export default function robots(): MetadataRoute.Robots {
   return {
     rules: {
       userAgent: "*",
-      allow: "/",
-      disallow: ["/api/voice/", "/dev/"],
+      allow: ["/", "/api/noise-address", "/api/mcp"],
+      disallow: ["/api/", "/dev/"],
     },
     sitemap: `${SITE_URL}/sitemap.xml`,
     host: SITE_URL,

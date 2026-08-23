@@ -1,6 +1,12 @@
 "use client"
 
-import { Fragment, type ComponentProps } from "react"
+import {
+  Fragment,
+  useEffect,
+  useState,
+  type ComponentProps,
+  type ReactNode,
+} from "react"
 import { Info } from "lucide-react"
 
 import {
@@ -8,10 +14,11 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { cn } from "@/lib/utils"
+import { useIsMobile } from "@/hooks/use-mobile"
 import {
   DEFRA_TIME_SLOT_NOTE,
   encodeNoiseTimeSlot,
+  formatNoiseTimeSlot,
   NOISE_DAY_PARTS,
   type NoiseDayPart,
   type NoiseTimeSlot,
@@ -19,16 +26,17 @@ import {
   WEEK_SEGMENT_LABELS,
   WEEK_SEGMENT_LETTERS,
 } from "@/lib/map/noise-time"
+import { cn } from "@/lib/utils"
 
 type NoiseTimeGridProps = {
-  value: NoiseTimeSlot;
-  onChange: (slot: NoiseTimeSlot) => void;
-};
+  value: NoiseTimeSlot
+  onChange: (slot: NoiseTimeSlot) => void
+}
 
 export const MAP_TOOLTIP_CONTENT_CLASS =
-  "border border-border bg-popover text-popover-foreground shadow-md";
+  "border border-border bg-popover text-popover-foreground shadow-md"
 
-export const MAP_TOOLTIP_ARROW_CLASS = "bg-popover fill-popover";
+export const MAP_TOOLTIP_ARROW_CLASS = "bg-popover fill-popover"
 
 export const MapTooltipContent = ({
   className,
@@ -39,145 +47,247 @@ export const MapTooltipContent = ({
     className={cn(MAP_TOOLTIP_CONTENT_CLASS, className)}
     {...props}
   />
-);
+)
 
-const WEEK_SEGMENTS = ["weekday", "weekend"] as const;
+export const OptionalMapTooltip = ({
+  enabled,
+  content,
+  children,
+  ...tooltipContentProps
+}: {
+  enabled: boolean
+  content: ReactNode
+  children: ReactNode
+} & Omit<ComponentProps<typeof MapTooltipContent>, "content" | "children">) => {
+  if (!enabled) return children
 
-const WEEKDAY_BAR_COUNT = 5;
-const WEEKEND_BAR_COUNT = 2;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <MapTooltipContent {...tooltipContentProps}>{content}</MapTooltipContent>
+    </Tooltip>
+  )
+}
+
+const WEEK_SEGMENTS = ["weekday", "weekend"] as const
+
+const WEEKDAY_BAR_COUNT = 5
+const WEEKEND_BAR_COUNT = 2
 
 const BAR_COUNT: Record<NoiseWeekSegment, number> = {
   weekday: WEEKDAY_BAR_COUNT,
   weekend: WEEKEND_BAR_COUNT,
-};
+}
 
 /** w-1.5 (6px); bar gap and column gap are derived from this width. */
-const NOISE_BAR_WIDTH_CLASS = "w-1.5";
-const NOISE_BAR_GAP_CLASS = "gap-[3px]";
-const NOISE_BAR_ROW_CLASS = cn("flex items-stretch", NOISE_BAR_GAP_CLASS);
-const NOISE_GROUP_GAP_CLASS = "gap-x-1.5 gap-y-1";
+const NOISE_BAR_WIDTH_CLASS = "w-1.5"
+const NOISE_BAR_GAP_CLASS = "gap-[3px]"
+const NOISE_BAR_ROW_CLASS = cn("flex items-stretch", NOISE_BAR_GAP_CLASS)
+const NOISE_GROUP_GAP_CLASS =
+  "gap-x-1.5 gap-y-1 max-md:gap-x-1 max-md:gap-y-0.5"
 
-const getButtonStyles = (
-  slot: NoiseTimeSlot,
-  isSelected: boolean
-): string => {
-  const { week, part } = slot;
-  const isNight = part === "night";
-  const isWeekend = week === "weekend";
+const getButtonStyles = (slot: NoiseTimeSlot, isSelected: boolean): string => {
+  const { week, part } = slot
+  const isNight = part === "night"
+  const isWeekend = week === "weekend"
 
   if (isSelected) {
-    if (isWeekend && isNight) return "border-violet-700 bg-background";
-    if (isWeekend) return "border-violet-500 bg-background";
-    if (isNight) return "border-zinc-600 bg-background";
-    return "border-primary bg-background";
+    if (isWeekend && isNight) return "border-violet-700 bg-background"
+    if (isWeekend) return "border-violet-500 bg-background"
+    if (isNight) return "border-zinc-600 bg-background"
+    return "border-primary bg-background"
   }
 
   if (isWeekend && isNight) {
-    return "border-transparent bg-muted/55 hover:bg-muted/70";
+    return "border-transparent bg-muted/55 hover:bg-muted/70"
   }
   if (isWeekend) {
-    return "border-transparent bg-background/30 hover:bg-background/45";
+    return "border-transparent bg-background/30 hover:bg-background/45"
   }
   if (isNight) {
-    return "border-transparent bg-muted/55 hover:bg-muted/70";
+    return "border-transparent bg-muted/55 hover:bg-muted/70"
   }
-  return "border-transparent bg-background/30 hover:bg-background/45";
-};
+  return "border-transparent bg-background/30 hover:bg-background/45"
+}
 
 const getBarStyles = (slot: NoiseTimeSlot, isSelected: boolean): string => {
-  const { week, part } = slot;
-  const isNight = part === "night";
-  const isWeekend = week === "weekend";
+  const { week, part } = slot
+  const isNight = part === "night"
+  const isWeekend = week === "weekend"
 
   if (isSelected) {
-    if (isWeekend && isNight) return "bg-violet-700";
-    if (isWeekend) return "bg-violet-500";
-    if (isNight) return "bg-zinc-600";
-    return "bg-primary";
+    if (isWeekend && isNight) return "bg-violet-700"
+    if (isWeekend) return "bg-violet-500"
+    if (isNight) return "bg-zinc-600"
+    return "bg-primary"
   }
 
-  if (isWeekend && isNight) return "bg-violet-600/50";
-  if (isWeekend) return "bg-violet-500/40";
-  if (isNight) return "bg-zinc-400/55";
-  return "bg-primary/35";
-};
+  if (isWeekend && isNight) return "bg-violet-600/50"
+  if (isWeekend) return "bg-violet-500/40"
+  if (isNight) return "bg-zinc-400/55"
+  return "bg-primary/35"
+}
+
+const SLOT_HEADING_MS = 2400
+const OTHER_HEADING_MS = 1600
+const HEADING_FADE_MS = 160
+
+type HeadingStage = "slot" | "other" | "when"
+
+const StagedTimeHeading = ({ slot }: { slot: NoiseTimeSlot }) => {
+  const [stage, setStage] = useState<HeadingStage>("slot")
+  const [visible, setVisible] = useState(true)
+  const slotLabel = formatNoiseTimeSlot(slot)
+
+  useEffect(() => {
+    const reducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches
+    const fadeMs = reducedMotion ? 0 : HEADING_FADE_MS
+    const timers: number[] = []
+
+    const goTo = (next: HeadingStage, delay: number) => {
+      timers.push(
+        window.setTimeout(() => {
+          setVisible(false)
+          timers.push(
+            window.setTimeout(() => {
+              setStage(next)
+              setVisible(true)
+            }, fadeMs)
+          )
+        }, delay)
+      )
+    }
+
+    goTo("other", SLOT_HEADING_MS)
+    goTo("when", SLOT_HEADING_MS + fadeMs + OTHER_HEADING_MS)
+
+    return () => {
+      for (const timer of timers) window.clearTimeout(timer)
+    }
+  }, [])
+
+  const visualText =
+    stage === "slot" ? (
+      <>
+        <span className="max-[22.5rem]:hidden">Showing: </span>
+        {slotLabel}
+      </>
+    ) : stage === "other" ? (
+      "Other times"
+    ) : (
+      "When"
+    )
+
+  return (
+    <div className="flex w-fit max-w-[calc(100vw-5.5rem)] justify-end self-end text-right">
+      <p className="sr-only">When, currently {slotLabel}</p>
+      <p
+        aria-hidden="true"
+        className="text-xs font-medium whitespace-nowrap text-foreground"
+      >
+        <span
+          className={cn(
+            visible ? "opacity-100" : "opacity-0",
+            "inline-block transition-opacity duration-150 motion-reduce:transition-none"
+          )}
+        >
+          {visualText}
+        </span>
+      </p>
+    </div>
+  )
+}
 
 const TimeSlotButton = ({
   slot,
   selectedId,
   onChange,
+  showTooltip,
 }: {
-  slot: NoiseTimeSlot;
-  selectedId: string;
-  onChange: (slot: NoiseTimeSlot) => void;
+  slot: NoiseTimeSlot
+  selectedId: string
+  onChange: (slot: NoiseTimeSlot) => void
+  showTooltip: boolean
 }) => {
-  const slotId = encodeNoiseTimeSlot(slot);
-  const isSelected = slotId === selectedId;
-  const partMeta = NOISE_DAY_PARTS.find((p) => p.part === slot.part);
-  const partLabel = partMeta?.label ?? "";
-  const hours = partMeta?.hours ?? "";
-  const barCount = BAR_COUNT[slot.week];
+  const slotId = encodeNoiseTimeSlot(slot)
+  const isSelected = slotId === selectedId
+  const partMeta = NOISE_DAY_PARTS.find((part) => part.part === slot.part)
+  const partLabel = partMeta?.label ?? ""
+  const hours = partMeta?.hours ?? ""
+  const barCount = BAR_COUNT[slot.week]
 
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <button
-          type="button"
-          aria-pressed={isSelected}
-          aria-label={`${WEEK_SEGMENT_LABELS[slot.week]} ${partLabel}, ${hours}`}
-          onClick={() => onChange(slot)}
-          className={cn(
-            "inline-flex w-fit items-center justify-center rounded-lg border p-1 transition-colors",
-            slot.part === "day" ? "h-7" : "h-5",
-            getButtonStyles(slot, isSelected)
-          )}
-        >
-          <div className={cn("h-full", NOISE_BAR_ROW_CLASS)} aria-hidden="true">
-            {Array.from({ length: barCount }, (_, index) => (
-              <span
-                key={index}
-                className={cn(NOISE_BAR_WIDTH_CLASS, "rounded-sm", getBarStyles(slot, isSelected))}
-              />
-            ))}
-          </div>
-        </button>
-      </TooltipTrigger>
-      <MapTooltipContent
-        side={slot.part === "day" ? "top" : "bottom"}
-        className="whitespace-nowrap"
+    <OptionalMapTooltip
+      enabled={showTooltip}
+      side={slot.part === "day" ? "top" : "bottom"}
+      className="whitespace-nowrap"
+      content={
+        <>
+          {WEEK_SEGMENT_LABELS[slot.week]} · {hours}
+        </>
+      }
+    >
+      <button
+        type="button"
+        aria-pressed={isSelected}
+        aria-label={`${WEEK_SEGMENT_LABELS[slot.week]} ${partLabel}, ${hours}`}
+        onClick={() => onChange(slot)}
+        className={cn(
+          "inline-flex w-fit items-center justify-center rounded-lg border p-1 transition-colors",
+          slot.part === "day" ? "h-7" : "h-5",
+          getButtonStyles(slot, isSelected)
+        )}
       >
-        {WEEK_SEGMENT_LABELS[slot.week]} · {hours}
-      </MapTooltipContent>
-    </Tooltip>
-  );
-};
+        <div className={cn("h-full", NOISE_BAR_ROW_CLASS)} aria-hidden="true">
+          {Array.from({ length: barCount }, (_, index) => (
+            <span
+              key={index}
+              className={cn(
+                NOISE_BAR_WIDTH_CLASS,
+                "rounded-sm",
+                getBarStyles(slot, isSelected)
+              )}
+            />
+          ))}
+        </div>
+      </button>
+    </OptionalMapTooltip>
+  )
+}
 
 export const NoiseTimeGrid = ({ value, onChange }: NoiseTimeGridProps) => {
-  const selectedId = encodeNoiseTimeSlot(value);
+  const selectedId = encodeNoiseTimeSlot(value)
+  const isMobile = useIsMobile()
 
   return (
-    <div className="pointer-events-auto flex w-fit flex-col items-end space-y-1 border-b border-border/50 pb-2">
-      <div className="flex w-fit items-center gap-0.5">
-        <p className="text-xs font-medium text-foreground">When</p>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              aria-label="About these time periods"
-              className="text-muted-foreground/70 transition-colors hover:text-muted-foreground"
+    <div className="pointer-events-auto flex w-fit flex-col items-end space-y-1 border-b border-border/50 pb-2 max-md:rounded-xl max-md:border max-md:border-border/60 max-md:bg-background/80 max-md:p-1.5 max-md:shadow-sm max-md:backdrop-blur-sm">
+      {isMobile ? (
+        <StagedTimeHeading slot={value} />
+      ) : (
+        <div className="flex w-fit items-center gap-0.5">
+          <p className="text-xs font-medium text-foreground">When</p>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                aria-label="About these time periods"
+                className="text-muted-foreground/70 transition-colors hover:text-muted-foreground"
+              >
+                <Info className="size-3" />
+              </button>
+            </TooltipTrigger>
+            <MapTooltipContent
+              side="bottom"
+              align="end"
+              className="max-w-56 flex-col items-start whitespace-normal"
             >
-              <Info className="size-3" />
-            </button>
-          </TooltipTrigger>
-          <MapTooltipContent
-            side="bottom"
-            align="end"
-            className="max-w-56 flex-col items-start whitespace-normal"
-          >
-            {DEFRA_TIME_SLOT_NOTE}
-          </MapTooltipContent>
-        </Tooltip>
-      </div>
+              {DEFRA_TIME_SLOT_NOTE}
+            </MapTooltipContent>
+          </Tooltip>
+        </div>
+      )}
 
       <div
         role="group"
@@ -191,7 +301,7 @@ export const NoiseTimeGrid = ({ value, onChange }: NoiseTimeGridProps) => {
         {WEEK_SEGMENTS.map((week) => (
           <p
             key={week}
-            className="text-center text-[9px] font-medium leading-none tracking-[-0.06em] text-muted-foreground"
+            className="text-center text-[9px] leading-none font-medium tracking-[-0.06em] text-muted-foreground"
           >
             {WEEK_SEGMENT_LETTERS[week].replace(/ /g, "")}
           </p>
@@ -208,11 +318,12 @@ export const NoiseTimeGrid = ({ value, onChange }: NoiseTimeGridProps) => {
                 slot={{ week, part: part as NoiseDayPart }}
                 selectedId={selectedId}
                 onChange={onChange}
+                showTooltip={!isMobile}
               />
             ))}
           </Fragment>
         ))}
       </div>
     </div>
-  );
-};
+  )
+}

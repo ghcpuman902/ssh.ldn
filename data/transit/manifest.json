@@ -1,56 +1,87 @@
 {
-  "description": "Static TfL/OSM transit geometry. Map API streams these files; do not fetch TfL at request time.",
-  "snapshottedAt": "2026-08-13T18:07:12.558Z",
+  "description": "Static unique-track centreline geometry copied from TfL-Components. Map API streams these files; do not fetch TfL at request time. Refresh with pnpm snapshot-transit while the sibling repo is present.",
+  "snapshottedAt": "2026-08-23T21:15:30.729Z",
+  "source": {
+    "kind": "tfl-components-unique-track-centreline",
+    "directory": "../tfl-components/data/geography/unique-track",
+    "description": "Unique-track OSM geometry: centreline is unique-track of the longer mapped direction; dual keeps both directions; welded junction graph. Full route variants stay in data/geography/{mode}-geometry.json; maps serve public/ copies of unique-track full.",
+    "snapshottedAt": "2026-08-18T12:16:25.491Z"
+  },
   "modes": [
     {
       "mode": "tube",
-      "source": "data/osm-cache/tube-geometry/8b90968bb6da762110f12dcaee1ae02a762844d2.json",
+      "source": "../tfl-components/data/geography/unique-track/tube/full.json",
       "stations": 270,
-      "fullLines": 31,
+      "fullLines": 28,
       "previewLines": 28,
-      "fullBytes": 134026,
-      "previewBytes": 91155,
-      "lineSource": "osm-route-network"
+      "fullBytes": 122884,
+      "previewBytes": 88905,
+      "lineSource": "osm-unique-track-centreline",
+      "uniqueTrackSnapshottedAt": "2026-08-18T12:16:25.491Z",
+      "uniqueTrackFullLines": 28,
+      "uniqueTrackPreviewLines": 28,
+      "uniqueTrackFullBytes": 123669,
+      "uniqueTrackPreviewBytes": 89383
     },
     {
       "mode": "overground",
-      "source": "data/osm-cache/overground-geometry/f645d39431cc8c09cab6378b6438db26239929b1.json",
+      "source": "../tfl-components/data/geography/unique-track/overground/full.json",
       "stations": 112,
-      "fullLines": 12,
-      "previewLines": 12,
-      "fullBytes": 52078,
-      "previewBytes": 35684,
-      "lineSource": "osm-route-network"
+      "fullLines": 14,
+      "previewLines": 14,
+      "fullBytes": 47650,
+      "previewBytes": 35926,
+      "lineSource": "osm-unique-track-centreline",
+      "uniqueTrackSnapshottedAt": "2026-08-18T12:16:25.491Z",
+      "uniqueTrackFullLines": 14,
+      "uniqueTrackPreviewLines": 14,
+      "uniqueTrackFullBytes": 48293,
+      "uniqueTrackPreviewBytes": 36228
     },
     {
       "mode": "elizabeth",
-      "source": "data/osm-cache/elizabeth-geometry/65c9f24647063a5690d4fc48d939d4764a3e4da2.json",
+      "source": "../tfl-components/data/geography/unique-track/elizabeth/full.json",
       "stations": 41,
-      "fullLines": 4,
-      "previewLines": 4,
-      "fullBytes": 19945,
-      "previewBytes": 13502,
-      "lineSource": "osm-route-network"
+      "fullLines": 5,
+      "previewLines": 5,
+      "fullBytes": 20204,
+      "previewBytes": 14282,
+      "lineSource": "osm-unique-track-centreline",
+      "uniqueTrackSnapshottedAt": "2026-08-18T12:16:25.491Z",
+      "uniqueTrackFullLines": 5,
+      "uniqueTrackPreviewLines": 5,
+      "uniqueTrackFullBytes": 20293,
+      "uniqueTrackPreviewBytes": 14373
     },
     {
       "mode": "dlr",
-      "source": "data/osm-cache/dlr-geometry/60e467744f1acd637fda6f618ed294a8b7212725.json",
+      "source": "../tfl-components/data/geography/unique-track/dlr/full.json",
       "stations": 45,
-      "fullLines": 4,
-      "previewLines": 4,
-      "fullBytes": 16091,
-      "previewBytes": 12734,
-      "lineSource": "osm-route-network"
+      "fullLines": 5,
+      "previewLines": 5,
+      "fullBytes": 17794,
+      "previewBytes": 13964,
+      "lineSource": "osm-unique-track-centreline",
+      "uniqueTrackSnapshottedAt": "2026-08-18T12:16:25.491Z",
+      "uniqueTrackFullLines": 5,
+      "uniqueTrackPreviewLines": 5,
+      "uniqueTrackFullBytes": 17793,
+      "uniqueTrackPreviewBytes": 14042
     },
     {
       "mode": "tram",
-      "source": "data/osm-cache/tram-geometry/e0c09e3bcab8000676e0e20c1fab3aad6a200889.json",
+      "source": "../tfl-components/data/geography/unique-track/tram/full.json",
       "stations": 38,
-      "fullLines": 3,
-      "previewLines": 3,
-      "fullBytes": 16488,
-      "previewBytes": 11924,
-      "lineSource": "osm-route-network"
+      "fullLines": 4,
+      "previewLines": 4,
+      "fullBytes": 16516,
+      "previewBytes": 12865,
+      "lineSource": "osm-unique-track-centreline",
+      "uniqueTrackSnapshottedAt": "2026-08-18T12:16:25.491Z",
+      "uniqueTrackFullLines": 4,
+      "uniqueTrackPreviewLines": 4,
+      "uniqueTrackFullBytes": 16516,
+      "uniqueTrackPreviewBytes": 12865
     }
   ]
 }

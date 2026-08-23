@@ -1,6 +1,13 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react"
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react"
 import dynamic from "next/dynamic"
 import Map, {
   Marker,
@@ -8,6 +15,7 @@ import Map, {
   type MapLayerMouseEvent,
   type MapRef,
 } from "react-map-gl/maplibre"
+import { CircleHelp } from "lucide-react"
 import { useTheme } from "next-themes"
 import { toast } from "sonner"
 import { useCursorNoise } from "@/hooks/use-cursor-noise"
@@ -25,7 +33,12 @@ import type { AnalyseState } from "@/components/map/map-analyse-panel"
 import { NoiseMapLayers } from "@/components/map/noise-map-layers"
 import { MapCenterCrosshair } from "@/components/map/map-center-crosshair"
 import { MapDataCredits } from "@/components/map/map-data-credits"
-import { MapSearchBar, type MapSearchBarHandle, type MapSearchSelection } from "@/components/map/map-search-bar"
+import {
+  MapSearchBar,
+  type MapSearchBarHandle,
+  type MapSearchSelection,
+} from "@/components/map/map-search-bar"
+import { MapLayerHelpSheet } from "@/components/map/map-layer-help-sheet"
 import { NoiseLayerControls } from "@/components/map/noise-layer-controls"
 import { VisualMapLayers } from "@/components/map/visual-map-layers"
 import { useVisualLayerData } from "@/hooks/use-visual-layer-data"
@@ -72,13 +85,17 @@ import "@/components/map/map-controls.css"
 
 const MapAnalysePanel = dynamic(
   () =>
-    import("@/components/map/map-analyse-panel").then((mod) => mod.MapAnalysePanel),
+    import("@/components/map/map-analyse-panel").then(
+      (mod) => mod.MapAnalysePanel
+    ),
   { ssr: false }
 )
 
 const MapAnalyseSheet = dynamic(
   () =>
-    import("@/components/map/map-analyse-sheet").then((mod) => mod.MapAnalyseSheet),
+    import("@/components/map/map-analyse-sheet").then(
+      (mod) => mod.MapAnalyseSheet
+    ),
   { ssr: false }
 )
 
@@ -108,7 +125,10 @@ type PlanningApplicationResponse = {
 const resolveMapTheme = (resolvedTheme: string | undefined): MapTheme =>
   resolvedTheme === "dark" ? "dark" : "light"
 
-const parseShareCoordinates = (latParam: string | null, lngParam: string | null) => {
+const parseShareCoordinates = (
+  latParam: string | null,
+  lngParam: string | null
+) => {
   if (latParam === null || lngParam === null) {
     return null
   }
@@ -143,7 +163,9 @@ const buildShareQuery = ({
 }
 
 const getShareSearchParams = () =>
-  new URLSearchParams(typeof window === "undefined" ? "" : window.location.search)
+  new URLSearchParams(
+    typeof window === "undefined" ? "" : window.location.search
+  )
 
 const replaceShareUrl = (query: string) => {
   if (typeof window === "undefined") return
@@ -162,9 +184,12 @@ export const MapShell = () => {
   const { resolvedTheme } = useTheme()
   const isMobile = useIsMobile()
   const [mounted, setMounted] = useState(false)
-  const [layerVisibility, setLayerVisibility] = useState(readNoiseLayerVisibility)
-  const [visualLayerVisibility, setVisualLayerVisibility] =
-    useState(readVisualLayerVisibility)
+  const [layerVisibility, setLayerVisibility] = useState(
+    readNoiseLayerVisibility
+  )
+  const [visualLayerVisibility, setVisualLayerVisibility] = useState(
+    readVisualLayerVisibility
+  )
   const [timeSlot, setTimeSlot] = useState(DEFAULT_NOISE_TIME_SLOT)
   const [mapReady, setMapReady] = useState(false)
   const [mapHasIdled, setMapHasIdled] = useState(false)
@@ -174,6 +199,7 @@ export const MapShell = () => {
   })
   const [isSearching, setIsSearching] = useState(false)
   const [audioEnabled, setAudioEnabled] = useState(false)
+  const [helpOpen, setHelpOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [searchExpanded, setSearchExpanded] = useState(false)
   const [mapCenterHintVisible, setMapCenterHintVisible] = useState(false)
@@ -187,8 +213,12 @@ export const MapShell = () => {
     longitude: number
   } | null>(null)
   const [isPickingLocation, setIsPickingLocation] = useState(false)
-  const [hoveredNoisyPoiId, setHoveredNoisyPoiId] = useState<string | null>(null)
-  const [focusedNoisyPoiId, setFocusedNoisyPoiId] = useState<string | null>(null)
+  const [hoveredNoisyPoiId, setHoveredNoisyPoiId] = useState<string | null>(
+    null
+  )
+  const [focusedNoisyPoiId, setFocusedNoisyPoiId] = useState<string | null>(
+    null
+  )
   const mapRef = useRef<MapRef>(null)
   const latestRequestIdRef = useRef(0)
   const hasHydratedFromUrlRef = useRef(false)
@@ -325,8 +355,12 @@ export const MapShell = () => {
           ? { status: "done", data: resolvedGeocode }
           : { status: "running" },
         score: resolvedGeocode ? { status: "running" } : { status: "queued" },
-        planning: resolvedGeocode ? { status: "running" } : { status: "queued" },
-        noisyPois: resolvedGeocode ? { status: "running" } : { status: "queued" },
+        planning: resolvedGeocode
+          ? { status: "running" }
+          : { status: "queued" },
+        noisyPois: resolvedGeocode
+          ? { status: "running" }
+          : { status: "queued" },
       })
       setHoveredNoisyPoiId(null)
       setFocusedNoisyPoiId(null)
@@ -355,7 +389,10 @@ export const MapShell = () => {
         })
       }
 
-      const runInstantScoreTask = async (latitude: number, longitude: number) => {
+      const runInstantScoreTask = async (
+        latitude: number,
+        longitude: number
+      ) => {
         patchAnalyse({ score: { status: "running" } })
 
         try {
@@ -457,8 +494,7 @@ export const MapShell = () => {
             `/api/discovery/geocode?${geocodeParams.toString()}`
           )
           const geocodeData = (await geocodeResponse.json()) as
-            | GeocodeResult
-            | { error: string }
+            GeocodeResult | { error: string }
 
           if (!geocodeResponse.ok || "error" in geocodeData) {
             throw new Error(
@@ -694,7 +730,8 @@ export const MapShell = () => {
         const response = await fetch(
           `/api/discovery/geocode/reverse?${params.toString()}`
         )
-        const data = (await response.json()) as GeocodeResult | { error: string }
+        const data = (await response.json()) as
+          GeocodeResult | { error: string }
 
         if (!response.ok || "error" in data) {
           throw new Error(
@@ -780,7 +817,9 @@ export const MapShell = () => {
         toast.dismiss("current-location-pending")
 
         if (error.code === error.PERMISSION_DENIED) {
-          toast.error("Location permission denied. Enable it in browser settings.")
+          toast.error(
+            "Location permission denied. Enable it in browser settings."
+          )
           return
         }
 
@@ -856,7 +895,10 @@ export const MapShell = () => {
           ? "Sound samples the map centre now — pan until the crosshair sits over the place you want to hear."
           : "If you still cannot hear it, check media volume, Silent Mode / ring switch, and Bluetooth output.",
         {
-          id: reason === "start" ? "mobile-audio-center-help" : "mobile-audio-device-help",
+          id:
+            reason === "start"
+              ? "mobile-audio-center-help"
+              : "mobile-audio-device-help",
           duration: reason === "start" ? 4200 : 7000,
         }
       )
@@ -994,9 +1036,7 @@ export const MapShell = () => {
           variant={analyseOpen ? "docked" : "floating"}
           instanceId="desktop"
           {...searchBarProps}
-          onMapCenterHintChange={
-            isMobile ? undefined : setMapCenterHintVisible
-          }
+          onMapCenterHintChange={isMobile ? undefined : setMapCenterHintVisible}
         />
       </div>
 
@@ -1067,6 +1107,7 @@ export const MapShell = () => {
               <VisualMapLayers
                 visibility={visualLayerVisibility}
                 data={visualLayerData}
+                theme={mapTheme}
               />
               {selectedLocation ? (
                 <Marker
@@ -1086,7 +1127,10 @@ export const MapShell = () => {
                 const isHighlighted =
                   hoveredNoisyPoiId === poi.placeId ||
                   focusedNoisyPoiId === poi.placeId
-                const style = getNoisyPoiStyle(poi.primaryType, poi.categoryLabel)
+                const style = getNoisyPoiStyle(
+                  poi.primaryType,
+                  poi.categoryLabel
+                )
 
                 return (
                   <Marker
@@ -1120,7 +1164,7 @@ export const MapShell = () => {
                       {focusedNoisyPoiId === poi.placeId ? (
                         <span
                           aria-hidden
-                          className="motion-safe:animate-ping absolute inset-0 rounded-full opacity-75"
+                          className="absolute inset-0 rounded-full opacity-75 motion-safe:animate-ping"
                           style={{ backgroundColor: style.color }}
                         />
                       ) : null}
@@ -1147,7 +1191,7 @@ export const MapShell = () => {
             <div
               ref={logoRef}
               aria-label="ssh-ldn London Noise Map"
-              className="pointer-events-none absolute left-0 top-0 w-fit pb-2 pr-2.5 md:pb-2.5 md:pr-3.5"
+              className="pointer-events-none absolute top-0 left-0 w-fit pr-2.5 pb-2 md:pr-3.5 md:pb-2.5"
             >
               <div className="flex items-center gap-1 md:gap-1.5">
                 <span
@@ -1156,8 +1200,8 @@ export const MapShell = () => {
                 >
                   🤫
                 </span>
-                <div className="-translate-y-px flex flex-col gap-0 leading-none">
-                  <span className="font-mono text-2xl font-bold tracking-tight text-foreground leading-none md:text-4xl">
+                <div className="flex -translate-y-px flex-col gap-0 leading-none">
+                  <span className="font-mono text-2xl leading-none font-bold tracking-tight text-foreground md:text-4xl">
                     ssh-ldn
                   </span>
                   <p className="text-[10px] leading-none text-muted-foreground">
@@ -1169,7 +1213,7 @@ export const MapShell = () => {
 
             <div
               className={cn(
-                "pointer-events-auto absolute right-4 top-4 z-20 md:hidden",
+                "pointer-events-auto absolute top-4 right-4 z-20 md:hidden",
                 analyseOpen && "pointer-events-none hidden opacity-0"
               )}
             >
@@ -1184,7 +1228,7 @@ export const MapShell = () => {
               />
             </div>
 
-            <div className="pointer-events-none absolute bottom-24 right-2 w-fit max-w-[calc(100%-2rem)] md:bottom-28 md:right-2.5">
+            <div className="pointer-events-none absolute right-2 bottom-24 w-fit max-w-[calc(100%-2rem)] md:right-2.5 md:bottom-28">
               <NoiseLayerControls
                 visibility={layerVisibility}
                 visualVisibility={visualLayerVisibility}
@@ -1200,6 +1244,19 @@ export const MapShell = () => {
               />
             </div>
 
+            <div className="pointer-events-none absolute bottom-[6.5rem] left-2.5 z-20 md:hidden">
+              <button
+                type="button"
+                aria-label="About map controls"
+                aria-haspopup="dialog"
+                aria-expanded={helpOpen}
+                onClick={() => setHelpOpen(true)}
+                className="pointer-events-auto flex size-9 items-center justify-center rounded-full border border-border/60 bg-background/80 text-foreground shadow-sm backdrop-blur-sm"
+              >
+                <CircleHelp className="size-4" aria-hidden="true" />
+              </button>
+            </div>
+
             <div className="pointer-events-none absolute inset-x-4 bottom-0 z-20 flex h-4 items-center md:inset-x-5 md:h-5">
               <MapDataCredits />
             </div>
@@ -1210,9 +1267,7 @@ export const MapShell = () => {
           className={cn(
             "hidden min-h-0 flex-col overflow-hidden md:flex",
             "md:h-full md:transition-none",
-            analyseOpen
-              ? "md:pointer-events-auto"
-              : "md:pointer-events-none"
+            analyseOpen ? "md:pointer-events-auto" : "md:pointer-events-none"
           )}
         >
           <div aria-hidden className="hidden h-14 shrink-0 md:block" />
@@ -1226,6 +1281,14 @@ export const MapShell = () => {
           />
         </div>
       </div>
+
+      <MapLayerHelpSheet
+        open={helpOpen}
+        onOpenChange={setHelpOpen}
+        timeSlot={timeSlot}
+        audioEnabled={audioEnabled}
+        audioSampleMode={audioSampleMode}
+      />
 
       {isMobile ? (
         <MapAnalyseSheet

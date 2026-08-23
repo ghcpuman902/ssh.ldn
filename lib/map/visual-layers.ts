@@ -1,14 +1,9 @@
 export type VisualLayerKey =
-  | "tube"
-  | "overground"
-  | "elizabeth"
-  | "dlr"
-  | "tram"
-  | "greenSpaces"
+  "tube" | "overground" | "elizabeth" | "dlr" | "tram" | "greenSpaces"
 
 export type VisualLayerVisibility = Record<VisualLayerKey, boolean>
 
-/** Coloured TfL overlays — Underground roundel toggles all of these. Rail is a permanent base layer. */
+/** Coloured TfL overlays — the transit toggle turns all of these on or off. Rail is a permanent base layer. */
 export const TRANSIT_VISUAL_LAYER_KEYS = [
   "tube",
   "overground",
