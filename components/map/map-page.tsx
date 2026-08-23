@@ -17,7 +17,7 @@ const MapShell = dynamic(
 )
 
 export const MapPage = () => (
-  <main className="h-svh w-full overflow-hidden">
+  <main className="h-svh w-full overscroll-none">
     <MapShell />
   </main>
 )

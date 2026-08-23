@@ -1,36 +1,85 @@
 /* Loaded after maplibre-gl.css so these overrides win over MapLibre defaults. */
 
 @media (max-width: 767px) {
-  .maplibregl-map .maplibregl-ctrl-bottom-right {
-    right: auto;
-    left: 0;
+  .maplibregl-map .maplibregl-ctrl-bottom-left {
     bottom: 1.25rem;
-  }
-
-  .maplibregl-map .maplibregl-ctrl-bottom-right .maplibregl-ctrl {
-    margin: 0 0 10px 10px;
   }
 }
 
+/* Frost the backing only. Do not set `opacity` on this node — that would
+   fade labels and icons too. Alpha lives on background-color.
+   Do not use `isolation` here: it makes backdrop-filter sample an empty
+   group instead of the map. */
+.map-float-chrome,
+.map-layer-group,
+.map-layer-icons {
+  position: relative;
+  border: 0.5px solid color-mix(in oklch, var(--border) 32%, transparent);
+  background-color: color-mix(in oklch, var(--background) 62%, transparent);
+  box-shadow: none;
+  -webkit-backdrop-filter: blur(32px) saturate(1.6);
+  backdrop-filter: blur(32px) saturate(1.6);
+}
+
+@media (max-width: 767px) {
+  .map-layer-group {
+    border: 0;
+    background-color: transparent;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  .map-layer-icons {
+    border-radius: 9999px;
+    padding: 0.25rem;
+    column-gap: 0.125rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .map-layer-group {
+    pointer-events: auto;
+    border-radius: 1.5rem;
+    padding: 0.375rem 0.625rem 0.5rem;
+  }
+
+  .map-layer-icons {
+    border: 0;
+    background-color: transparent;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+.maplibregl-map .maplibregl-ctrl-group,
 .maplibregl-map .maplibregl-ctrl-group:not(:empty) {
   box-shadow: none !important;
+  filter: none !important;
 }
 
 .maplibregl-map .maplibregl-ctrl-group {
   border-radius: 9999px !important;
   overflow: hidden !important;
-  border: 1px solid color-mix(in oklch, var(--border) 60%, transparent) !important;
-  background-color: color-mix(in oklch, var(--background) 85%, transparent) !important;
-  backdrop-filter: blur(4px);
+  border: 0.5px solid color-mix(in oklch, var(--border) 32%, transparent) !important;
+  background-color: color-mix(
+    in oklch,
+    var(--background) 62%,
+    transparent
+  ) !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: blur(32px) saturate(1.6);
+  backdrop-filter: blur(32px) saturate(1.6);
 }
 
 .maplibregl-map .maplibregl-ctrl-group button {
+  width: 29px;
+  height: 29px;
   border: 0;
   background-color: transparent;
 }
 
 .maplibregl-map .maplibregl-ctrl-group button + button {
-  border-top: 1px solid color-mix(in oklch, var(--border) 60%, transparent);
+  border-top: 0.5px solid color-mix(in oklch, var(--border) 32%, transparent);
 }
 
 .maplibregl-map .maplibregl-ctrl-group button:focus:first-child,
@@ -46,8 +95,14 @@
   }
 }
 
-.maplibregl-map .maplibregl-ctrl button.maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon,
-.maplibregl-map .maplibregl-ctrl button.maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon {
+.maplibregl-map
+  .maplibregl-ctrl
+  button.maplibregl-ctrl-zoom-in
+  .maplibregl-ctrl-icon,
+.maplibregl-map
+  .maplibregl-ctrl
+  button.maplibregl-ctrl-zoom-out
+  .maplibregl-ctrl-icon {
   background-image: none !important;
   background-color: var(--foreground);
   mask-repeat: no-repeat;
@@ -58,12 +113,18 @@
   -webkit-mask-size: 14px 14px;
 }
 
-.maplibregl-map .maplibregl-ctrl button.maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon {
+.maplibregl-map
+  .maplibregl-ctrl
+  button.maplibregl-ctrl-zoom-in
+  .maplibregl-ctrl-icon {
   mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M10 4.5v11M4.5 10h11' stroke='%23000' stroke-width='1.75' stroke-linecap='round'/%3E%3C/svg%3E");
   -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M10 4.5v11M4.5 10h11' stroke='%23000' stroke-width='1.75' stroke-linecap='round'/%3E%3C/svg%3E");
 }
 
-.maplibregl-map .maplibregl-ctrl button.maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon {
+.maplibregl-map
+  .maplibregl-ctrl
+  button.maplibregl-ctrl-zoom-out
+  .maplibregl-ctrl-icon {
   mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M4.5 10h11' stroke='%23000' stroke-width='1.75' stroke-linecap='round'/%3E%3C/svg%3E");
   -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M4.5 10h11' stroke='%23000' stroke-width='1.75' stroke-linecap='round'/%3E%3C/svg%3E");
 }

@@ -1,12 +1,6 @@
 "use client"
 
-import {
-  Fragment,
-  useEffect,
-  useState,
-  type ComponentProps,
-  type ReactNode,
-} from "react"
+import { Fragment, type ComponentProps, type ReactNode } from "react"
 import { Info } from "lucide-react"
 
 import {
@@ -18,7 +12,7 @@ import { useIsMobile } from "@/hooks/use-mobile"
 import {
   DEFRA_TIME_SLOT_NOTE,
   encodeNoiseTimeSlot,
-  formatNoiseTimeSlot,
+  formatNoiseTimeSlotShort,
   NOISE_DAY_PARTS,
   type NoiseDayPart,
   type NoiseTimeSlot,
@@ -99,15 +93,15 @@ const getButtonStyles = (slot: NoiseTimeSlot, isSelected: boolean): string => {
   }
 
   if (isWeekend && isNight) {
-    return "border-transparent bg-muted/55 hover:bg-muted/70"
+    return "border-transparent bg-muted hover:bg-muted/80"
   }
   if (isWeekend) {
-    return "border-transparent bg-background/30 hover:bg-background/45"
+    return "border-transparent bg-muted/80 hover:bg-muted"
   }
   if (isNight) {
-    return "border-transparent bg-muted/55 hover:bg-muted/70"
+    return "border-transparent bg-muted hover:bg-muted/80"
   }
-  return "border-transparent bg-background/30 hover:bg-background/45"
+  return "border-transparent bg-muted/80 hover:bg-muted"
 }
 
 const getBarStyles = (slot: NoiseTimeSlot, isSelected: boolean): string => {
@@ -128,73 +122,13 @@ const getBarStyles = (slot: NoiseTimeSlot, isSelected: boolean): string => {
   return "bg-primary/35"
 }
 
-const SLOT_HEADING_MS = 2400
-const OTHER_HEADING_MS = 1600
-const HEADING_FADE_MS = 160
-
-type HeadingStage = "slot" | "other" | "when"
-
-const StagedTimeHeading = ({ slot }: { slot: NoiseTimeSlot }) => {
-  const [stage, setStage] = useState<HeadingStage>("slot")
-  const [visible, setVisible] = useState(true)
-  const slotLabel = formatNoiseTimeSlot(slot)
-
-  useEffect(() => {
-    const reducedMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)"
-    ).matches
-    const fadeMs = reducedMotion ? 0 : HEADING_FADE_MS
-    const timers: number[] = []
-
-    const goTo = (next: HeadingStage, delay: number) => {
-      timers.push(
-        window.setTimeout(() => {
-          setVisible(false)
-          timers.push(
-            window.setTimeout(() => {
-              setStage(next)
-              setVisible(true)
-            }, fadeMs)
-          )
-        }, delay)
-      )
-    }
-
-    goTo("other", SLOT_HEADING_MS)
-    goTo("when", SLOT_HEADING_MS + fadeMs + OTHER_HEADING_MS)
-
-    return () => {
-      for (const timer of timers) window.clearTimeout(timer)
-    }
-  }, [])
-
-  const visualText =
-    stage === "slot" ? (
-      <>
-        <span className="max-[22.5rem]:hidden">Showing: </span>
-        {slotLabel}
-      </>
-    ) : stage === "other" ? (
-      "Other times"
-    ) : (
-      "When"
-    )
+const SelectedTimeHeading = ({ slot }: { slot: NoiseTimeSlot }) => {
+  const slotLabel = formatNoiseTimeSlotShort(slot)
 
   return (
     <div className="flex w-fit max-w-[calc(100vw-5.5rem)] justify-end self-end text-right">
-      <p className="sr-only">When, currently {slotLabel}</p>
-      <p
-        aria-hidden="true"
-        className="text-xs font-medium whitespace-nowrap text-foreground"
-      >
-        <span
-          className={cn(
-            visible ? "opacity-100" : "opacity-0",
-            "inline-block transition-opacity duration-150 motion-reduce:transition-none"
-          )}
-        >
-          {visualText}
-        </span>
+      <p className="text-xs font-medium whitespace-nowrap text-foreground">
+        {slotLabel}
       </p>
     </div>
   )
@@ -262,32 +196,32 @@ export const NoiseTimeGrid = ({ value, onChange }: NoiseTimeGridProps) => {
   const isMobile = useIsMobile()
 
   return (
-    <div className="pointer-events-auto flex w-fit flex-col items-end space-y-1 border-b border-border/50 pb-2 max-md:rounded-xl max-md:border max-md:border-border/60 max-md:bg-background/80 max-md:p-1.5 max-md:shadow-sm max-md:backdrop-blur-sm">
-      {isMobile ? (
-        <StagedTimeHeading slot={value} />
-      ) : (
-        <div className="flex w-fit items-center gap-0.5">
-          <p className="text-xs font-medium text-foreground">When</p>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                type="button"
-                aria-label="About these time periods"
-                className="text-muted-foreground/70 transition-colors hover:text-muted-foreground"
-              >
-                <Info className="size-3" />
-              </button>
-            </TooltipTrigger>
-            <MapTooltipContent
-              side="bottom"
-              align="end"
-              className="max-w-56 flex-col items-start whitespace-normal"
-            >
-              {DEFRA_TIME_SLOT_NOTE}
-            </MapTooltipContent>
-          </Tooltip>
-        </div>
+    <div
+      className={cn(
+        "map-float-chrome pointer-events-auto flex w-fit flex-col items-end space-y-1 rounded-3xl p-2"
       )}
+    >
+      <div className="flex w-fit items-center gap-0.5">
+        <SelectedTimeHeading slot={value} />
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              aria-label="About these time periods"
+              className="hidden text-muted-foreground/70 transition-colors hover:text-muted-foreground md:inline-flex"
+            >
+              <Info className="size-3" />
+            </button>
+          </TooltipTrigger>
+          <MapTooltipContent
+            side="bottom"
+            align="end"
+            className="max-w-56 flex-col items-start whitespace-normal"
+          >
+            {DEFRA_TIME_SLOT_NOTE}
+          </MapTooltipContent>
+        </Tooltip>
+      </div>
 
       <div
         role="group"

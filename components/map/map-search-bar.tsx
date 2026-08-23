@@ -10,7 +10,7 @@ import {
   useState,
   type KeyboardEvent,
 } from "react"
-import { Clock3, Crosshair, Loader2, LocateFixed, MapPin, Search, X } from "lucide-react"
+import { Clock3, Crosshair, Focus, Loader2, LocateFixed, MapPin, Search, X } from "lucide-react"
 
 import { buildGeocodeResultFromPlace } from "@/lib/map/build-geocode-result"
 import {
@@ -32,6 +32,8 @@ import {
 } from "@/lib/map/search-suggestions"
 import type { GeocodeResult } from "@/lib/server/geocode-types"
 import { cn } from "@/lib/utils"
+
+const FLOATING_EXPANDED_WIDTH_CLASS = "w-[min(22rem,calc(100vw-4rem))]"
 
 export type MapSearchSelection = {
   address: string
@@ -463,7 +465,7 @@ export const MapSearchBar = forwardRef<MapSearchBarHandle, MapSearchBarProps>(
           isDocked
             ? "w-full"
             : expanded
-              ? "w-[min(calc(100vw-2rem),22rem)]"
+              ? FLOATING_EXPANDED_WIDTH_CLASS
               : "w-11"
         )}
       >
@@ -524,7 +526,7 @@ export const MapSearchBar = forwardRef<MapSearchBarHandle, MapSearchBarProps>(
                 setShowSuggestions(true)
               }}
               onKeyDown={handleKeyDown}
-              className="h-11 w-full bg-transparent px-4 text-sm text-foreground outline-none placeholder:text-muted-foreground"
+              className="h-11 w-full bg-transparent pl-4 text-sm text-foreground outline-none placeholder:text-muted-foreground"
             />
           </div>
         </div>
@@ -550,10 +552,8 @@ export const MapSearchBar = forwardRef<MapSearchBarHandle, MapSearchBarProps>(
           role="listbox"
           aria-label="Location suggestions"
           className={cn(
-            "absolute top-[calc(100%+0.5rem)] z-30 max-h-72 overflow-y-auto rounded-2xl border border-border/60 bg-popover p-1.5",
-            isDocked
-              ? "inset-x-0 w-full"
-              : "right-0 w-[min(calc(100vw-2rem),22rem)]"
+            "absolute top-[calc(100%+0.5rem)] z-30 max-h-72 overflow-y-auto rounded-2xl border border-border/40 bg-background/70 p-1.5 shadow-none backdrop-blur-[20px] backdrop-saturate-150",
+            isDocked ? "inset-x-0 w-full" : cn("right-0", FLOATING_EXPANDED_WIDTH_CLASS)
           )}
         >
           {onSelectFromMap ? (
@@ -564,7 +564,7 @@ export const MapSearchBar = forwardRef<MapSearchBarHandle, MapSearchBarProps>(
                   event.preventDefault()
                   handleSelectFromMapClick()
                 }}
-                className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-medium text-foreground transition-colors hover:bg-muted/70"
+                className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-medium text-foreground transition-colors hover:bg-foreground/5"
               >
                 <Crosshair
                   className="size-3.5 shrink-0 text-primary"
@@ -583,13 +583,13 @@ export const MapSearchBar = forwardRef<MapSearchBarHandle, MapSearchBarProps>(
                   event.preventDefault()
                   handleUseCurrentLocationClick()
                 }}
-                className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-medium text-foreground transition-colors hover:bg-muted/70"
+                className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-medium text-foreground transition-colors hover:bg-foreground/5"
               >
                 <LocateFixed
                   className="size-3.5 shrink-0 text-primary"
                   aria-hidden="true"
                 />
-                Use my current location
+                Current location
               </button>
             </li>
           ) : null}
@@ -602,13 +602,13 @@ export const MapSearchBar = forwardRef<MapSearchBarHandle, MapSearchBarProps>(
                   event.preventDefault()
                   handleUseMapCenterClick()
                 }}
-                className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-medium text-foreground transition-colors hover:bg-muted/70"
+                className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-medium text-foreground transition-colors hover:bg-foreground/5"
               >
-                <MapPin
+                <Focus
                   className="size-3.5 shrink-0 text-primary"
                   aria-hidden="true"
                 />
-                Use map centre
+                Map center
               </button>
             </li>
           ) : null}
@@ -647,8 +647,8 @@ export const MapSearchBar = forwardRef<MapSearchBarHandle, MapSearchBarProps>(
                 className={cn(
                   "flex w-full items-start gap-2 rounded-xl px-3 py-2 text-left text-sm transition-colors",
                   activeIndex === index
-                    ? "bg-muted text-foreground"
-                    : "text-foreground hover:bg-muted/70"
+                    ? "bg-foreground/8 text-foreground"
+                    : "text-foreground hover:bg-foreground/5"
                 )}
               >
                 {suggestion.source === "recent" ? (

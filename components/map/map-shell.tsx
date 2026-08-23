@@ -15,7 +15,6 @@ import Map, {
   type MapLayerMouseEvent,
   type MapRef,
 } from "react-map-gl/maplibre"
-import { CircleHelp } from "lucide-react"
 import { useTheme } from "next-themes"
 import { toast } from "sonner"
 import { useCursorNoise } from "@/hooks/use-cursor-noise"
@@ -266,6 +265,11 @@ export const MapShell = () => {
     setMounted(true)
     setTimeSlot(getCurrentNoiseTimeSlot())
   }, [])
+
+  useEffect(() => {
+    if (!isMobile) return
+    setAudioEnabled(true)
+  }, [isMobile])
 
   useEffect(() => {
     writeNoiseLayerVisibility(layerVisibility)
@@ -1174,7 +1178,7 @@ export const MapShell = () => {
                 )
               })}
               <NavigationControl
-                position="bottom-right"
+                position="bottom-left"
                 showCompass={false}
                 visualizePitch={false}
               />
@@ -1185,6 +1189,50 @@ export const MapShell = () => {
               className="pointer-events-none absolute inset-0 bg-linear-to-b from-background/10 via-transparent to-background/20"
             />
             {showMapCenterCrosshair ? <MapCenterCrosshair /> : null}
+
+            {/* Sit inside the map clip so backdrop-filter can sample the canvas. */}
+            <div className="pointer-events-none absolute inset-0 z-10">
+              <div className="pointer-events-none absolute right-4 bottom-4 w-fit max-w-[calc(100%-2rem)] md:right-2.5 md:bottom-2.5">
+                <NoiseLayerControls
+                  visibility={layerVisibility}
+                  visualVisibility={visualLayerVisibility}
+                  timeSlot={timeSlot}
+                  intensityPercentages={intensityPercentages}
+                  localAmenityPercentages={localAmenityPercentages}
+                  audioEnabled={audioEnabled}
+                  audioSampleMode={audioSampleMode}
+                  onVisibilityChange={setLayerVisibility}
+                  onVisualVisibilityChange={setVisualLayerVisibility}
+                  onTimeSlotChange={setTimeSlot}
+                  onAudioEnabledChange={handleAudioEnabledChange}
+                />
+              </div>
+
+              <div className="pointer-events-none absolute bottom-[6.5rem] left-2.5 z-20 md:hidden">
+                <button
+                  type="button"
+                  aria-label="About map controls"
+                  aria-haspopup="dialog"
+                  aria-expanded={helpOpen}
+                  onClick={() => setHelpOpen(true)}
+                  className="map-float-chrome pointer-events-auto flex size-[29px] items-center justify-center rounded-full text-foreground"
+                >
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 24 24"
+                    className="size-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                    <path d="M12 17h.01" />
+                  </svg>
+                </button>
+              </div>
+            </div>
           </div>
 
           <div className="pointer-events-none absolute inset-0 z-10">
@@ -1226,35 +1274,6 @@ export const MapShell = () => {
                   analyseOpen ? undefined : setMapCenterHintVisible
                 }
               />
-            </div>
-
-            <div className="pointer-events-none absolute right-2 bottom-24 w-fit max-w-[calc(100%-2rem)] md:right-2.5 md:bottom-28">
-              <NoiseLayerControls
-                visibility={layerVisibility}
-                visualVisibility={visualLayerVisibility}
-                timeSlot={timeSlot}
-                intensityPercentages={intensityPercentages}
-                localAmenityPercentages={localAmenityPercentages}
-                audioEnabled={audioEnabled}
-                audioSampleMode={audioSampleMode}
-                onVisibilityChange={setLayerVisibility}
-                onVisualVisibilityChange={setVisualLayerVisibility}
-                onTimeSlotChange={setTimeSlot}
-                onAudioEnabledChange={handleAudioEnabledChange}
-              />
-            </div>
-
-            <div className="pointer-events-none absolute bottom-[6.5rem] left-2.5 z-20 md:hidden">
-              <button
-                type="button"
-                aria-label="About map controls"
-                aria-haspopup="dialog"
-                aria-expanded={helpOpen}
-                onClick={() => setHelpOpen(true)}
-                className="pointer-events-auto flex size-9 items-center justify-center rounded-full border border-border/60 bg-background/80 text-foreground shadow-sm backdrop-blur-sm"
-              >
-                <CircleHelp className="size-4" aria-hidden="true" />
-              </button>
             </div>
 
             <div className="pointer-events-none absolute inset-x-4 bottom-0 z-20 flex h-4 items-center md:inset-x-5 md:h-5">

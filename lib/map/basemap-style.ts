@@ -20,6 +20,9 @@ export const TRANSIT_OVERLAY_SLOT_ID = "transit-overlay-slot"
 /** Insert noise/POI layers before this id so labels stay on top. */
 export const BASEMAP_LABELS_LAYER_ID = "basemap-labels"
 
+/** OpenFreeMap glyph stack — custom symbol layers must use this or MapLibre 404s Open Sans. */
+export const BASEMAP_TEXT_FONT = ["Noto Sans Regular"] as const
+
 type LayerPatch = {
   minzoom?: number
   maxzoom?: number
@@ -120,7 +123,7 @@ const applyLightReadability = (style: StyleSpecification) => {
     minzoom: 10,
     maxzoom: 16,
     layout: {
-      "text-font": ["Noto Sans Regular"],
+      "text-font": [...BASEMAP_TEXT_FONT],
       "text-transform": "none",
       "text-letter-spacing": 0.02,
       "text-size": [

@@ -14,12 +14,22 @@ const applyCapsuleZoomControlStyles = (root: ParentNode | null) => {
   group.style.setProperty("overflow", "hidden", "important")
   group.style.setProperty(
     "border",
-    "1px solid color-mix(in oklch, var(--border) 60%, transparent)",
+    "0.5px solid color-mix(in oklch, var(--border) 32%, transparent)",
     "important"
   )
   group.style.setProperty(
     "background-color",
-    "color-mix(in oklch, var(--background) 85%, transparent)",
+    "color-mix(in oklch, var(--background) 62%, transparent)",
+    "important"
+  )
+  group.style.setProperty(
+    "-webkit-backdrop-filter",
+    "blur(32px) saturate(1.6)",
+    "important"
+  )
+  group.style.setProperty(
+    "backdrop-filter",
+    "blur(32px) saturate(1.6)",
     "important"
   )
 }

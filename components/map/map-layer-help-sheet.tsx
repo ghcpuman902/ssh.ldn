@@ -32,15 +32,15 @@ const audioHelpText = (
   audioEnabled: boolean,
   audioSampleMode: "cursor" | "center"
 ) => {
-  if (audioEnabled) {
-    return audioSampleMode === "center"
-      ? "On. Sound follows the map centre."
-      : "On. Sound follows the cursor."
+  if (audioSampleMode === "center") {
+    return "On. Sound follows the map centre, and stays unmuted here — use the phone silent switch if you want it off."
   }
 
-  return audioSampleMode === "center"
-    ? "Hear a rough mix from the map centre."
-    : "Hear a rough mix under the cursor."
+  if (audioEnabled) {
+    return "On. Sound follows the cursor."
+  }
+
+  return "Hear a rough mix under the cursor."
 }
 
 const HelpSection = ({

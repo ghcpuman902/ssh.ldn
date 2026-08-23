@@ -157,39 +157,27 @@ const SlotScoreCellView = ({
   const barCount = SCORE_BAR_COUNT[cell.week]
 
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <button
-          type="button"
-          tabIndex={0}
-          aria-label={`${slotLabel}, ${hours}, score ${score}, ${sourceLabel}`}
-          className="inline-flex w-fit items-center justify-center rounded-lg p-1"
-          style={{
-            backgroundColor: `color-mix(in oklch, ${fill} 50%, transparent)`,
-          }}
-        >
-          <div
-            className={cn(SCORE_PART_BAR_HEIGHT[cell.part], SCORE_BAR_ROW_CLASS)}
-            aria-hidden="true"
-            style={{ opacity: Math.max(0.35, progress) }}
-          >
-            {Array.from({ length: barCount }, (_, index) => (
-              <span
-                key={index}
-                className={cn(SCORE_BAR_WIDTH_CLASS, "rounded-sm bg-background/50")}
-              />
-            ))}
-          </div>
-        </button>
-      </TooltipTrigger>
-      <MapTooltipContent
-        side={cell.part === "day" ? "top" : "bottom"}
-        className="whitespace-nowrap"
+    <div
+      role="img"
+      aria-label={`${slotLabel}, ${hours}, score ${score}, ${sourceLabel}`}
+      className="inline-flex w-fit items-center justify-center justify-self-center rounded-lg p-1"
+      style={{
+        backgroundColor: `color-mix(in oklch, ${fill} 50%, transparent)`,
+      }}
+    >
+      <div
+        className={cn(SCORE_PART_BAR_HEIGHT[cell.part], SCORE_BAR_ROW_CLASS)}
+        aria-hidden="true"
+        style={{ opacity: Math.max(0.35, progress) }}
       >
-        {slotLabel} · {hours} · {score}
-        <span className="mt-0.5 block text-muted-foreground">{sourceLabel}</span>
-      </MapTooltipContent>
-    </Tooltip>
+        {Array.from({ length: barCount }, (_, index) => (
+          <span
+            key={index}
+            className={cn(SCORE_BAR_WIDTH_CLASS, "rounded-sm bg-background/50")}
+          />
+        ))}
+      </div>
+    </div>
   )
 }
 
@@ -209,13 +197,8 @@ const NoiseScoreCard = ({
   const loudest = findLoudestSlot(score.timeProfile)
 
   return (
-    <div className="relative overflow-hidden rounded-3xl bg-muted/60 p-4">
-      <span
-        aria-hidden="true"
-        className="pointer-events-none absolute -bottom-10 right-0 h-20 opacity-50 w-100 rounded-[50%_/_50%] blur-2xl"
-        style={{ backgroundColor: scoreColor }}
-      />
-      <div className="relative z-10">
+    <div className="space-y-2">
+      <div className="rounded-3xl bg-muted/60 p-4">
         <p className="text-xs text-muted-foreground">Overall noise score</p>
         <div className="flex items-center justify-between gap-3">
           <p className="leading-none">
@@ -239,106 +222,110 @@ const NoiseScoreCard = ({
           </div>
         </div>
 
-      <div className="mt-4 flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <p className="font-mono text-sm font-bold tracking-tight text-foreground">
-            who should ssssssssh?
-          </p>
-          <p className="mt-0.5 font-mono text-sm font-bold tracking-tight text-muted-foreground">
-            {describeSshTargets(score.contributors, score.localAmenities)}
-          </p>
-          {loudest && loudest.score > 0 ? (
-            <p className="mt-2 text-xs text-muted-foreground">
-              Loudest: {formatNoiseAnalysisSlot(loudest)}
-              {loudest.dominantSource
-                ? ` · ${formatSourceLabel(loudest.dominantSource)}`
-                : ""}
+        <div className="mt-4 flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-32 flex-1">
+            <p className="font-mono text-sm font-bold tracking-tight text-foreground">
+              who should ssssssssh?
             </p>
-          ) : null}
-        </div>
-
-        <div
-          role="group"
-          aria-label="Noise by weekday or weekend and time of day"
-          className={cn(
-            "grid w-fit shrink-0 grid-cols-[auto_auto_auto] items-center",
-            SCORE_GROUP_GAP_CLASS
-          )}
-        >
-          <div aria-hidden="true" />
-          {WEEK_SEGMENTS.map((week) => (
-            <p
-              key={week}
-              className="text-center text-[9px] font-medium leading-none tracking-[-0.06em] text-muted-foreground"
-            >
-              {WEEK_SEGMENT_LETTERS[week].replaceAll(" ", "")}
+            <p className="mt-0.5 font-mono text-sm font-bold tracking-tight text-muted-foreground">
+              {describeSshTargets(score.contributors, score.localAmenities)}
             </p>
-          ))}
-
-          {ANALYSIS_DAY_PARTS.map(({ part, label }) => (
-            <Fragment key={part}>
-              <p className="pr-0.5 text-[10px] font-medium text-muted-foreground">
-                {label}
+            {loudest && loudest.score > 0 ? (
+              <p className="mt-2 text-xs text-muted-foreground">
+                Loudest: {formatNoiseAnalysisSlot(loudest)}
+                {loudest.dominantSource
+                  ? ` · ${formatSourceLabel(loudest.dominantSource)}`
+                  : ""}
               </p>
-              {WEEK_SEGMENTS.map((week) => {
-                const cell = cellForSlot(score.timeProfile, { week, part })
-                return (
-                  <SlotScoreCellView
-                    key={`${week}-${part}`}
-                    cell={cell}
-                    progress={progress}
-                  />
-                )
-              })}
-            </Fragment>
-          ))}
-        </div>
-      </div>
+            ) : null}
+          </div>
 
-      {score.contributors.length > 0 ? (
-        <div className="mt-4 space-y-2">
-          {score.contributors.map((contributor) => {
-            const meta = getNoiseContributorMeta(contributor.source)
-            const { band, sentence } = describeContributor({
-              source: contributor.source,
-              score: contributor.score,
-              localAmenities: score.localAmenities,
-              nearbyVenues,
-            })
-            const bandColor = getNoiseScoreColor(contributor.score)
-
-            return (
-              <div
-                key={contributor.source}
-                role="group"
-                aria-label={`${contributorCardLabel(contributor.source)}, ${band}. ${sentence}`}
-                className="rounded-2xl px-3 py-2.5"
-                style={{
-                  backgroundColor: `color-mix(in oklch, ${meta.strokeColor} 14%, transparent)`,
-                }}
+          <div
+            role="group"
+            aria-label="Noise by weekday or weekend and time of day"
+            className={cn(
+              "grid w-fit shrink-0 grid-cols-[auto_auto_auto] items-center",
+              SCORE_GROUP_GAP_CLASS
+            )}
+          >
+            <div aria-hidden="true" />
+            {WEEK_SEGMENTS.map((week) => (
+              <p
+                key={week}
+                className="self-end text-center text-[9px] font-medium leading-none text-muted-foreground"
               >
-                <div className="flex items-baseline justify-between gap-2">
-                  <p className="text-[10px] font-medium text-muted-foreground">
-                    <span aria-hidden="true">{meta.emoji}</span>{" "}
-                    {contributorCardLabel(contributor.source)}
-                  </p>
-                  <p
-                    className={cn(
-                      "text-xs font-medium",
-                      band === "Low" && "text-muted-foreground"
-                    )}
-                    style={band === "Low" ? undefined : { color: bandColor }}
-                  >
-                    {band}
-                  </p>
-                </div>
-                <p className="mt-0.5 text-sm text-foreground">{sentence}</p>
-              </div>
-            )
-          })}
+                {week === "weekend" ? (
+                  <>
+                    Week
+                    <br />
+                    ends
+                  </>
+                ) : (
+                  "Weekdays"
+                )}
+              </p>
+            ))}
+
+            {ANALYSIS_DAY_PARTS.map(({ part, label, hours }) => (
+              <Fragment key={part}>
+                <p className="whitespace-nowrap pr-0.5 text-right text-[10px] font-medium text-muted-foreground">
+                  {label} ({hours})
+                </p>
+                {WEEK_SEGMENTS.map((week) => {
+                  const cell = cellForSlot(score.timeProfile, { week, part })
+                  return (
+                    <SlotScoreCellView
+                      key={`${week}-${part}`}
+                      cell={cell}
+                      progress={progress}
+                    />
+                  )
+                })}
+              </Fragment>
+            ))}
+          </div>
         </div>
-      ) : null}
       </div>
+
+      {score.contributors.map((contributor) => {
+        const meta = getNoiseContributorMeta(contributor.source)
+        const { band, sentence } = describeContributor({
+          source: contributor.source,
+          score: contributor.score,
+          localAmenities: score.localAmenities,
+          nearbyVenues,
+        })
+        const bandColor = getNoiseScoreColor(contributor.score)
+
+        return (
+          <div
+            key={contributor.source}
+            role="group"
+            aria-label={`${contributorCardLabel(contributor.source)}, ${band}. ${sentence}`}
+            className="rounded-2xl px-3 py-2.5"
+            style={{
+              backgroundColor: `color-mix(in oklch, ${meta.strokeColor} 14%, transparent)`,
+            }}
+          >
+            <div className="flex items-baseline justify-between gap-2">
+              <p className="text-[10px] font-medium text-muted-foreground">
+                <span aria-hidden="true">{meta.emoji}</span>{" "}
+                {contributorCardLabel(contributor.source)}
+              </p>
+              <p
+                className={cn(
+                  "text-xs font-medium",
+                  band === "Low" && "text-muted-foreground"
+                )}
+                style={band === "Low" ? undefined : { color: bandColor }}
+              >
+                {band}
+              </p>
+            </div>
+            <p className="mt-0.5 text-sm text-foreground">{sentence}</p>
+          </div>
+        )
+      })}
     </div>
   )
 }

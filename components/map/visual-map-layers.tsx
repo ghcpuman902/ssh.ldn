@@ -7,6 +7,7 @@ import { Layer, Source } from "react-map-gl/maplibre"
 import type { VisualLayerData } from "@/hooks/use-visual-layer-data"
 import {
   BASEMAP_LABELS_LAYER_ID,
+  BASEMAP_TEXT_FONT,
   RAIL_UNDERLAY_SLOT_ID,
   TRANSIT_OVERLAY_SLOT_ID,
 } from "@/lib/map/config"
@@ -170,6 +171,7 @@ const TransitLineOverlay = ({
             layout={{
               visibility: layerVisibility(visible),
               "text-field": ["coalesce", ["get", "label"], ["get", "name"], ""],
+              "text-font": [...BASEMAP_TEXT_FONT],
               "text-size": TRANSIT_LABEL_SIZE,
               "text-offset": [0, 1.15],
               "text-anchor": "top",

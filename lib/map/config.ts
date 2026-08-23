@@ -2,6 +2,7 @@ import type { LngLatBoundsLike } from "maplibre-gl"
 
 export {
   BASEMAP_LABELS_LAYER_ID,
+  BASEMAP_TEXT_FONT,
   getMapStyle,
   MAP_TILE_STYLES,
   NOISE_OVERLAY_SLOT_ID,

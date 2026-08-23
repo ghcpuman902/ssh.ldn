@@ -37,10 +37,10 @@ People can estimate commute times, crime rates, and rent — but they have almos
 | Source | Use |
 | --- | --- |
 | [DEFRA Round 4 strategic noise maps](https://environment.data.gov.uk/) | Road, rail, airport baseline (2021, 10 m grid) |
-| [OpenStreetMap / Overpass](https://www.openstreetmap.org/copyright) | Nightlife venues, hospitals, rail geometry |
+| [OpenStreetMap / Overpass](https://www.openstreetmap.org/copyright) | Nightlife venues, hospitals, rail / tube / Overground / Elizabeth / DLR / Tram geometry |
 | [OpenFreeMap](https://openfreemap.org/) | Vector Positron / Dark Matter tiles |
 | [postcodes.io](https://api.postcodes.io/) | Postcode autocomplete |
-| [TfL Unified API](https://api.tfl.gov.uk/) | Disruption and transport context |
+| [TfL Unified API](https://api.tfl.gov.uk/) | Station names, zones, and line colours — committed snapshot in `data/transit` (live keys not required) |
 | [Planning London Datahub](https://planningdata.london.gov.uk/) | Nearby development applications |
 
 Strategic noise maps show **annual averages**, not live measurement. Local opening hours are partial; time-slot activity uses heuristics when hours are missing.
@@ -53,13 +53,13 @@ Next.js 16 · React 19 · MapLibre GL · Tailwind 4 · shadcn/ui · ElevenLabs S
 
 ```bash
 pnpm install
-cp .env.example .env.local   # add TfL / ElevenLabs keys as needed
+cp .env.example .env.local
 pnpm dev
 ```
 
 Runs on [http://localhost:3999](http://localhost:3999).
 
-Copy `.env.local` with keys for TfL (`TFL_APP_ID`, `TFL_APP_KEY`), ElevenLabs voice (`ELEVENLABS_API_KEY`, `ELEVENLABS_SPEECH_ENGINE_ID`), and optional Google geocoding. Voice routes in development proxy to the deployed server. See `.env.example` for the full list.
+Live TfL API keys are not required — station points and line identity come from committed `data/transit` JSON. Add ElevenLabs keys only if you re-enable voice mode (`VOICE_MODE_ENABLED` and `NEXT_PUBLIC_VOICE_MODE_ENABLED`). Google geocoding keys are optional. Voice routes in development proxy to the deployed server. See `.env.example` for the full list.
 
 ```bash
 pnpm typecheck
@@ -79,6 +79,17 @@ pnpm generate-poi-density -- --from-cache
 ```
 
 The generator writes `public/poi-density/manifest.json` with the 0–1 normalisation range, per-amenity weights, and tile counts. Live OSM emoji markers still load progressively for higher-zoom detail.
+
+## Transit overlays
+
+Tube, Overground, Elizabeth line, DLR, and Tram geometry is snapshotted into `data/transit/`:
+
+```bash
+pnpm snapshot-transit
+pnpm audit-osm-rail
+```
+
+`snapshot-transit` refreshes the committed unique-track JSON. `audit-osm-rail` reports duplicate OSM rail geometries. The map reads these files; it does not call TfL at runtime for line identity.
 
 ## Accessibility
 

@@ -125,11 +125,11 @@ const toggleSurfaceClass = (
 ) =>
   cn(
     "relative flex size-full items-center justify-center overflow-hidden border border-border bg-background",
-    "ease transition-[opacity,transform] duration-150 will-change-transform",
+    "ease transition-[transform,filter] duration-150 will-change-transform",
     "motion-reduce:transition-none",
     shapeClass,
     pressed ? "scale-[0.8]" : active ? "scale-100" : "scale-90",
-    active ? "opacity-100" : "opacity-40"
+    active ? "saturate-100" : "grayscale-[0.35] saturate-50"
   )
 
 const LayerToggle = ({
@@ -344,130 +344,134 @@ export const NoiseLayerControls = ({
   return (
     <section
       aria-label="Noise map layers"
-      className="pointer-events-none inline-flex w-fit max-w-[calc(100vw-2rem)] flex-col items-end rounded-2xl bg-transparent"
+      className="pointer-events-none inline-flex w-fit max-w-[calc(100vw-2rem)] flex-col items-end"
     >
       <NoiseTimeGrid value={timeSlot} onChange={onTimeSlotChange} />
 
-      <div className="pointer-events-auto mt-3 mb-2 flex w-fit items-center justify-end gap-1 self-end max-md:mt-2 max-md:mb-1.5 max-md:rounded-full max-md:border max-md:border-border/60 max-md:bg-background/80 max-md:px-1.5 max-md:py-0.5 max-md:shadow-sm">
-        <OptionalMapTooltip
-          enabled={!isMobile}
-          side="bottom"
-          className="max-w-56 whitespace-normal"
-          content={getAudioTooltipText(audioEnabled, audioSampleMode)}
+      <div className="map-layer-group mt-2 flex flex-col items-end">
+        <div className="pointer-events-auto mb-1.5 hidden w-fit items-center justify-end gap-1 self-end md:flex">
+          <OptionalMapTooltip
+            enabled={!isMobile}
+            side="bottom"
+            className="max-w-56 whitespace-normal"
+            content={getAudioTooltipText(audioEnabled, audioSampleMode)}
+          >
+            <button
+              type="button"
+              aria-pressed={audioEnabled}
+              aria-label={
+                audioEnabled
+                  ? "Turn representative sound preview off"
+                  : "Turn representative sound preview on"
+              }
+              onClick={handleAudioToggle}
+              className={cn(
+                "flex size-8 shrink-0 items-center justify-center rounded-full border border-border/50 bg-background shadow-sm transition-colors md:size-4",
+                audioEnabled
+                  ? "text-primary hover:bg-muted"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              )}
+            >
+              {audioEnabled ? (
+                <Volume2 className="size-3.5 md:size-2.5" aria-hidden="true" />
+              ) : (
+                <VolumeX className="size-3.5 md:size-2.5" aria-hidden="true" />
+              )}
+            </button>
+          </OptionalMapTooltip>
+          <p className="text-xs font-medium text-foreground max-md:text-[11px]">
+            Noise layers
+          </p>
+          <OptionalMapTooltip
+            enabled={!isMobile}
+            side="bottom"
+            className="max-w-56 flex-col items-start whitespace-normal"
+            content="Yearly DEFRA averages, not live readings."
+          >
+            <button
+              type="button"
+              aria-label="About these layers"
+              className="hidden text-muted-foreground/70 transition-colors hover:text-muted-foreground md:inline-flex"
+            >
+              <Info className="size-3" />
+            </button>
+          </OptionalMapTooltip>
+        </div>
+
+        <div
+          role="group"
+          aria-label="Noise layer visibility"
+          className="map-layer-icons pointer-events-auto flex w-fit flex-row gap-1"
         >
-          <button
-            type="button"
-            aria-pressed={audioEnabled}
-            aria-label={
-              audioEnabled
-                ? "Turn representative sound preview off"
-                : "Turn representative sound preview on"
+          {LAYER_ORDER.map((key) => {
+            const meta = LAYER_META[key]
+
+            if (key === "nightlife") {
+              return (
+                <LayerToggle
+                  key={key}
+                  layerKey={key}
+                  active={visibility[key]}
+                  segments={nightlifeSegments}
+                  phase={meta.gaugePhase}
+                  color={meta.gaugeColor}
+                  onToggle={handleToggle}
+                />
+              )
             }
-            onClick={handleAudioToggle}
-            className={cn(
-              "flex size-8 shrink-0 items-center justify-center rounded-full border border-border/50 bg-background shadow-sm transition-colors md:size-4",
-              audioEnabled
-                ? "text-primary hover:bg-muted"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground"
-            )}
-          >
-            {audioEnabled ? (
-              <Volume2 className="size-3.5 md:size-2.5" aria-hidden="true" />
-            ) : (
-              <VolumeX className="size-3.5 md:size-2.5" aria-hidden="true" />
-            )}
-          </button>
-        </OptionalMapTooltip>
-        <p className="text-xs font-medium text-foreground max-md:text-[11px]">
-          Noise layers
-        </p>
-        <OptionalMapTooltip
-          enabled={!isMobile}
-          side="bottom"
-          className="max-w-56 flex-col items-start whitespace-normal"
-          content="Yearly DEFRA averages, not live readings."
-        >
-          <button
-            type="button"
-            aria-label="About these layers"
-            className="hidden text-muted-foreground/70 transition-colors hover:text-muted-foreground md:inline-flex"
-          >
-            <Info className="size-3" />
-          </button>
-        </OptionalMapTooltip>
-      </div>
 
-      <div
-        role="group"
-        aria-label="Noise layer visibility"
-        className="pointer-events-auto flex w-fit flex-row gap-1 max-md:gap-0.5 max-md:rounded-xl max-md:border max-md:border-border/60 max-md:bg-background/80 max-md:p-1 max-md:shadow-sm"
-      >
-        {LAYER_ORDER.map((key) => {
-          const meta = LAYER_META[key]
+            const gaugeKey = LAYER_GAUGE_LEVEL[key]
 
-          if (key === "nightlife") {
             return (
               <LayerToggle
                 key={key}
                 layerKey={key}
                 active={visibility[key]}
-                segments={nightlifeSegments}
+                level={visibility[key] ? intensityPercentages[gaugeKey] : 0}
                 phase={meta.gaugePhase}
                 color={meta.gaugeColor}
                 onToggle={handleToggle}
               />
             )
-          }
-
-          const gaugeKey = LAYER_GAUGE_LEVEL[key]
-
-          return (
-            <LayerToggle
-              key={key}
-              layerKey={key}
-              active={visibility[key]}
-              level={visibility[key] ? intensityPercentages[gaugeKey] : 0}
-              phase={meta.gaugePhase}
-              color={meta.gaugeColor}
-              onToggle={handleToggle}
-            />
-          )
-        })}
+          })}
+        </div>
       </div>
 
-      <div className="pointer-events-auto mt-3 mb-2 flex w-fit items-center justify-end gap-0.5 self-end max-md:mt-2 max-md:mb-1.5 max-md:rounded-full max-md:border max-md:border-border/60 max-md:bg-background/80 max-md:px-1.5 max-md:py-0.5 max-md:shadow-sm">
-        <p className="text-xs font-medium text-foreground max-md:text-[11px]">
-          Visual layers
-        </p>
-        <OptionalMapTooltip
-          enabled={!isMobile}
-          side="bottom"
-          className="max-w-56 flex-col items-start whitespace-normal"
-          content="TfL lines and greenery. Not noise."
-        >
-          <button
-            type="button"
-            aria-label="About visual layers"
-            className="hidden text-muted-foreground/70 transition-colors hover:text-muted-foreground md:inline-flex"
+      <div className="map-layer-group mt-2 flex flex-col items-end">
+        <div className="pointer-events-auto mb-1.5 hidden w-fit items-center justify-end gap-0.5 self-end md:flex">
+          <p className="text-xs font-medium text-foreground max-md:text-[11px]">
+            Visual layers
+          </p>
+          <OptionalMapTooltip
+            enabled={!isMobile}
+            side="bottom"
+            className="max-w-56 flex-col items-start whitespace-normal"
+            content="TfL lines and greenery. Not noise."
           >
-            <Info className="size-3" />
-          </button>
-        </OptionalMapTooltip>
-      </div>
+            <button
+              type="button"
+              aria-label="About visual layers"
+              className="hidden text-muted-foreground/70 transition-colors hover:text-muted-foreground md:inline-flex"
+            >
+              <Info className="size-3" />
+            </button>
+          </OptionalMapTooltip>
+        </div>
 
-      <div
-        role="group"
-        aria-label="Visual layer visibility"
-        className="pointer-events-auto flex w-fit flex-row gap-1 max-md:gap-0.5 max-md:rounded-xl max-md:border max-md:border-border/60 max-md:bg-background/80 max-md:p-1 max-md:shadow-sm"
-      >
-        <TubeLayerToggle
-          active={transitLayersActive}
-          onToggle={handleTransitToggle}
-        />
-        <GreenSpacesToggle
-          active={visualVisibility.greenSpaces}
-          onToggle={handleGreenSpacesToggle}
-        />
+        <div
+          role="group"
+          aria-label="Visual layer visibility"
+          className="map-layer-icons pointer-events-auto flex w-fit flex-row gap-1"
+        >
+          <TubeLayerToggle
+            active={transitLayersActive}
+            onToggle={handleTransitToggle}
+          />
+          <GreenSpacesToggle
+            active={visualVisibility.greenSpaces}
+            onToggle={handleGreenSpacesToggle}
+          />
+        </div>
       </div>
     </section>
   )

@@ -54,8 +54,9 @@ export const encodeNoiseAnalysisSlot = ({ week, part }: NoiseAnalysisSlot) =>
 
 export const formatNoiseAnalysisSlot = ({ week, part }: NoiseAnalysisSlot) => {
   const partLabel =
-    ANALYSIS_DAY_PARTS.find((item) => item.part === part)?.label.toLowerCase() ??
-    part
+    ANALYSIS_DAY_PARTS.find(
+      (item) => item.part === part
+    )?.label.toLowerCase() ?? part
   return `${WEEK_SEGMENT_LABELS[week]} ${partLabel}`
 }
 
@@ -111,6 +112,10 @@ export const formatNoiseTimeSlot = ({ week, part }: NoiseTimeSlot) => {
   const partLabel = part === "day" ? "daytime" : "night-time"
   return `${weekLabel} ${partLabel}`
 }
+
+/** Compact map-control label: "weekday day", "weekend night". */
+export const formatNoiseTimeSlotShort = ({ week, part }: NoiseTimeSlot) =>
+  `${week} ${part}`
 
 /** DEFRA Round 4 is a yearly average. Weekday/weekend only changes local modifiers, not the raster. */
 export const DEFRA_TIME_SLOT_NOTE =
