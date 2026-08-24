@@ -526,18 +526,21 @@ export const MapSearchBar = forwardRef<MapSearchBarHandle, MapSearchBarProps>(
                 setShowSuggestions(true)
               }}
               onKeyDown={handleKeyDown}
-              className="h-11 w-full bg-transparent pl-4 text-sm text-foreground outline-none placeholder:text-muted-foreground"
+              className={cn(
+                "h-11 w-full touch-manipulation bg-transparent pl-4 text-sm text-foreground outline-none placeholder:text-muted-foreground",
+                expanded && query.trim() && !isDocked && "pr-10"
+              )}
             />
           </div>
         </div>
 
-        {expanded && query.trim() ? (
+        {expanded && query.trim() && !isDocked ? (
           <button
             type="button"
             aria-label="Clear search"
             disabled={isSearching}
             onClick={handleClear}
-            className="absolute top-1/2 right-12 z-20 flex size-8 -translate-y-1/2 items-center justify-center opacity-0 pointer-events-none transition-opacity duration-200 ease-out group-focus-within:pointer-events-auto group-focus-within:opacity-100 disabled:opacity-60"
+            className="absolute top-1/2 right-12 z-20 flex size-8 -translate-y-1/2 items-center justify-center opacity-0 pointer-events-none transition-opacity duration-200 ease-out group-focus-within:pointer-events-auto group-focus-within:opacity-100 disabled:opacity-0"
           >
             <span className="flex size-7 items-center justify-center rounded-full bg-background text-muted-foreground shadow-[0_0_0_3px_var(--background),0_1px_3px_rgba(0,0,0,0.1)] transition-[color,background-color] hover:bg-muted/60 hover:text-foreground">
               <X className="size-3.5" aria-hidden="true" />

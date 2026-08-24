@@ -28,6 +28,7 @@ import {
 } from "@/lib/map/visual-layers"
 import type { LocalAmenityLevels } from "@/hooks/use-cursor-noise"
 import { LOCAL_NOISE_AMENITIES } from "@/lib/map/venue-time"
+import { noiseAudioEngine } from "@/lib/map/noise-audio-engine"
 import { cn } from "@/lib/utils"
 import type { NoiseTimeSlot } from "@/lib/map/noise-time"
 
@@ -310,7 +311,15 @@ export const NoiseLayerControls = ({
   onAudioEnabledChange,
 }: NoiseLayerControlsProps) => {
   const isMobile = useIsMobile()
+  const unlockNoiseAudio = () => {
+    noiseAudioEngine.unlockFromUserGesture()
+    if (audioEnabled) {
+      void noiseAudioEngine.enable()
+    }
+  }
+
   const handleToggle = (key: LayerKey, checked: boolean) => {
+    unlockNoiseAudio()
     onVisibilityChange({ ...visibility, [key]: checked })
   }
 
@@ -334,6 +343,10 @@ export const NoiseLayerControls = ({
   }
 
   const handleAudioToggle = () => {
+    noiseAudioEngine.unlockFromUserGesture()
+    if (!audioEnabled) {
+      void noiseAudioEngine.enable()
+    }
     onAudioEnabledChange(!audioEnabled)
   }
 

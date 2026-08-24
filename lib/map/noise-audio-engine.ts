@@ -42,9 +42,30 @@ class NoiseAudioEngine {
   private levels: NoiseAudioChannelLevels = createEmptyNoiseAudioChannelLevels()
   private masterLevel = 0
   private started = false
+  private primed = false
+
+  /**
+   * Safari / iOS only allow Web Audio after a user gesture. Call this from
+   * pointer/touch/click handlers (map pan, layer toggles) so resume happens
+   * in the same turn as the gesture — not after an await.
+   */
+  unlockFromUserGesture() {
+    const context = this.ensureContext()
+    this.primeUnlock(context)
+
+    if (context.state === "suspended") {
+      void context.resume()
+    }
+  }
 
   async enable() {
     const context = this.ensureContext()
+
+    // Resume before any await so a gesture that called enable() still counts.
+    if (context.state === "suspended") {
+      await context.resume()
+    }
+
     await this.ensureBuffers()
     this.startSources()
     this.applyAllGains()
@@ -101,6 +122,17 @@ class NoiseAudioEngine {
     this.masterGain = masterGain
 
     return context
+  }
+
+  private primeUnlock(context: AudioContext) {
+    if (this.primed) return
+
+    const buffer = context.createBuffer(1, 1, context.sampleRate)
+    const source = context.createBufferSource()
+    source.buffer = buffer
+    source.connect(context.destination)
+    source.start(0)
+    this.primed = true
   }
 
   private async ensureBuffers() {

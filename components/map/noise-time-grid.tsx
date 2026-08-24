@@ -126,7 +126,7 @@ const SelectedTimeHeading = ({ slot }: { slot: NoiseTimeSlot }) => {
   const slotLabel = formatNoiseTimeSlotShort(slot)
 
   return (
-    <div className="flex w-fit max-w-[calc(100vw-5.5rem)] justify-end self-end text-right">
+    <div className="flex w-fit max-w-[calc(100vw-5.5rem)] justify-end self-end text-right max-md:justify-center max-md:self-center max-md:text-center">
       <p className="text-xs font-medium whitespace-nowrap text-foreground">
         {slotLabel}
       </p>
@@ -198,10 +198,10 @@ export const NoiseTimeGrid = ({ value, onChange }: NoiseTimeGridProps) => {
   return (
     <div
       className={cn(
-        "map-float-chrome pointer-events-auto flex w-fit flex-col items-end space-y-1 rounded-3xl p-2"
+        "map-float-chrome pointer-events-auto flex w-fit flex-col items-end space-y-1 rounded-3xl p-2 max-md:items-center max-md:space-y-1.5 max-md:pt-1.5"
       )}
     >
-      <div className="flex w-fit items-center gap-0.5">
+      <div className="flex w-fit items-center justify-end gap-0.5 max-md:w-full max-md:justify-center">
         <SelectedTimeHeading slot={value} />
         <Tooltip>
           <TooltipTrigger asChild>

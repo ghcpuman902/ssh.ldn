@@ -11,7 +11,6 @@ import {
   Loader2,
   Music2,
   Star,
-  X,
 } from "lucide-react"
 
 import { BoroughLogo } from "@/components/map/borough-logo"
@@ -847,14 +846,25 @@ export const AnalyseHeader = ({
   return (
     <div
       className={cn(
-        "relative border-b border-border/60 px-4 py-3 pr-12",
+        "relative border-b border-border/60 px-4 py-3",
         className
       )}
     >
-      <div className="min-w-0">
-        <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-          Analyse
-        </p>
+      <div className={cn("min-w-0", primaryBorough && "pr-12")}>
+        <div className="flex items-baseline gap-3">
+          <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+            Analyse
+          </p>
+          <button
+            type="button"
+            aria-label="Close analysis panel"
+            data-sheet-no-drag
+            onClick={onClose}
+            className="touch-manipulation text-xs font-medium tracking-wide text-muted-foreground underline underline-offset-2 transition-colors hover:text-foreground"
+          >
+            Close
+          </button>
+        </div>
         <AddressHeading className="mt-1 line-clamp-2 text-sm font-medium text-foreground">
           {address}
         </AddressHeading>
@@ -871,18 +881,9 @@ export const AnalyseHeader = ({
         <BoroughLogo
           planningAuthority={primaryBorough.name}
           size="sm"
-          className="absolute right-10 bottom-3"
+          className="absolute right-4 bottom-3"
         />
       ) : null}
-
-      <button
-        type="button"
-        aria-label="Close analysis panel"
-        onClick={onClose}
-        className="absolute top-3 right-3 rounded-full p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-      >
-        <X className="size-4" aria-hidden="true" />
-      </button>
     </div>
   )
 }
@@ -926,7 +927,7 @@ export const AnalyseBody = ({
     <div
       ref={scrollRef}
       className={cn(
-        "min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4",
+        "min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-y-contain px-4 py-4 [-webkit-overflow-scrolling:touch]",
         className
       )}
     >
@@ -1002,7 +1003,7 @@ export const AnalyseBody = ({
               </p>
               <div
                 ref={noisyPoiScrollerRef}
-                className="-mx-4 flex gap-2.5 overflow-x-auto px-4 pb-1 snap-x snap-mandatory scrollbar-none"
+                className="-mx-4 flex gap-2.5 overflow-x-auto overscroll-x-contain px-4 pb-1 snap-x snap-mandatory scrollbar-none"
               >
                 {state.noisyPois.data.map((poi, index) => (
                   <NoisyPoiCard

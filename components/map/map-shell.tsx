@@ -77,6 +77,7 @@ import {
   writeNoiseLayerVisibility,
   writeVisualLayerVisibility,
 } from "@/lib/map/layer-visibility-storage"
+import { noiseAudioEngine } from "@/lib/map/noise-audio-engine"
 import { cn } from "@/lib/utils"
 
 import "maplibre-gl/dist/maplibre-gl.css"
@@ -912,6 +913,10 @@ export const MapShell = () => {
 
   const handleAudioEnabledChange = useCallback(
     (nextEnabled: boolean) => {
+      noiseAudioEngine.unlockFromUserGesture()
+      if (nextEnabled) {
+        void noiseAudioEngine.enable()
+      }
       setAudioEnabled(nextEnabled)
 
       if (!isMobile) return
@@ -934,6 +939,27 @@ export const MapShell = () => {
     },
     [isMobile, showMobileAudioHelp]
   )
+
+  useEffect(() => {
+    const map = mapRef.current?.getMap()
+    if (!map || !mapReady) return
+
+    const handleUserGesture = () => {
+      noiseAudioEngine.unlockFromUserGesture()
+      if (audioEnabled) {
+        void noiseAudioEngine.enable()
+      }
+    }
+
+    const canvas = map.getCanvas()
+    canvas.addEventListener("pointerdown", handleUserGesture, { passive: true })
+    canvas.addEventListener("touchstart", handleUserGesture, { passive: true })
+
+    return () => {
+      canvas.removeEventListener("pointerdown", handleUserGesture)
+      canvas.removeEventListener("touchstart", handleUserGesture)
+    }
+  }, [audioEnabled, mapReady])
 
   const analyseOpen = analyseState.status !== "idle"
   const noisyPois = useMemo(
