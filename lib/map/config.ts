@@ -68,16 +68,19 @@ export const MAP_CONFIG = {
 
 /**
  * DEFRA strategic noise: z10–12 pre-cached (~13 MB for London via download script).
- * z13–14 load on demand from DEFRA WMS and are write-through cached as you pan.
- * z15+ overzooms z14 — avoids GB-scale bulk downloads.
+ * The map paints at most z12 and overzooms with nearest-neighbour. z13–14 stay
+ * available from the API / WMS for a later detail pass, but first paint must
+ * not request them (MapLibre covering zoom is viewZoom+1 for 256px tiles).
  */
 export const NOISE_TILE_MIN_ZOOM = 10
 export const NOISE_TILE_PRECACHE_MAX_ZOOM = 12
 export const NOISE_TILE_MAX_ZOOM = 14
+export const NOISE_TILE_PAINT_MAX_ZOOM = NOISE_TILE_PRECACHE_MAX_ZOOM
 
 /**
- * Prebuilt OSM POI density tiles mirror the DEFRA overview strategy:
- * zoomed-out rendering is raster/pixel-based through z14, then live symbols take over.
+ * Prebuilt OSM POI density tiles. Paint at the cached overview zoom and
+ * overzoom; live venue symbols take over as you zoom in.
  */
 export const POI_DENSITY_TILE_MIN_ZOOM = 10
 export const POI_DENSITY_TILE_MAX_ZOOM = 14
+export const POI_DENSITY_PAINT_MAX_ZOOM = NOISE_TILE_PRECACHE_MAX_ZOOM

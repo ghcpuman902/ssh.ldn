@@ -13,9 +13,9 @@ import {
 } from "@/lib/map/defra-layers"
 import {
   NOISE_OVERLAY_SLOT_ID,
-  NOISE_TILE_MAX_ZOOM,
   NOISE_TILE_MIN_ZOOM,
-  POI_DENSITY_TILE_MAX_ZOOM,
+  NOISE_TILE_PAINT_MAX_ZOOM,
+  POI_DENSITY_PAINT_MAX_ZOOM,
   POI_DENSITY_TILE_MIN_ZOOM,
 } from "@/lib/map/config"
 import { nightlifeEmojiImageId } from "@/lib/map/nightlife-emoji-images"
@@ -24,7 +24,6 @@ import {
   poiDensitySlotFromParts,
 } from "@/lib/map/poi-density"
 import type { NightlifeFeatureCollection } from "@/lib/map/geojson-types"
-import type { LngLatBoundsTuple } from "@/lib/map/noise-coverage"
 import { isWeekendNight, type NoiseTimeSlot } from "@/lib/map/noise-time"
 import {
   isLocalNoiseAmenity,
@@ -154,7 +153,6 @@ type DefraNoiseRasterLayersProps = {
   opacity: Partial<Record<DefraMapKind, number>>
   weekendNightBoost: number
   revealStage: NoiseRevealStage
-  coverageBounds: LngLatBoundsTuple | undefined
   rasterFadeMs: number
 }
 
@@ -164,14 +162,7 @@ const kindsForRevealStage = (
 ): DefraMapKind[] => {
   if (stage === "basemap") return []
 
-  const visibleKinds = DEFRA_MAP_RENDER_ORDER.filter((kind) => visibility[kind])
-
-  if (stage === "center") {
-    if (visibility.road) return ["road"]
-    return visibleKinds.slice(-1)
-  }
-
-  return visibleKinds
+  return DEFRA_MAP_RENDER_ORDER.filter((kind) => visibility[kind])
 }
 
 const DefraNoiseRasterLayers = ({
@@ -180,7 +171,6 @@ const DefraNoiseRasterLayers = ({
   opacity,
   weekendNightBoost,
   revealStage,
-  coverageBounds,
   rasterFadeMs,
 }: DefraNoiseRasterLayersProps) => {
   const period = defraPeriodFromDayPart(timeSlot.part)
@@ -194,14 +184,13 @@ const DefraNoiseRasterLayers = ({
     <>
       {kinds.map((kind) => (
         <Source
-          key={`defra-${kind}-${period}-${revealStage}`}
+          key={`defra-${kind}-${period}`}
           id={`defra-noise-${kind}-${period}`}
           type="raster"
           tiles={[defraTileUrl(kind, period)]}
           tileSize={256}
           minzoom={NOISE_TILE_MIN_ZOOM}
-          maxzoom={NOISE_TILE_MAX_ZOOM}
-          {...(coverageBounds ? { bounds: coverageBounds } : {})}
+          maxzoom={NOISE_TILE_PAINT_MAX_ZOOM}
         >
           <Layer
             id={`defra-noise-${kind}-${period}-layer`}
@@ -247,7 +236,7 @@ const PoiDensityRasterLayer = ({
       tiles={[poiDensityTileUrl(slot)]}
       tileSize={256}
       minzoom={POI_DENSITY_TILE_MIN_ZOOM}
-      maxzoom={POI_DENSITY_TILE_MAX_ZOOM}
+      maxzoom={POI_DENSITY_PAINT_MAX_ZOOM}
     >
       <Layer
         id={`poi-density-${slot}-layer`}
@@ -624,7 +613,7 @@ type NoiseMapLayersProps = {
   opacity?: Partial<Record<DefraMapKind | "nightlife", number>>
   nightlifeGeoJson: NightlifeFeatureCollection | null
   revealStage?: NoiseRevealStage
-  coverageBounds?: LngLatBoundsTuple
+  coverageBounds?: unknown
   rasterFadeMs?: number
 }
 
@@ -634,7 +623,6 @@ export const NoiseMapLayers = ({
   opacity = {},
   nightlifeGeoJson,
   revealStage = "complete",
-  coverageBounds,
   rasterFadeMs = 250,
 }: NoiseMapLayersProps) => {
   const weekendNightBoost = isWeekendNight(timeSlot) ? 1.08 : 1
@@ -660,7 +648,6 @@ export const NoiseMapLayers = ({
         opacity={opacity}
         weekendNightBoost={weekendNightBoost}
         revealStage={revealStage}
-        coverageBounds={coverageBounds}
         rasterFadeMs={rasterFadeMs}
       />
 

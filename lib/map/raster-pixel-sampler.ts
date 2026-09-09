@@ -1,4 +1,7 @@
-import { NOISE_TILE_MAX_ZOOM, NOISE_TILE_MIN_ZOOM } from "@/lib/map/config"
+import {
+  NOISE_TILE_MIN_ZOOM,
+  NOISE_TILE_PRECACHE_MAX_ZOOM,
+} from "@/lib/map/config"
 import type { DefraMapKind, DefraNoisePeriod } from "@/lib/map/defra-layers"
 import {
   defraRasterPixelToIntensity,
@@ -23,7 +26,10 @@ type SampleInput = {
 const tileCache = new Map<string, Promise<TilePixels>>()
 
 const clampTileZoom = (zoom: number) =>
-  Math.min(NOISE_TILE_MAX_ZOOM, Math.max(NOISE_TILE_MIN_ZOOM, Math.floor(zoom)))
+  Math.min(
+    NOISE_TILE_PRECACHE_MAX_ZOOM,
+    Math.max(NOISE_TILE_MIN_ZOOM, Math.floor(zoom))
+  )
 
 const createCanvas = () => {
   if (typeof OffscreenCanvas !== "undefined") {
