@@ -14,6 +14,7 @@ import {
 } from "lucide-react"
 
 import { BoroughLogo } from "@/components/map/borough-logo"
+import { SelectedLocationPin } from "@/components/map/selected-location-pin"
 import { MapTooltipContent } from "@/components/map/noise-time-grid"
 import {
   getPlanningApplicationBadges,
@@ -295,33 +296,55 @@ const NoiseScoreCard = ({
           nearbyVenues,
         })
         const bandColor = getNoiseScoreColor(contributor.score)
+        const label = contributorCardLabel(contributor.source)
+        const loudnessPercent = Math.min(
+          100,
+          Math.max(0, contributor.score * progress)
+        )
 
         return (
           <div
             key={contributor.source}
             role="group"
-            aria-label={`${contributorCardLabel(contributor.source)}, ${band}. ${sentence}`}
-            className="rounded-2xl px-3 py-2.5"
+            aria-label={`${label}, ${band}, ${Math.round(contributor.score)} percent. ${sentence}`}
+            className="relative overflow-hidden rounded-2xl py-2 pr-3 pl-1.5"
             style={{
-              backgroundColor: `color-mix(in oklch, ${meta.strokeColor} 14%, transparent)`,
+              backgroundColor: `color-mix(in oklch, ${meta.strokeColor} 7%, transparent)`,
             }}
           >
-            <div className="flex items-baseline justify-between gap-2">
-              <p className="text-[10px] font-medium text-muted-foreground">
-                <span aria-hidden="true">{meta.emoji}</span>{" "}
-                {contributorCardLabel(contributor.source)}
-              </p>
-              <p
-                className={cn(
-                  "text-xs font-medium",
-                  band === "Low" && "text-muted-foreground"
-                )}
-                style={band === "Low" ? undefined : { color: bandColor }}
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-y-0 left-0 rounded-2xl"
+              style={{
+                width: `${loudnessPercent}%`,
+                backgroundColor: `color-mix(in oklch, ${meta.strokeColor} 20%, transparent)`,
+              }}
+            />
+            <div className="relative flex items-center gap-1">
+              <span
+                aria-hidden="true"
+                className="my-0.5 ml-1.5 mr-0.5 shrink-0 text-[2rem] leading-none"
               >
-                {band}
-              </p>
+                {meta.emoji}
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-baseline justify-between gap-2">
+                  <p className="text-[10px] font-medium text-muted-foreground">
+                    {label}
+                  </p>
+                  <p
+                    className={cn(
+                      "text-xs font-medium",
+                      band === "Low" && "text-muted-foreground"
+                    )}
+                    style={band === "Low" ? undefined : { color: bandColor }}
+                  >
+                    {band}
+                  </p>
+                </div>
+                <p className="mt-0.5 text-sm text-foreground">{sentence}</p>
+              </div>
             </div>
-            <p className="mt-0.5 text-sm text-foreground">{sentence}</p>
           </div>
         )
       })}
@@ -850,20 +873,21 @@ export const AnalyseHeader = ({
         className
       )}
     >
-      <div className={cn("min-w-0", primaryBorough && "pr-12")}>
-        <div className="flex items-baseline gap-3">
+      <button
+        type="button"
+        aria-label="Close analysis panel"
+        data-sheet-no-drag
+        onClick={onClose}
+        className="absolute top-3 right-4 z-10 touch-manipulation text-xs font-medium tracking-wide text-muted-foreground underline underline-offset-2 transition-colors hover:text-foreground"
+      >
+        Close
+      </button>
+      <div className="min-w-0 pr-12">
+        <div className="flex items-center gap-1.5 overflow-visible">
+          <SelectedLocationPin size="xs" />
           <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
             Analyse
           </p>
-          <button
-            type="button"
-            aria-label="Close analysis panel"
-            data-sheet-no-drag
-            onClick={onClose}
-            className="touch-manipulation text-xs font-medium tracking-wide text-muted-foreground underline underline-offset-2 transition-colors hover:text-foreground"
-          >
-            Close
-          </button>
         </div>
         <AddressHeading className="mt-1 line-clamp-2 text-sm font-medium text-foreground">
           {address}

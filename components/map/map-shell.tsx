@@ -10,8 +10,10 @@ import {
 } from "react"
 import dynamic from "next/dynamic"
 import Map, {
+  GeolocateControl,
   Marker,
   NavigationControl,
+  type GeolocateErrorEvent,
   type MapLayerMouseEvent,
   type MapRef,
 } from "react-map-gl/maplibre"
@@ -31,6 +33,7 @@ import type { AnalyseState } from "@/components/map/map-analyse-panel"
 // import { VoiceModeButton } from "@/components/map/voice-mode-button"
 import { NoiseMapLayers } from "@/components/map/noise-map-layers"
 import { MapCenterCrosshair } from "@/components/map/map-center-crosshair"
+import { SelectedLocationPin } from "@/components/map/selected-location-pin"
 import { MapDataCredits } from "@/components/map/map-data-credits"
 import {
   MapSearchBar,
@@ -100,6 +103,15 @@ const MapAnalyseSheet = dynamic(
 )
 
 const SEARCH_RESULT_ZOOM = 15
+const GEOLOCATE_POSITION_OPTIONS = {
+  enableHighAccuracy: true,
+  timeout: 12_000,
+  maximumAge: 60_000,
+} as const
+const GEOLOCATE_FIT_BOUNDS_OPTIONS = {
+  maxZoom: SEARCH_RESULT_ZOOM,
+  duration: 1200,
+} as const
 const PANEL_WIDTH = "26rem"
 const PANEL_TRANSITION_MS = 300
 /** Wait after nightlife settles before warming visual layers. */
@@ -835,13 +847,29 @@ export const MapShell = () => {
 
         toast.error("Could not get your current location.")
       },
-      {
-        enableHighAccuracy: true,
-        timeout: 12_000,
-        maximumAge: 60_000,
-      }
+      GEOLOCATE_POSITION_OPTIONS
     )
   }, [handleMapLocationPicked])
+
+  const handleGeolocateError = useCallback((error: GeolocateErrorEvent) => {
+    if (error.code === error.PERMISSION_DENIED) {
+      toast.error(
+        "Location permission denied. Enable it in browser settings."
+      )
+      return
+    }
+
+    if (error.code === error.TIMEOUT) {
+      toast.error("Timed out getting your location. Try again.")
+      return
+    }
+
+    toast.error("Could not get your current location.")
+  }, [])
+
+  const handleGeolocateOutOfMaxBounds = useCallback(() => {
+    toast.error("Your location is outside Greater London.")
+  }, [])
 
   const handleMapLongPress = useCallback(
     ({ latitude, longitude }: { latitude: number; longitude: number }) => {
@@ -1131,7 +1159,6 @@ export const MapShell = () => {
                 timeSlot={timeSlot}
                 nightlifeGeoJson={nightlifeGeoJson}
                 revealStage={noiseReveal.stage}
-                coverageBounds={noiseReveal.coverageBounds}
                 rasterFadeMs={noiseReveal.rasterFadeMs}
               />
               <VisualMapLayers
@@ -1145,12 +1172,7 @@ export const MapShell = () => {
                   latitude={selectedLocation.latitude}
                   anchor="bottom"
                 >
-                  <span
-                    aria-hidden
-                    className="flex size-8 items-center justify-center rounded-full border-2 border-white bg-primary text-sm shadow-md"
-                  >
-                    📍
-                  </span>
+                  <SelectedLocationPin />
                 </Marker>
               ) : null}
               {noisyPois.map((poi, index) => {
@@ -1208,6 +1230,16 @@ export const MapShell = () => {
                 showCompass={false}
                 visualizePitch={false}
               />
+              <GeolocateControl
+                position="bottom-left"
+                showUserLocation={false}
+                showAccuracyCircle={false}
+                trackUserLocation={false}
+                positionOptions={GEOLOCATE_POSITION_OPTIONS}
+                fitBoundsOptions={GEOLOCATE_FIT_BOUNDS_OPTIONS}
+                onError={handleGeolocateError}
+                onOutOfMaxBounds={handleGeolocateOutOfMaxBounds}
+              />
             </Map>
 
             <div
@@ -1234,7 +1266,7 @@ export const MapShell = () => {
                 />
               </div>
 
-              <div className="pointer-events-none absolute bottom-[6.5rem] left-2.5 z-20 md:hidden">
+              <div className="pointer-events-none absolute bottom-[9rem] left-2.5 z-20 md:hidden">
                 <button
                   type="button"
                   aria-label="About map controls"

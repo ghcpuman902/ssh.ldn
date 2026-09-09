@@ -46,7 +46,7 @@ export const NOISE_CONTRIBUTOR_META: Record<
     strokeColor: "var(--noise-airport)",
   },
   nightlife: {
-    emoji: "🔊",
+    emoji: "🪩",
     label: "Local sources",
     cssVar: "--noise-nightlife",
     barClassName: "bg-noise-nightlife",

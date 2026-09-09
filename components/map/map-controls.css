@@ -39,8 +39,6 @@
 @media (min-width: 768px) {
   .map-layer-group {
     pointer-events: auto;
-    border-radius: 1.5rem;
-    padding: 0.375rem 0.625rem 0.5rem;
   }
 
   .map-layer-icons {
@@ -72,14 +70,32 @@
 }
 
 .maplibregl-map .maplibregl-ctrl-group button {
+  position: relative;
   width: 29px;
   height: 29px;
   border: 0;
   background-color: transparent;
 }
 
+.maplibregl-map .maplibregl-ctrl-group button::before {
+  content: "";
+  position: absolute;
+  inset: 0.125rem;
+  z-index: 0;
+  border-radius: 9999px;
+  background-color: color-mix(in oklch, var(--foreground) 10%, transparent);
+  opacity: 0;
+  pointer-events: none;
+}
+
 .maplibregl-map .maplibregl-ctrl-group button + button {
   border-top: 0.5px solid color-mix(in oklch, var(--border) 32%, transparent);
+}
+
+.maplibregl-map
+  .maplibregl-ctrl-bottom-left
+  .maplibregl-ctrl-group:has(.maplibregl-ctrl-geolocate) {
+  margin-bottom: 6px;
 }
 
 .maplibregl-map .maplibregl-ctrl-group button:focus:first-child,
@@ -88,10 +104,15 @@
   border-radius: 0 !important;
 }
 
+.maplibregl-map .maplibregl-ctrl-group button:hover,
+.maplibregl-map .maplibregl-ctrl-group button:active {
+  background-color: transparent;
+}
+
 @media (hover: hover) {
-  .maplibregl-map .maplibregl-ctrl-group button:not(:disabled):hover,
-  .maplibregl-map .maplibregl-ctrl-group button:not(:disabled):active {
-    background-color: color-mix(in oklch, var(--foreground) 5%, transparent);
+  .maplibregl-map .maplibregl-ctrl-group button:not(:disabled):hover::before,
+  .maplibregl-map .maplibregl-ctrl-group button:not(:disabled):active::before {
+    opacity: 1;
   }
 }
 
@@ -102,7 +123,13 @@
 .maplibregl-map
   .maplibregl-ctrl
   button.maplibregl-ctrl-zoom-out
+  .maplibregl-ctrl-icon,
+.maplibregl-map
+  .maplibregl-ctrl
+  button.maplibregl-ctrl-geolocate
   .maplibregl-ctrl-icon {
+  position: relative;
+  z-index: 1;
   background-image: none !important;
   background-color: var(--foreground);
   mask-repeat: no-repeat;
@@ -127,6 +154,16 @@
   .maplibregl-ctrl-icon {
   mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M4.5 10h11' stroke='%23000' stroke-width='1.75' stroke-linecap='round'/%3E%3C/svg%3E");
   -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M4.5 10h11' stroke='%23000' stroke-width='1.75' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+
+.maplibregl-map
+  .maplibregl-ctrl
+  button.maplibregl-ctrl-geolocate
+  .maplibregl-ctrl-icon {
+  mask-size: 15px 15px;
+  -webkit-mask-size: 15px 15px;
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none'%3E%3Ccircle cx='10' cy='10' r='5' stroke='%23000' stroke-width='1.75'/%3E%3Cpath d='M10 2v2.25M10 15.75V18M2 10h2.25M15.75 10H18' stroke='%23000' stroke-width='1.75' stroke-linecap='round'/%3E%3C/svg%3E");
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none'%3E%3Ccircle cx='10' cy='10' r='5' stroke='%23000' stroke-width='1.75'/%3E%3Cpath d='M10 2v2.25M10 15.75V18M2 10h2.25M15.75 10H18' stroke='%23000' stroke-width='1.75' stroke-linecap='round'/%3E%3C/svg%3E");
 }
 
 .map-noise-sampling .maplibregl-canvas-container,

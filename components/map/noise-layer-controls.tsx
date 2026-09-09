@@ -125,12 +125,14 @@ const toggleSurfaceClass = (
   shapeClass: string
 ) =>
   cn(
-    "relative flex size-full items-center justify-center overflow-hidden border border-border bg-background",
-    "ease transition-[transform,filter] duration-150 will-change-transform",
+    "relative flex size-full items-center justify-center overflow-hidden border",
+    "ease transition-[transform,filter,background-color,border-color,backdrop-filter] duration-150 will-change-transform",
     "motion-reduce:transition-none",
     shapeClass,
-    pressed ? "scale-[0.8]" : active ? "scale-100" : "scale-90",
-    active ? "saturate-100" : "grayscale-[0.35] saturate-50"
+    pressed ? "scale-[0.8]" : "scale-100",
+    active
+      ? "border-transparent bg-background saturate-100"
+      : "border-muted-foreground bg-transparent backdrop-blur-none grayscale-[0.35] saturate-50"
   )
 
 const LayerToggle = ({
@@ -195,7 +197,7 @@ const VisualLayerStrike = () => (
     aria-hidden="true"
     className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center"
   >
-    <span className="h-px w-[140%] rotate-45 bg-border/70" />
+    <span className="h-0 w-[140%] rotate-45 border-t border-muted-foreground" />
   </span>
 )
 
@@ -361,8 +363,8 @@ export const NoiseLayerControls = ({
     >
       <NoiseTimeGrid value={timeSlot} onChange={onTimeSlotChange} />
 
-      <div className="map-layer-group mt-2 flex flex-col items-end">
-        <div className="pointer-events-auto mb-1.5 hidden w-fit items-center justify-end gap-1 self-end md:flex">
+      <div className="map-layer-group mt-2 flex flex-col items-end space-y-1 md:rounded-3xl md:p-2">
+        <div className="pointer-events-auto hidden w-fit items-center justify-end gap-1 self-end md:flex">
           <OptionalMapTooltip
             enabled={!isMobile}
             side="bottom"
@@ -450,8 +452,8 @@ export const NoiseLayerControls = ({
         </div>
       </div>
 
-      <div className="map-layer-group mt-2 flex flex-col items-end">
-        <div className="pointer-events-auto mb-1.5 hidden w-fit items-center justify-end gap-0.5 self-end md:flex">
+      <div className="map-layer-group mt-2 flex flex-col items-end space-y-1 md:rounded-3xl md:p-2">
+        <div className="pointer-events-auto hidden w-fit items-center justify-end gap-0.5 self-end md:flex">
           <p className="text-xs font-medium text-foreground max-md:text-[11px]">
             Visual layers
           </p>
