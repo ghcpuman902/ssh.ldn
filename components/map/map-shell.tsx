@@ -28,6 +28,7 @@ import { useIsMobile } from "@/hooks/use-mobile"
 import { useShiftDragRotate } from "@/hooks/use-shift-drag-rotate"
 import { useViewportNightlifeGeoJson } from "@/hooks/use-viewport-nightlife-geojson"
 import { useNoiseReveal } from "@/hooks/use-noise-reveal"
+import { useSafariAudioUnlock } from "@/hooks/use-safari-audio-unlock"
 import type { AnalyseState } from "@/components/map/map-analyse-panel"
 // Voice mode is temporarily unwired so ElevenLabs stays off the map load path.
 // import { VoiceModeButton } from "@/components/map/voice-mode-button"
@@ -40,6 +41,7 @@ import {
   type MapSearchBarHandle,
   type MapSearchSelection,
 } from "@/components/map/map-search-bar"
+import { MapHelpControl } from "@/components/map/map-help-control"
 import { MapLayerHelpSheet } from "@/components/map/map-layer-help-sheet"
 import { NoiseLayerControls } from "@/components/map/noise-layer-controls"
 import { VisualMapLayers } from "@/components/map/visual-map-layers"
@@ -939,11 +941,14 @@ export const MapShell = () => {
     [isMobile]
   )
 
+  const handleOpenHelp = useCallback(() => {
+    setHelpOpen(true)
+  }, [])
+
   const handleAudioEnabledChange = useCallback(
     (nextEnabled: boolean) => {
-      noiseAudioEngine.unlockFromUserGesture()
       if (nextEnabled) {
-        void noiseAudioEngine.enable()
+        noiseAudioEngine.unlockFromUserGesture()
       }
       setAudioEnabled(nextEnabled)
 
@@ -968,26 +973,20 @@ export const MapShell = () => {
     [isMobile, showMobileAudioHelp]
   )
 
-  useEffect(() => {
-    const map = mapRef.current?.getMap()
-    if (!map || !mapReady) return
+  const handleMapAudioUnlock = useCallback(() => {
+    const mobileViewport =
+      isMobile ||
+      (typeof window !== "undefined" && window.innerWidth < 768)
 
-    const handleUserGesture = () => {
-      noiseAudioEngine.unlockFromUserGesture()
-      if (audioEnabled) {
-        void noiseAudioEngine.enable()
-      }
+    if (!mobileViewport && !audioEnabled) return
+
+    noiseAudioEngine.unlockFromUserGesture()
+    if (mobileViewport && !audioEnabled) {
+      setAudioEnabled(true)
     }
+  }, [audioEnabled, isMobile])
 
-    const canvas = map.getCanvas()
-    canvas.addEventListener("pointerdown", handleUserGesture, { passive: true })
-    canvas.addEventListener("touchstart", handleUserGesture, { passive: true })
-
-    return () => {
-      canvas.removeEventListener("pointerdown", handleUserGesture)
-      canvas.removeEventListener("touchstart", handleUserGesture)
-    }
-  }, [audioEnabled, mapReady])
+  useSafariAudioUnlock(mounted && mapReady, handleMapAudioUnlock)
 
   const analyseOpen = analyseState.status !== "idle"
   const noisyPois = useMemo(
@@ -1152,6 +1151,7 @@ export const MapShell = () => {
                 updateClip()
                 mapRef.current?.resize()
                 applyZoomControlStyles()
+                noiseAudioEngine.prefetch()
               }}
             >
               <NoiseMapLayers
@@ -1225,6 +1225,13 @@ export const MapShell = () => {
                   </Marker>
                 )
               })}
+              {isMobile ? (
+                <MapHelpControl
+                  mapRef={mapRef}
+                  enabled={mapReady}
+                  onOpen={handleOpenHelp}
+                />
+              ) : null}
               <NavigationControl
                 position="bottom-left"
                 showCompass={false}
@@ -1264,31 +1271,6 @@ export const MapShell = () => {
                   onTimeSlotChange={setTimeSlot}
                   onAudioEnabledChange={handleAudioEnabledChange}
                 />
-              </div>
-
-              <div className="pointer-events-none absolute bottom-[9rem] left-2.5 z-20 md:hidden">
-                <button
-                  type="button"
-                  aria-label="About map controls"
-                  aria-haspopup="dialog"
-                  aria-expanded={helpOpen}
-                  onClick={() => setHelpOpen(true)}
-                  className="map-float-chrome pointer-events-auto flex size-[29px] items-center justify-center rounded-full text-foreground"
-                >
-                  <svg
-                    aria-hidden="true"
-                    viewBox="0 0 24 24"
-                    className="size-3.5"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-                    <path d="M12 17h.01" />
-                  </svg>
-                </button>
               </div>
             </div>
           </div>

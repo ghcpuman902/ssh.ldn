@@ -17,6 +17,9 @@ export const NOISE_OVERLAY_SLOT_ID = "noise-overlay-slot"
 /** Insert green layers before this id so they stay under coloured transit. */
 export const TRANSIT_OVERLAY_SLOT_ID = "transit-overlay-slot"
 
+/** Insert transit lines before this id so station dots paint above the tracks. */
+export const STATION_OVERLAY_SLOT_ID = "station-overlay-slot"
+
 /** Insert noise/POI layers before this id so labels stay on top. */
 export const BASEMAP_LABELS_LAYER_ID = "basemap-labels"
 
@@ -81,6 +84,7 @@ const insertOverlaySlots = (style: StyleSpecification) => {
     slotLayer(RAIL_UNDERLAY_SLOT_ID),
     slotLayer(NOISE_OVERLAY_SLOT_ID),
     slotLayer(TRANSIT_OVERLAY_SLOT_ID),
+    slotLayer(STATION_OVERLAY_SLOT_ID),
     slotLayer(BASEMAP_LABELS_LAYER_ID),
     ...labels,
   ]

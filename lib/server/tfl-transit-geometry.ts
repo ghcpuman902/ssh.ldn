@@ -4,9 +4,11 @@
  * Rebuild: fetch into data/osm-cache, then `pnpm snapshot-transit`.
  */
 import { withTubeLineOffsets } from "@/lib/map/tube-line-offsets";
+import { snapStationsToLines } from "@/lib/map/snap-stations-to-lines";
 import {
   dedupeConsecutiveCoords,
   parseLineStringEntries,
+  stationNameMatchKeys,
   stripStationLabel,
 } from "@/lib/map/tube-line-paths";
 import type {
@@ -236,14 +238,6 @@ const upsertStation = (
   });
 };
 
-const normalizeStationName = (name: string | null | undefined) =>
-  stripStationLabel(name)
-    ?.toLowerCase()
-    .replace(/&/g, "and")
-    .replace(/\bst\b/g, "saint")
-    .replace(/[^a-z0-9]+/g, "")
-    .trim() ?? null;
-
 const getOsmElementCoordinates = (
   element: OverpassElement,
 ): CoordPair | null => {
@@ -277,13 +271,20 @@ out center;`;
   const coordinatesByName = new Map<string, CoordPair>();
 
   for (const element of payload.elements ?? []) {
-    const stationName = normalizeStationName(element.tags?.name);
-    if (!stationName || coordinatesByName.has(stationName)) continue;
-
     const coordinates = getOsmElementCoordinates(element);
     if (!coordinates) continue;
 
-    coordinatesByName.set(stationName, coordinates);
+    const nameKeys = [
+      ...stationNameMatchKeys(element.tags?.name),
+      ...stationNameMatchKeys(element.tags?.["name:en"]),
+      ...stationNameMatchKeys(element.tags?.short_name),
+    ];
+
+    for (const stationName of nameKeys) {
+      if (!coordinatesByName.has(stationName)) {
+        coordinatesByName.set(stationName, coordinates);
+      }
+    }
   }
 
   return coordinatesByName;
@@ -297,12 +298,11 @@ const withOsmStationCoordinates = (
 
   let matchedCount = 0;
   const features = stations.features.map((station) => {
-    const normalizedName = normalizeStationName(
+    const coordinates = stationNameMatchKeys(
       station.properties.name ?? station.properties.label,
-    );
-    const coordinates = normalizedName
-      ? coordinatesByName.get(normalizedName)
-      : null;
+    )
+      .map((key) => coordinatesByName.get(key))
+      .find((value): value is CoordPair => Boolean(value));
 
     if (!coordinates) return station;
 
@@ -613,26 +613,30 @@ const buildTransitGeometry = async (
 
   if (selectedLineFeatures.length > 0) {
     const usesOsmGeometry = selectedLineFeatures.every(isTrackFollowingFeature);
+    const lines: TubeLineFeatureCollection = {
+      type: "FeatureCollection",
+      features: selectedLineFeatures,
+      meta: {
+        source: usesOsmGeometry ? "osm-route-relations" : "tfl-unified-api",
+        filter: usesOsmGeometry
+          ? config.osmFilterLabel
+          : config.tflFilterLabel,
+        featureCount: selectedLineFeatures.length,
+        retrievedAt,
+      },
+    };
 
     return bundleWithLineOffsets({
-      lines: {
-        type: "FeatureCollection",
-        features: selectedLineFeatures,
-        meta: {
-          source: usesOsmGeometry ? "osm-route-relations" : "tfl-unified-api",
-          filter: usesOsmGeometry
-            ? config.osmFilterLabel
-            : config.tflFilterLabel,
-          featureCount: selectedLineFeatures.length,
-          retrievedAt,
-        },
-      },
-      stations,
+      lines,
+      stations: snapStationsToLines(stations, lines),
     });
   }
 
   if (tflLines) {
-    return bundleWithLineOffsets({ lines: tflLines, stations });
+    return bundleWithLineOffsets({
+      lines: tflLines,
+      stations: snapStationsToLines(stations, tflLines),
+    });
   }
 
   return bundleWithLineOffsets({

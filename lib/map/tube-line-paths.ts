@@ -7,8 +7,38 @@ export const stripStationLabel = (name: string | null | undefined) => {
     .replace(/ Underground Station$/i, "")
     .replace(/ Rail Station$/i, "")
     .replace(/ DLR Station$/i, "")
+    .replace(/ Tram Stop$/i, "")
     .replace(/ Station$/i, "")
+    .replace(/\s*\([^)]*\)\s*$/g, "")
     .trim();
+};
+
+/** Keys used to match TfL stop names to OSM station nodes. */
+export const stationNameMatchKeys = (name: string | null | undefined) => {
+  const stripped = stripStationLabel(name);
+  if (!stripped) return [];
+
+  const variants = [
+    stripped,
+    stripped.replace(/\s*&\s*/g, " and "),
+    stripped.split("/")[0]?.trim(),
+    stripped.split(" - ")[0]?.trim(),
+  ].filter((value): value is string => Boolean(value));
+
+  const keys = new Set<string>();
+
+  for (const variant of variants) {
+    const normalized = variant
+      .toLowerCase()
+      .replace(/&/g, "and")
+      .replace(/\bst\b/g, "saint")
+      .replace(/[^a-z0-9]+/g, "")
+      .trim();
+
+    if (normalized) keys.add(normalized);
+  }
+
+  return [...keys];
 };
 
 const isCoordPair = (value: unknown): value is CoordPair =>
