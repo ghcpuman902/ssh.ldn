@@ -98,6 +98,21 @@
   margin-bottom: 6px;
 }
 
+.maplibregl-map
+  .maplibregl-ctrl-bottom-left
+  .maplibregl-ctrl-group:has(.maplibregl-ctrl-help) {
+  margin-bottom: 6px;
+}
+
+.maplibregl-map .maplibregl-ctrl-group button.maplibregl-ctrl-help {
+  color: var(--foreground);
+}
+
+.maplibregl-map .maplibregl-ctrl-group button.maplibregl-ctrl-help svg {
+  display: block;
+  margin: 0 auto;
+}
+
 .maplibregl-map .maplibregl-ctrl-group button:focus:first-child,
 .maplibregl-map .maplibregl-ctrl-group button:focus:last-child,
 .maplibregl-map .maplibregl-ctrl-group button:focus:only-child {
@@ -222,5 +237,216 @@
   .map-data-credits-marquee {
     animation: none;
     transform: none;
+  }
+}
+
+.map-help-demo-time-label::after {
+  content: "weekday day";
+  animation: map-help-time-label 8s steps(1, end) infinite;
+}
+
+.map-help-demo-slot {
+  color: color-mix(in oklch, var(--primary) 35%, transparent);
+  border-color: transparent;
+  background-color: var(--muted);
+}
+
+.map-help-demo-slot-weekday-day {
+  animation: map-help-slot-weekday-day 8s steps(1, end) infinite;
+}
+
+.map-help-demo-slot-weekend-day {
+  animation: map-help-slot-weekend-day 8s steps(1, end) infinite;
+}
+
+.map-help-demo-slot-weekday-night {
+  animation: map-help-slot-weekday-night 8s steps(1, end) infinite;
+}
+
+.map-help-demo-slot-weekend-night {
+  animation: map-help-slot-weekend-night 8s steps(1, end) infinite;
+}
+
+.map-help-demo-layer-ring {
+  opacity: 0.2;
+}
+
+.map-help-demo-layer-0 .map-help-demo-layer-ring {
+  animation: map-help-layer-ring 4.8s 0s ease-in-out infinite;
+}
+
+.map-help-demo-layer-1 .map-help-demo-layer-ring {
+  animation: map-help-layer-ring 4.8s 1.2s ease-in-out infinite;
+}
+
+.map-help-demo-layer-2 .map-help-demo-layer-ring {
+  animation: map-help-layer-ring 4.8s 2.4s ease-in-out infinite;
+}
+
+.map-help-demo-layer-3 .map-help-demo-layer-ring {
+  animation: map-help-layer-ring 4.8s 3.6s ease-in-out infinite;
+}
+
+.map-help-demo-visual-tube {
+  animation: map-help-visual-press 3.2s ease-in-out infinite;
+}
+
+.map-help-demo-visual-park {
+  animation: map-help-visual-press 3.2s 1.6s ease-in-out infinite;
+}
+
+.map-help-demo-sound-crosshair {
+  top: 42%;
+  left: 38%;
+  animation: map-help-sound-pan 4s ease-in-out infinite;
+}
+
+.map-help-demo-sound-dot {
+  top: 36%;
+  left: 48%;
+}
+
+.map-help-demo-sound-dot-b {
+  top: 52%;
+  left: 62%;
+}
+
+.map-help-demo-sound-bars span {
+  animation: map-help-sound-bar 1s ease-in-out infinite;
+}
+
+.map-help-demo-sound-bars span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.map-help-demo-sound-bars span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes map-help-time-label {
+  0%,
+  24.9% {
+    content: "weekday day";
+  }
+  25%,
+  49.9% {
+    content: "weekday night";
+  }
+  50%,
+  74.9% {
+    content: "weekend day";
+  }
+  75%,
+  100% {
+    content: "weekend night";
+  }
+}
+
+@keyframes map-help-slot-weekday-day {
+  0%,
+  24.9% {
+    color: var(--primary);
+    border-color: var(--primary);
+    background-color: var(--background);
+  }
+}
+
+@keyframes map-help-slot-weekday-night {
+  25%,
+  49.9% {
+    color: var(--foreground);
+    border-color: #52525b;
+    background-color: var(--background);
+  }
+}
+
+@keyframes map-help-slot-weekend-day {
+  50%,
+  74.9% {
+    color: #8b5cf6;
+    border-color: #8b5cf6;
+    background-color: var(--background);
+  }
+}
+
+@keyframes map-help-slot-weekend-night {
+  75%,
+  100% {
+    color: #6d28d9;
+    border-color: #6d28d9;
+    background-color: var(--background);
+  }
+}
+
+@keyframes map-help-layer-ring {
+  0%,
+  15% {
+    opacity: 0.2;
+    transform: scale(0.92);
+  }
+  30%,
+  55% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  70%,
+  100% {
+    opacity: 0.2;
+    transform: scale(0.92);
+  }
+}
+
+@keyframes map-help-visual-press {
+  0%,
+  20% {
+    transform: scale(1);
+    filter: grayscale(0.35);
+  }
+  35%,
+  60% {
+    transform: scale(0.92);
+    filter: grayscale(0);
+  }
+  75%,
+  100% {
+    transform: scale(1);
+    filter: grayscale(0.35);
+  }
+}
+
+@keyframes map-help-sound-pan {
+  0% {
+    top: 38%;
+    left: 32%;
+  }
+  50% {
+    top: 58%;
+    left: 64%;
+  }
+  100% {
+    top: 38%;
+    left: 32%;
+  }
+}
+
+@keyframes map-help-sound-bar {
+  0%,
+  100% {
+    height: 25%;
+  }
+  50% {
+    height: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .map-help-demo-time-label::after,
+  .map-help-demo-slot,
+  .map-help-demo-layer-ring,
+  .map-help-demo-visual-tube,
+  .map-help-demo-visual-park,
+  .map-help-demo-sound-crosshair,
+  .map-help-demo-sound-bars span {
+    animation: none;
   }
 }

@@ -11,6 +11,7 @@ import type {
 } from "@/lib/map/geojson-types"
 import { withTransitGeometryCache } from "@/lib/map/transit-geometry-cache"
 import type { VisualLayerVisibility } from "@/lib/map/visual-layers"
+import { snapStationsToLines } from "@/lib/map/snap-stations-to-lines"
 import { isStationSketchLines } from "@/lib/map/transit-sketch"
 import {
   useStaticGeoJson,
@@ -90,6 +91,11 @@ const pickTransitLayer = (
     stations: full?.stations ?? preview?.stations ?? null,
   }
 }
+
+const stationsOnOsmLines = (
+  stations: TubeStationFeatureCollection | null,
+  lines: TubeLineFeatureCollection | null
+) => (lines && stations ? snapStationsToLines(stations, lines) : stations)
 
 type UseVisualLayerDataOptions = {
   backgroundPrefetch: boolean
@@ -241,15 +247,21 @@ export const useVisualLayerData = (
     () => ({
       railLines,
       tubeLines: tube.lines,
-      tubeStations: tube.stations,
+      tubeStations: stationsOnOsmLines(tube.stations, tube.lines),
       overgroundLines: overground.lines,
-      overgroundStations: overground.stations,
+      overgroundStations: stationsOnOsmLines(
+        overground.stations,
+        overground.lines
+      ),
       elizabethLines: elizabeth.lines,
-      elizabethStations: elizabeth.stations,
+      elizabethStations: stationsOnOsmLines(
+        elizabeth.stations,
+        elizabeth.lines
+      ),
       dlrLines: dlr.lines,
-      dlrStations: dlr.stations,
+      dlrStations: stationsOnOsmLines(dlr.stations, dlr.lines),
       tramLines: tram.lines,
-      tramStations: tram.stations,
+      tramStations: stationsOnOsmLines(tram.stations, tram.lines),
       greenSpaces,
     }),
     [

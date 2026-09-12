@@ -40,6 +40,7 @@ import {
   type MapSearchBarHandle,
   type MapSearchSelection,
 } from "@/components/map/map-search-bar"
+import { MapHelpControl } from "@/components/map/map-help-control"
 import { MapLayerHelpSheet } from "@/components/map/map-layer-help-sheet"
 import { NoiseLayerControls } from "@/components/map/noise-layer-controls"
 import { VisualMapLayers } from "@/components/map/visual-map-layers"
@@ -939,11 +940,16 @@ export const MapShell = () => {
     [isMobile]
   )
 
+  const handleOpenHelp = useCallback(() => {
+    setHelpOpen(true)
+  }, [])
+
   const handleAudioEnabledChange = useCallback(
     (nextEnabled: boolean) => {
-      noiseAudioEngine.unlockFromUserGesture()
       if (nextEnabled) {
-        void noiseAudioEngine.enable()
+        noiseAudioEngine.unlockAndEnableFromUserGesture()
+      } else {
+        noiseAudioEngine.unlockFromUserGesture()
       }
       setAudioEnabled(nextEnabled)
 
@@ -968,26 +974,56 @@ export const MapShell = () => {
     [isMobile, showMobileAudioHelp]
   )
 
+  const handleMapAudioUnlock = useCallback(() => {
+    const mobileViewport =
+      isMobile ||
+      (typeof window !== "undefined" && window.innerWidth < 768)
+
+    if (mobileViewport) {
+      noiseAudioEngine.unlockAndEnableFromUserGesture()
+      if (!audioEnabled) {
+        setAudioEnabled(true)
+      }
+      return
+    }
+
+    noiseAudioEngine.unlockFromUserGesture()
+    if (audioEnabled) {
+      void noiseAudioEngine.enable()
+    }
+  }, [audioEnabled, isMobile])
+
   useEffect(() => {
     const map = mapRef.current?.getMap()
     if (!map || !mapReady) return
 
+    const root = map.getContainer()
     const handleUserGesture = () => {
-      noiseAudioEngine.unlockFromUserGesture()
-      if (audioEnabled) {
-        void noiseAudioEngine.enable()
-      }
+      handleMapAudioUnlock()
     }
 
-    const canvas = map.getCanvas()
-    canvas.addEventListener("pointerdown", handleUserGesture, { passive: true })
-    canvas.addEventListener("touchstart", handleUserGesture, { passive: true })
+    root.addEventListener("pointerdown", handleUserGesture, {
+      capture: true,
+      passive: true,
+    })
+    root.addEventListener("touchstart", handleUserGesture, {
+      capture: true,
+      passive: true,
+    })
+    map.on("mousedown", handleUserGesture)
+    map.on("touchstart", handleUserGesture)
+    map.on("dragstart", handleUserGesture)
+    map.on("zoomstart", handleUserGesture)
 
     return () => {
-      canvas.removeEventListener("pointerdown", handleUserGesture)
-      canvas.removeEventListener("touchstart", handleUserGesture)
+      root.removeEventListener("pointerdown", handleUserGesture, true)
+      root.removeEventListener("touchstart", handleUserGesture, true)
+      map.off("mousedown", handleUserGesture)
+      map.off("touchstart", handleUserGesture)
+      map.off("dragstart", handleUserGesture)
+      map.off("zoomstart", handleUserGesture)
     }
-  }, [audioEnabled, mapReady])
+  }, [handleMapAudioUnlock, mapReady])
 
   const analyseOpen = analyseState.status !== "idle"
   const noisyPois = useMemo(
@@ -1152,7 +1188,11 @@ export const MapShell = () => {
                 updateClip()
                 mapRef.current?.resize()
                 applyZoomControlStyles()
+                noiseAudioEngine.prefetch()
               }}
+              onMouseDown={handleMapAudioUnlock}
+              onTouchStart={handleMapAudioUnlock}
+              onMoveStart={handleMapAudioUnlock}
             >
               <NoiseMapLayers
                 visibility={layerVisibility}
@@ -1225,6 +1265,13 @@ export const MapShell = () => {
                   </Marker>
                 )
               })}
+              {isMobile ? (
+                <MapHelpControl
+                  mapRef={mapRef}
+                  enabled={mapReady}
+                  onOpen={handleOpenHelp}
+                />
+              ) : null}
               <NavigationControl
                 position="bottom-left"
                 showCompass={false}
@@ -1264,31 +1311,6 @@ export const MapShell = () => {
                   onTimeSlotChange={setTimeSlot}
                   onAudioEnabledChange={handleAudioEnabledChange}
                 />
-              </div>
-
-              <div className="pointer-events-none absolute bottom-[9rem] left-2.5 z-20 md:hidden">
-                <button
-                  type="button"
-                  aria-label="About map controls"
-                  aria-haspopup="dialog"
-                  aria-expanded={helpOpen}
-                  onClick={() => setHelpOpen(true)}
-                  className="map-float-chrome pointer-events-auto flex size-[29px] items-center justify-center rounded-full text-foreground"
-                >
-                  <svg
-                    aria-hidden="true"
-                    viewBox="0 0 24 24"
-                    className="size-3.5"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-                    <path d="M12 17h.01" />
-                  </svg>
-                </button>
               </div>
             </div>
           </div>

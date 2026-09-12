@@ -43,6 +43,7 @@ class NoiseAudioEngine {
   private masterLevel = 0
   private started = false
   private primed = false
+  private keepAlive: OscillatorNode | null = null
 
   /**
    * Safari / iOS only allow Web Audio after a user gesture. Call this from
@@ -52,10 +53,21 @@ class NoiseAudioEngine {
   unlockFromUserGesture() {
     const context = this.ensureContext()
     this.primeUnlock(context)
+    this.startKeepAlive(context)
 
     if (context.state === "suspended") {
       void context.resume()
     }
+  }
+
+  /** Map pan / pinch / tap — unlock and start loops in the same gesture. */
+  unlockAndEnableFromUserGesture() {
+    this.unlockFromUserGesture()
+    void this.enable()
+  }
+
+  prefetch() {
+    void this.ensureBuffers().catch(() => undefined)
   }
 
   async enable() {
@@ -66,6 +78,7 @@ class NoiseAudioEngine {
       await context.resume()
     }
 
+    this.startKeepAlive(context)
     await this.ensureBuffers()
     this.startSources()
     this.applyAllGains()
@@ -133,6 +146,20 @@ class NoiseAudioEngine {
     source.connect(context.destination)
     source.start(0)
     this.primed = true
+  }
+
+  /** Inaudible tone so iOS does not suspend the context after the silent ping. */
+  private startKeepAlive(context: AudioContext) {
+    if (this.keepAlive) return
+
+    const oscillator = context.createOscillator()
+    const gain = context.createGain()
+    gain.gain.value = 0.00008
+    oscillator.frequency.value = 20
+    oscillator.connect(gain)
+    gain.connect(context.destination)
+    oscillator.start()
+    this.keepAlive = oscillator
   }
 
   private async ensureBuffers() {

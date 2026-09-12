@@ -7,6 +7,7 @@ export {
   MAP_TILE_STYLES,
   NOISE_OVERLAY_SLOT_ID,
   RAIL_UNDERLAY_SLOT_ID,
+  STATION_OVERLAY_SLOT_ID,
   TRANSIT_OVERLAY_SLOT_ID,
   type MapTheme,
 } from "@/lib/map/basemap-style"
