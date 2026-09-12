@@ -164,15 +164,9 @@ export const useCursorNoise = ({
   )
 
   useEffect(() => {
-    if (!audioEnabled) {
-      void noiseAudioEngine.disable()
-      return
-    }
+    if (audioEnabled) return
 
-    void noiseAudioEngine.enable().catch(() => {
-      const emptyLevels = createEmptyNoiseAudioChannelLevels()
-      noiseAudioEngine.setIntensities(emptyLevels)
-    })
+    void noiseAudioEngine.disable()
   }, [audioEnabled])
 
   useEffect(() => {

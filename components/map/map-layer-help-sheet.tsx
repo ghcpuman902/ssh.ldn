@@ -28,7 +28,7 @@ const HelpSection = ({
 }: {
   title: string
   caption: string
-  children: ReactNode
+  children?: ReactNode
 }) => (
   <section className="space-y-2">
     <div className="space-y-0.5">
@@ -50,7 +50,7 @@ export const MapLayerHelpSheet = ({
         <DrawerHeader className="text-left">
           <DrawerTitle>Map controls</DrawerTitle>
           <DrawerDescription>
-            Watch the cluster, then use the matching buttons on the map.
+            Time, layers, and a sound preview.
           </DrawerDescription>
         </DrawerHeader>
         <div className="flex flex-col gap-5 overflow-y-auto px-4 pb-8">
@@ -68,10 +68,7 @@ export const MapLayerHelpSheet = ({
             <MapLayerHelpDemos.Layers />
           </HelpSection>
 
-          <HelpSection
-            title="Visual layers"
-            caption="Tube tracks and parks. Not a reading."
-          >
+          <HelpSection title="Visual layers" caption="Tube lines and parks.">
             <MapLayerHelpDemos.Visual />
           </HelpSection>
 
@@ -79,12 +76,10 @@ export const MapLayerHelpSheet = ({
             title="Sound preview"
             caption={
               audioSampleMode === "center"
-                ? "Pan the map. Sound follows the centre crosshair."
-                : "Move the cursor. Sound follows it."
+                ? "Pan the map to hear the mix at the centre."
+                : "Move the cursor to hear the mix under it."
             }
-          >
-            <MapLayerHelpDemos.Sound />
-          </HelpSection>
+          />
         </div>
       </DrawerContent>
     </Drawer>

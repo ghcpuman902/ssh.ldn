@@ -28,6 +28,7 @@ import { useIsMobile } from "@/hooks/use-mobile"
 import { useShiftDragRotate } from "@/hooks/use-shift-drag-rotate"
 import { useViewportNightlifeGeoJson } from "@/hooks/use-viewport-nightlife-geojson"
 import { useNoiseReveal } from "@/hooks/use-noise-reveal"
+import { useSafariAudioUnlock } from "@/hooks/use-safari-audio-unlock"
 import type { AnalyseState } from "@/components/map/map-analyse-panel"
 // Voice mode is temporarily unwired so ElevenLabs stays off the map load path.
 // import { VoiceModeButton } from "@/components/map/voice-mode-button"
@@ -947,8 +948,6 @@ export const MapShell = () => {
   const handleAudioEnabledChange = useCallback(
     (nextEnabled: boolean) => {
       if (nextEnabled) {
-        noiseAudioEngine.unlockAndEnableFromUserGesture()
-      } else {
         noiseAudioEngine.unlockFromUserGesture()
       }
       setAudioEnabled(nextEnabled)
@@ -979,51 +978,15 @@ export const MapShell = () => {
       isMobile ||
       (typeof window !== "undefined" && window.innerWidth < 768)
 
-    if (mobileViewport) {
-      noiseAudioEngine.unlockAndEnableFromUserGesture()
-      if (!audioEnabled) {
-        setAudioEnabled(true)
-      }
-      return
-    }
+    if (!mobileViewport && !audioEnabled) return
 
     noiseAudioEngine.unlockFromUserGesture()
-    if (audioEnabled) {
-      void noiseAudioEngine.enable()
+    if (mobileViewport && !audioEnabled) {
+      setAudioEnabled(true)
     }
   }, [audioEnabled, isMobile])
 
-  useEffect(() => {
-    const map = mapRef.current?.getMap()
-    if (!map || !mapReady) return
-
-    const root = map.getContainer()
-    const handleUserGesture = () => {
-      handleMapAudioUnlock()
-    }
-
-    root.addEventListener("pointerdown", handleUserGesture, {
-      capture: true,
-      passive: true,
-    })
-    root.addEventListener("touchstart", handleUserGesture, {
-      capture: true,
-      passive: true,
-    })
-    map.on("mousedown", handleUserGesture)
-    map.on("touchstart", handleUserGesture)
-    map.on("dragstart", handleUserGesture)
-    map.on("zoomstart", handleUserGesture)
-
-    return () => {
-      root.removeEventListener("pointerdown", handleUserGesture, true)
-      root.removeEventListener("touchstart", handleUserGesture, true)
-      map.off("mousedown", handleUserGesture)
-      map.off("touchstart", handleUserGesture)
-      map.off("dragstart", handleUserGesture)
-      map.off("zoomstart", handleUserGesture)
-    }
-  }, [handleMapAudioUnlock, mapReady])
+  useSafariAudioUnlock(mounted && mapReady, handleMapAudioUnlock)
 
   const analyseOpen = analyseState.status !== "idle"
   const noisyPois = useMemo(
@@ -1190,9 +1153,6 @@ export const MapShell = () => {
                 applyZoomControlStyles()
                 noiseAudioEngine.prefetch()
               }}
-              onMouseDown={handleMapAudioUnlock}
-              onTouchStart={handleMapAudioUnlock}
-              onMoveStart={handleMapAudioUnlock}
             >
               <NoiseMapLayers
                 visibility={layerVisibility}

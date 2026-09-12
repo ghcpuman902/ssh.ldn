@@ -13,6 +13,23 @@ const GAIN_RAMP_SECONDS = 0.08
 /** Below this channel gain the loop is inaudible — treat as off to avoid ghost bleed. */
 const CHANNEL_GAIN_SILENCE_THRESHOLD = 0.012
 
+/**
+ * Safari only treats these as user activation for Web Audio / autoplay.
+ * Synthetic map events (movestart, dragstart) do not count.
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Best_practices#autoplay_policy
+ */
+export const SAFARI_AUDIO_UNLOCK_EVENTS = [
+  "touchstart",
+  "touchend",
+  "click",
+  "mousedown",
+  "keydown",
+] as const
+
+/** One-sample WAV so HTMLMediaElement.play() can unlock iOS media in the same gesture. */
+const SILENT_WAV =
+  "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA"
+
 const clamp01 = (value: number) => Math.min(1, Math.max(0, value))
 
 type AudioNodes = {
@@ -38,57 +55,50 @@ class NoiseAudioEngine {
   private masterGain: GainNode | null = null
   private nodes = new Map<NoiseAudioChannelId, AudioNodes>()
   private buffers = new Map<NoiseAudioChannelId, AudioBuffer>()
-  private loading: Promise<void> | null = null
+  private rawFiles = new Map<NoiseAudioChannelId, ArrayBuffer>()
+  private loadingFiles: Promise<void> | null = null
+  private loadingDecode: Promise<void> | null = null
   private levels: NoiseAudioChannelLevels = createEmptyNoiseAudioChannelLevels()
   private masterLevel = 0
   private started = false
   private primed = false
   private keepAlive: OscillatorNode | null = null
+  private silentElement: HTMLAudioElement | null = null
+  private enabled = false
 
   /**
-   * Safari / iOS only allow Web Audio after a user gesture. Call this from
-   * pointer/touch/click handlers (map pan, layer toggles) so resume happens
-   * in the same turn as the gesture — not after an await.
+   * Safari / iOS: create or resume the context in this turn — not after an
+   * await, React state update, or MapLibre `movestart`. Also play a silent
+   * HTML audio element in the same gesture so the media session unlocks.
    */
   unlockFromUserGesture() {
     const context = this.ensureContext()
+    this.enabled = true
+
+    if (context.state === "running" && this.started) return
+
+    this.playHtmlUnlock()
     this.primeUnlock(context)
     this.startKeepAlive(context)
 
-    if (context.state === "suspended") {
+    if (this.needsResume(context)) {
       void context.resume()
     }
-  }
 
-  /** Map pan / pinch / tap — unlock and start loops in the same gesture. */
-  unlockAndEnableFromUserGesture() {
-    this.unlockFromUserGesture()
-    void this.enable()
+    void this.finishEnable()
   }
 
   prefetch() {
-    void this.ensureBuffers().catch(() => undefined)
+    void this.ensureFiles().catch(() => undefined)
   }
 
   async enable() {
-    const context = this.ensureContext()
-
-    // Resume before any await so a gesture that called enable() still counts.
-    if (context.state === "suspended") {
-      await context.resume()
-    }
-
-    this.startKeepAlive(context)
-    await this.ensureBuffers()
-    this.startSources()
-    this.applyAllGains()
-
-    if (context.state === "suspended") {
-      await context.resume()
-    }
+    this.enabled = true
+    this.unlockFromUserGesture()
   }
 
   async disable() {
+    this.enabled = false
     if (!this.context) return
 
     this.rampGain(this.masterGain, 0)
@@ -96,6 +106,10 @@ class NoiseAudioEngine {
     window.setTimeout(() => {
       void this.context?.suspend()
     }, GAIN_RAMP_SECONDS * 1000)
+  }
+
+  isRunning() {
+    return this.context?.state === "running"
   }
 
   setIntensities(nextLevels: Partial<NoiseAudioChannelLevels>) {
@@ -123,6 +137,26 @@ class NoiseAudioEngine {
     return this.levels
   }
 
+  private async finishEnable() {
+    const context = this.ensureContext()
+
+    await this.ensureFiles()
+    await this.ensureDecoded(context)
+    this.startSources()
+    this.applyAllGains()
+
+    if (this.needsResume(context)) {
+      await context.resume()
+    }
+  }
+
+  private needsResume(context: AudioContext) {
+    return (
+      context.state === "suspended" ||
+      (context.state as string) === "interrupted"
+    )
+  }
+
   private ensureContext() {
     if (this.context && this.masterGain) return this.context
 
@@ -137,6 +171,24 @@ class NoiseAudioEngine {
     return context
   }
 
+  private playHtmlUnlock() {
+    if (!this.silentElement) {
+      const element = new Audio(SILENT_WAV)
+      element.preload = "auto"
+      element.loop = false
+      element.volume = 0.05
+      element.setAttribute("playsinline", "")
+      element.setAttribute("webkit-playsinline", "")
+      this.silentElement = element
+    }
+
+    this.silentElement.currentTime = 0
+    const playback = this.silentElement.play()
+    if (playback) {
+      void playback.catch(() => undefined)
+    }
+  }
+
   private primeUnlock(context: AudioContext) {
     if (this.primed) return
 
@@ -148,7 +200,6 @@ class NoiseAudioEngine {
     this.primed = true
   }
 
-  /** Inaudible tone so iOS does not suspend the context after the silent ping. */
   private startKeepAlive(context: AudioContext) {
     if (this.keepAlive) return
 
@@ -162,32 +213,53 @@ class NoiseAudioEngine {
     this.keepAlive = oscillator
   }
 
-  private async ensureBuffers() {
-    if (this.buffers.size === NOISE_AUDIO_CHANNEL_IDS.length) return
-    if (this.loading) return this.loading
+  private async ensureFiles() {
+    if (this.rawFiles.size === NOISE_AUDIO_CHANNEL_IDS.length) return
+    if (this.loadingFiles) return this.loadingFiles
 
-    const context = this.ensureContext()
-
-    this.loading = Promise.all(
+    this.loadingFiles = Promise.all(
       NOISE_AUDIO_CHANNEL_IDS.map(async (id) => {
-        if (this.buffers.has(id)) return
+        if (this.rawFiles.has(id)) return
 
         const response = await fetch(NOISE_AUDIO_CHANNELS[id].file)
         if (!response.ok) {
-          throw new Error(`Failed to load noise audio: ${NOISE_AUDIO_CHANNELS[id].file}`)
+          throw new Error(
+            `Failed to load noise audio: ${NOISE_AUDIO_CHANNELS[id].file}`
+          )
         }
 
-        const audioData = await response.arrayBuffer()
-        const buffer = await context.decodeAudioData(audioData)
-        this.buffers.set(id, buffer)
+        this.rawFiles.set(id, await response.arrayBuffer())
       })
     ).then(() => undefined)
 
-    return this.loading
+    return this.loadingFiles
+  }
+
+  private async ensureDecoded(context: AudioContext) {
+    if (this.buffers.size === NOISE_AUDIO_CHANNEL_IDS.length) return
+    if (this.loadingDecode) return this.loadingDecode
+
+    this.loadingDecode = this.ensureFiles().then(() =>
+      Promise.all(
+        NOISE_AUDIO_CHANNEL_IDS.map(async (id) => {
+          if (this.buffers.has(id)) return
+
+          const raw = this.rawFiles.get(id)
+          if (!raw) return
+
+          const buffer = await context.decodeAudioData(raw.slice(0))
+          this.buffers.set(id, buffer)
+        })
+      ).then(() => undefined)
+    )
+
+    return this.loadingDecode
   }
 
   private startSources() {
-    if (this.started || !this.context || !this.masterGain) return
+    if (this.started || !this.context || !this.masterGain || !this.enabled) {
+      return
+    }
 
     for (const id of NOISE_AUDIO_CHANNEL_IDS) {
       const buffer = this.buffers.get(id)
@@ -206,7 +278,7 @@ class NoiseAudioEngine {
       this.nodes.set(id, { source, gain })
     }
 
-    this.started = true
+    this.started = this.nodes.size === NOISE_AUDIO_CHANNEL_IDS.length
   }
 
   private applyAllGains() {

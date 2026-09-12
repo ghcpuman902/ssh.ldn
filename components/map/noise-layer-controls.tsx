@@ -315,9 +315,6 @@ export const NoiseLayerControls = ({
   const isMobile = useIsMobile()
   const unlockNoiseAudio = () => {
     noiseAudioEngine.unlockFromUserGesture()
-    if (audioEnabled) {
-      void noiseAudioEngine.enable()
-    }
   }
 
   const handleToggle = (key: LayerKey, checked: boolean) => {
@@ -345,9 +342,8 @@ export const NoiseLayerControls = ({
   }
 
   const handleAudioToggle = () => {
-    noiseAudioEngine.unlockFromUserGesture()
     if (!audioEnabled) {
-      void noiseAudioEngine.enable()
+      noiseAudioEngine.unlockFromUserGesture()
     }
     onAudioEnabledChange(!audioEnabled)
   }
