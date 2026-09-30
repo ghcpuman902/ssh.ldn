@@ -51,10 +51,9 @@ import { buildGeocodeResultFromCoordinates } from "@/lib/map/build-geocode-resul
 import {
   DEFAULT_NOISE_TIME_SLOT,
   decodeNoiseTimeSlot,
-  encodeNoiseTimeSlot,
   getCurrentNoiseTimeSlot,
-  type NoiseTimeSlot,
 } from "@/lib/map/noise-time"
+import { buildShareQuery } from "@/lib/map/share-card"
 // import { locationContextFromAnalyse } from "@/lib/voice/location-context"
 // import { isVoiceModeEnabledClient } from "@/lib/voice/voice-mode"
 import { estimateClientNoiseScore } from "@/lib/map/client-noise-score"
@@ -155,25 +154,6 @@ const parseShareCoordinates = (
   }
 
   return { latitude, longitude }
-}
-
-const buildShareQuery = ({
-  address,
-  latitude,
-  longitude,
-  timeSlot,
-}: {
-  address: string
-  latitude: number
-  longitude: number
-  timeSlot: NoiseTimeSlot
-}) => {
-  const params = new URLSearchParams()
-  params.set("address", address)
-  params.set("lat", latitude.toFixed(6))
-  params.set("lng", longitude.toFixed(6))
-  params.set("timeSlot", encodeNoiseTimeSlot(timeSlot))
-  return params.toString()
 }
 
 const getShareSearchParams = () =>
@@ -615,7 +595,14 @@ export const MapShell = () => {
   }, [])
 
   const urlAddress =
-    analyseState.status === "analysing" ? analyseState.address : null
+    analyseState.status === "analysing" &&
+    analyseState.geocode.status === "done"
+      ? analyseState.geocode.data.normalizedAddress || analyseState.address
+      : null
+  const urlScore =
+    analyseState.status === "analysing" && analyseState.score.status === "done"
+      ? Math.round(analyseState.score.data.noiseScore)
+      : undefined
   const urlLatitude =
     analyseState.status === "analysing" &&
     analyseState.geocode.status === "done"
@@ -713,6 +700,7 @@ export const MapShell = () => {
             latitude: urlLatitude,
             longitude: urlLongitude,
             timeSlot,
+            score: urlScore,
           })
         : ""
 
@@ -731,6 +719,7 @@ export const MapShell = () => {
     urlAddress,
     urlLatitude,
     urlLongitude,
+    urlScore,
   ])
 
   const handleNoisyPoiFocus = useCallback((poi: NearbyNoisyPoiSummary) => {
@@ -1334,6 +1323,7 @@ export const MapShell = () => {
           <MapAnalysePanel
             state={analyseState}
             onClose={handleCloseAnalyse}
+            timeSlot={timeSlot}
             focusedNoisyPoiId={focusedNoisyPoiId}
             onNoisyPoiHover={setHoveredNoisyPoiId}
             onNoisyPoiFocus={handleNoisyPoiFocus}
@@ -1354,6 +1344,7 @@ export const MapShell = () => {
           open={analyseOpen}
           state={analyseState}
           onClose={handleCloseAnalyse}
+          timeSlot={timeSlot}
           searchBarProps={{
             ...searchBarProps,
             onMapCenterHintChange: setMapCenterHintVisible,

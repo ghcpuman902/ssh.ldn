@@ -527,7 +527,7 @@ export const MapSearchBar = forwardRef<MapSearchBarHandle, MapSearchBarProps>(
               }}
               onKeyDown={handleKeyDown}
               className={cn(
-                "h-11 w-full touch-manipulation bg-transparent pl-4 text-sm text-foreground outline-none placeholder:text-muted-foreground",
+                "h-11 w-full touch-manipulation bg-transparent pl-4 text-base text-foreground outline-none placeholder:text-muted-foreground",
                 expanded && query.trim() && !isDocked && "pr-10"
               )}
             />

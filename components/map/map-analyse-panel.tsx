@@ -15,6 +15,7 @@ import {
 
 import { BoroughLogo } from "@/components/map/borough-logo"
 import { SelectedLocationPin } from "@/components/map/selected-location-pin"
+import { ShareAnalyseButton } from "@/components/map/share-analyse-button"
 import { MapTooltipContent } from "@/components/map/noise-time-grid"
 import {
   getPlanningApplicationBadges,
@@ -31,6 +32,7 @@ import {
   type OpeningCoverage,
 } from "@/lib/map/google-nearby-noisy-poi"
 import { hasGooglePlacesClientKey } from "@/lib/map/google-places"
+import { describeNoiseScore } from "@/lib/map/share-card"
 import {
   describeContributor,
   type LocalAmenityHint,
@@ -42,6 +44,7 @@ import {
   WEEK_SEGMENTS,
   formatNoiseAnalysisSlot,
   type NoiseAnalysisPart,
+  type NoiseTimeSlot,
   type NoiseWeekSegment,
 } from "@/lib/map/noise-time"
 import {
@@ -110,6 +113,7 @@ export type AnalyseState =
 type MapAnalysePanelProps = {
   state: AnalyseState
   onClose: () => void
+  timeSlot: NoiseTimeSlot
   className?: string
   focusedNoisyPoiId?: string | null
   onNoisyPoiHover?: (placeId: string | null) => void
@@ -350,19 +354,6 @@ const NoiseScoreCard = ({
       })}
     </div>
   )
-}
-
-const describeNoiseScore = (score: number) => {
-  if (score >= 75) {
-    return "ssh has left the chat"
-  }
-  if (score >= 55) {
-    return "ssh is a suggestion"
-  }
-  if (score >= 35) {
-    return "ssh-able, most days"
-  }
-  return "a rare London hush"
 }
 
 const describeSshTargets = (
@@ -914,6 +905,7 @@ export const AnalyseHeader = ({
 
 type AnalyseBodyProps = {
   state: AnalysingState
+  timeSlot: NoiseTimeSlot
   primaryBorough?: PrimaryBorough
   focusedNoisyPoiId?: string | null
   onNoisyPoiHover?: (placeId: string | null) => void
@@ -924,6 +916,7 @@ type AnalyseBodyProps = {
 
 export const AnalyseBody = ({
   state,
+  timeSlot,
   primaryBorough = null,
   focusedNoisyPoiId = null,
   onNoisyPoiHover,
@@ -1067,6 +1060,24 @@ export const AnalyseBody = ({
             </p>
           ) : null}
 
+          {state.geocode.status === "done" ? (
+            <ShareAnalyseButton
+              address={state.geocode.data.normalizedAddress}
+              latitude={state.geocode.data.latitude}
+              longitude={state.geocode.data.longitude}
+              timeSlot={timeSlot}
+              score={
+                state.score.status === "done"
+                  ? Math.round(state.score.data.noiseScore)
+                  : undefined
+              }
+              scorePending={
+                state.score.status === "queued" ||
+                state.score.status === "running"
+              }
+            />
+          ) : null}
+
           {state.planning.status === "queued" ||
           state.planning.status === "running" ? (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -1123,6 +1134,7 @@ export const AnalyseBody = ({
 export const MapAnalysePanel = ({
   state,
   onClose,
+  timeSlot,
   className,
   focusedNoisyPoiId = null,
   onNoisyPoiHover,
@@ -1151,6 +1163,7 @@ export const MapAnalysePanel = ({
         />
         <AnalyseBody
           state={state}
+          timeSlot={timeSlot}
           primaryBorough={primaryBorough}
           focusedNoisyPoiId={focusedNoisyPoiId}
           onNoisyPoiHover={onNoisyPoiHover}

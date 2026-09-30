@@ -22,6 +22,7 @@ import {
   type MapSearchBarProps,
 } from "@/components/map/map-search-bar"
 import type { NearbyNoisyPoiSummary } from "@/lib/map/google-nearby-noisy-poi"
+import type { NoiseTimeSlot } from "@/lib/map/noise-time"
 import {
   clampAnalyseSheetHeight,
   getAnalyseSheetSnapHeights,
@@ -36,6 +37,7 @@ type MapAnalyseSheetProps = {
   open: boolean
   state: AnalyseState
   onClose: () => void
+  timeSlot: NoiseTimeSlot
   searchBarProps: Omit<MapSearchBarProps, "variant" | "instanceId">
   searchBarRef?: Ref<MapSearchBarHandle>
   focusedNoisyPoiId?: string | null
@@ -83,6 +85,7 @@ export const MapAnalyseSheet = ({
   open,
   state,
   onClose,
+  timeSlot,
   searchBarProps,
   searchBarRef,
   focusedNoisyPoiId = null,
@@ -377,6 +380,7 @@ export const MapAnalyseSheet = ({
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             <AnalyseBody
               state={state}
+              timeSlot={timeSlot}
               primaryBorough={primaryBorough}
               focusedNoisyPoiId={focusedNoisyPoiId}
               onNoisyPoiHover={onNoisyPoiHover}
