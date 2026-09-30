@@ -1,4 +1,6 @@
+import { Suspense } from "react"
 import type { Metadata } from "next"
+import { connection } from "next/server"
 import { preconnect, prefetchDNS, preload } from "react-dom"
 
 import { MapPage } from "@/components/map/map-page"
@@ -70,6 +72,11 @@ export const generateMetadata = async ({
   }
 }
 
+const Connection = async () => {
+  await connection()
+  return null
+}
+
 export default function Page() {
   prefetchDNS("https://tiles.openfreemap.org")
   preconnect("https://tiles.openfreemap.org")
@@ -81,5 +88,12 @@ export default function Page() {
     }
   )
 
-  return <MapPage />
+  return (
+    <>
+      <MapPage />
+      <Suspense>
+        <Connection />
+      </Suspense>
+    </>
+  )
 }

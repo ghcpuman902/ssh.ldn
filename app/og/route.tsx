@@ -1,7 +1,5 @@
 import { type NextRequest } from "next/server"
 
-export const runtime = "nodejs"
-
 import { createShareCardImage } from "@/lib/map/share-card-image"
 import { parseShareCardSearchParams } from "@/lib/map/share-card"
 
