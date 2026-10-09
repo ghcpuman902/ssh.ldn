@@ -1,10 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Info, Volume2, VolumeX } from "lucide-react"
 
 import {
-  NoiseTimeGrid,
+  NoiseTimePicker,
   OptionalMapTooltip,
 } from "@/components/map/noise-time-grid"
 import { useIsMobile } from "@/hooks/use-mobile"
@@ -284,6 +284,111 @@ const GreenSpacesToggle = ({
   )
 }
 
+const LAYER_TOGGLE_HINT_KEY = "ssh.ldn.layer-toggle-hint-seen"
+/** Long enough to read once, short enough to be gone before it nags. */
+const LAYER_TOGGLE_HINT_MS = 5000
+const LAYER_CAPTION_MS = 1600
+const LAYER_TOGGLE_HINT_TEXT = "Tap a layer to switch it on or off"
+
+const readLayerHintSeen = () => {
+  try {
+    return window.localStorage.getItem(LAYER_TOGGLE_HINT_KEY) === "1"
+  } catch {
+    return true
+  }
+}
+
+/**
+ * Round emoji buttons do not read as switches on their own. Until the first
+ * toggle, a hint with a tail points at them for a few seconds; after each
+ * toggle a caption names the layer and its new state ("Road noise off"),
+ * which also goes to screen readers.
+ */
+const useLayerToggleCaption = () => {
+  const [caption, setCaption] = useState<{ text: string; id: number } | null>(
+    null
+  )
+  const [captionVisible, setCaptionVisible] = useState(false)
+  const [hintVisible, setHintVisible] = useState(() => !readLayerHintSeen())
+
+  useEffect(() => {
+    if (!hintVisible) return
+    const timer = window.setTimeout(
+      () => setHintVisible(false),
+      LAYER_TOGGLE_HINT_MS
+    )
+    return () => window.clearTimeout(timer)
+  }, [hintVisible])
+
+  useEffect(() => {
+    if (!caption) return
+    const timer = window.setTimeout(
+      () => setCaptionVisible(false),
+      LAYER_CAPTION_MS
+    )
+    return () => window.clearTimeout(timer)
+  }, [caption])
+
+  const announce = (label: string, on: boolean) => {
+    // Keep the text after hiding so the caption fades out instead of emptying.
+    setCaption({
+      text: `${label} ${on ? "on" : "off"}`,
+      id: (caption?.id ?? 0) + 1,
+    })
+    setCaptionVisible(true)
+    setHintVisible(false)
+    try {
+      window.localStorage.setItem(LAYER_TOGGLE_HINT_KEY, "1")
+    } catch {
+      // Private mode: the hint simply shows again next visit.
+    }
+  }
+
+  return {
+    caption: caption?.text ?? null,
+    captionVisible,
+    hintVisible,
+    announce,
+  }
+}
+
+const LAYER_FLOAT_PILL_CLASS =
+  "pointer-events-none absolute top-1/2 right-full -translate-y-1/2 rounded-full border border-border/50 bg-background/95 px-2 py-1 text-[11px] leading-none font-medium whitespace-nowrap shadow-sm transition-opacity duration-400 ease-out motion-reduce:transition-none"
+
+const LayerToggleHint = ({ visible }: { visible: boolean }) => (
+  <p
+    data-layer-hint
+    data-state={visible ? "shown" : "hidden"}
+    aria-hidden={!visible}
+    className={cn(
+      LAYER_FLOAT_PILL_CLASS,
+      "map-layer-hint mr-2.5 text-muted-foreground",
+      visible ? "opacity-100" : "opacity-0"
+    )}
+  >
+    {LAYER_TOGGLE_HINT_TEXT}
+  </p>
+)
+
+const LayerToggleCaption = ({
+  text,
+  visible,
+}: {
+  text: string | null
+  visible: boolean
+}) => (
+  <p
+    aria-live="polite"
+    className={cn(
+      LAYER_FLOAT_PILL_CLASS,
+      "mr-1.5 text-foreground",
+      visible && text ? "opacity-100" : "opacity-0"
+    )}
+  >
+    {text}
+  </p>
+)
+
 const getAudioTooltipText = (
   audioEnabled: boolean,
   audioSampleMode: "cursor" | "center"
@@ -313,12 +418,14 @@ export const NoiseLayerControls = ({
   onAudioEnabledChange,
 }: NoiseLayerControlsProps) => {
   const isMobile = useIsMobile()
+  const layerCaption = useLayerToggleCaption()
   const unlockNoiseAudio = () => {
     noiseAudioEngine.unlockFromUserGesture()
   }
 
   const handleToggle = (key: LayerKey, checked: boolean) => {
     unlockNoiseAudio()
+    layerCaption.announce(LAYER_META[key].label, checked)
     onVisibilityChange({ ...visibility, [key]: checked })
   }
 
@@ -331,10 +438,12 @@ export const NoiseLayerControls = ({
     for (const key of TRANSIT_VISUAL_LAYER_KEYS) {
       next[key] = checked
     }
+    layerCaption.announce("Tube lines", checked)
     onVisualVisibilityChange?.(next)
   }
 
   const handleGreenSpacesToggle = (checked: boolean) => {
+    layerCaption.announce(VISUAL_LAYER_META.greenSpaces.label, checked)
     onVisualVisibilityChange?.({
       ...visualVisibility,
       greenSpaces: checked,
@@ -357,7 +466,7 @@ export const NoiseLayerControls = ({
       aria-label="Noise map layers"
       className="pointer-events-none inline-flex w-fit max-w-[calc(100vw-2rem)] flex-col items-end"
     >
-      <NoiseTimeGrid value={timeSlot} onChange={onTimeSlotChange} />
+      <NoiseTimePicker value={timeSlot} onChange={onTimeSlotChange} />
 
       <div className="map-layer-group mt-2 flex flex-col items-end space-y-1 md:rounded-3xl md:p-2">
         <div className="pointer-events-auto hidden w-fit items-center justify-end gap-1 self-end md:flex">
@@ -414,6 +523,11 @@ export const NoiseLayerControls = ({
           aria-label="Noise layer visibility"
           className="map-layer-icons pointer-events-auto flex w-fit flex-row gap-1"
         >
+          <LayerToggleHint visible={layerCaption.hintVisible} />
+          <LayerToggleCaption
+            text={layerCaption.caption}
+            visible={layerCaption.captionVisible}
+          />
           {LAYER_ORDER.map((key) => {
             const meta = LAYER_META[key]
 

@@ -1,3 +1,5 @@
+import type { MapTheme } from "@/lib/map/basemap-style"
+
 /** Day (07:00–19:00) vs night (23:00–07:00) — maps to DEFRA Lday / Lnight WMS layers. */
 export type NoiseDayPart = "day" | "night"
 
@@ -11,6 +13,18 @@ export type NoiseTimeSlot = {
 export const WEEK_SEGMENT_LABELS: Record<NoiseWeekSegment, string> = {
   weekday: "Weekday",
   weekend: "Weekend",
+}
+
+/**
+ * Days each segment covers. A night belongs to the evening it starts on, so
+ * Fri and Sat nights are the weekend and Sun night is back to the week.
+ */
+export const WEEK_SEGMENT_DAYS: Record<
+  NoiseDayPart,
+  Record<NoiseWeekSegment, string>
+> = {
+  day: { weekday: "Mon–Fri", weekend: "Sat–Sun" },
+  night: { weekday: "Sun–Thu", weekend: "Fri–Sat" },
 }
 
 /** Short letter-day markers used as grid column headers (Mon–Fri / Sat–Sun). */
@@ -86,15 +100,28 @@ const getLondonClock = (date: Date) => {
   return { weekday, hour }
 }
 
-/** Map the current London clock to the nearest UI time slot. */
+const WEEKDAY_ORDER = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+
+/**
+ * Map the current London clock to the nearest UI time slot. Days are Sat–Sun
+ * weekends; nights count from the evening they start on, so Fri 19:00 →
+ * Sat 07:00 is a weekend night and Sun 19:00 → Mon 07:00 a weekday night.
+ */
 export const getCurrentNoiseTimeSlot = (
   date: Date = new Date()
 ): NoiseTimeSlot => {
   const { weekday, hour } = getLondonClock(date)
-  const week: NoiseWeekSegment =
-    weekday === "Sat" || weekday === "Sun" ? "weekend" : "weekday"
   const part: NoiseDayPart = hour >= 7 && hour < 19 ? "day" : "night"
 
+  if (part === "day") {
+    const week = weekday === "Sat" || weekday === "Sun" ? "weekend" : "weekday"
+    return { week, part }
+  }
+
+  const today = Math.max(0, WEEKDAY_ORDER.indexOf(weekday))
+  const nightStart = WEEKDAY_ORDER[hour < 7 ? (today + 6) % 7 : today]
+  const week =
+    nightStart === "Fri" || nightStart === "Sat" ? "weekend" : "weekday"
   return { week, part }
 }
 
@@ -123,3 +150,11 @@ export const DEFRA_TIME_SLOT_NOTE =
 
 export const isWeekendNight = ({ week, part }: NoiseTimeSlot) =>
   week === "weekend" && part === "night"
+
+/** The basemap lighting is the day/night indicator: day = Positron, night = Dark Matter. */
+export const mapThemeForTimeSlot = ({ part }: NoiseTimeSlot): MapTheme =>
+  part === "night" ? "dark" : "light"
+
+/** Title-case label for the time picker and live region: "Weekend night". */
+export const formatNoiseTimeSlotTitle = ({ week, part }: NoiseTimeSlot) =>
+  `${WEEK_SEGMENT_LABELS[week]} ${part === "day" ? "day" : "night"}`

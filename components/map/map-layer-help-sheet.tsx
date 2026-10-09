@@ -56,14 +56,14 @@ export const MapLayerHelpSheet = ({
         <div className="flex flex-col gap-5 overflow-y-auto px-4 pb-8">
           <HelpSection
             title="When"
-            caption="Weekday or weekend, day or night."
+            caption="Day lights the map; at night loud places glow. Weekends get a warm glow around the map."
           >
             <MapLayerHelpDemos.Time />
           </HelpSection>
 
           <HelpSection
             title="Noise layers"
-            caption="Road, rail, aircraft, and nearby venues."
+            caption="Road, rail, aircraft, and nearby venues. Tap one to switch it on or off."
           >
             <MapLayerHelpDemos.Layers />
           </HelpSection>

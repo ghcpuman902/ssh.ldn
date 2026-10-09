@@ -26,6 +26,9 @@ export const BASEMAP_LABELS_LAYER_ID = "basemap-labels"
 /** OpenFreeMap glyph stack — custom symbol layers must use this or MapLibre 404s Open Sans. */
 export const BASEMAP_TEXT_FONT = ["Noto Sans Regular"] as const
 
+/** Style diffing ignores metadata, so this tag survives a lighting swap. */
+const BASEMAP_THEME_METADATA_KEY = "ssh-ldn:basemap-theme"
+
 type LayerPatch = {
   minzoom?: number
   maxzoom?: number
@@ -42,13 +45,21 @@ const LIGHT = {
   majorSubtle: "rgb(170,170,176)",
 } as const
 
+/**
+ * Night is "London from a plane": a deep blue-black ground with quiet labels
+ * and road casings, so the noise rasters and transit lines read as light.
+ */
 const DARK = {
-  label: "#e4e4e7",
-  labelMuted: "#d4d4d8",
-  halo: "rgba(0,0,0,0.82)",
-  majorCasing: "rgba(118,118,122,0.95)",
-  motorwayCasing: "rgba(130,130,134,0.95)",
-  majorSubtle: "#3f3f46",
+  background: "#07080b",
+  water: "#0d1118",
+  land: "#0b0c0f",
+  building: "#0a0b0e",
+  label: "#a1a1aa",
+  labelMuted: "#71717a",
+  halo: "rgba(4,5,8,0.9)",
+  majorCasing: "rgba(72,74,82,0.85)",
+  motorwayCasing: "rgba(84,86,94,0.9)",
+  majorSubtle: "#24252b",
 } as const
 
 const slotLayer = (id: string): LayerSpecification => ({
@@ -202,6 +213,21 @@ const applyLightReadability = (style: StyleSpecification) => {
 }
 
 const applyDarkReadability = (style: StyleSpecification) => {
+  patchLayer(style, "background", {
+    paint: { "background-color": DARK.background },
+  })
+  patchLayer(style, "water", { paint: { "fill-color": DARK.water } })
+  patchLayer(style, "waterway", { paint: { "line-color": DARK.water } })
+  for (const id of ["landuse_park", "landcover_wood"]) {
+    patchLayer(style, id, { paint: { "fill-color": DARK.land } })
+  }
+  patchLayer(style, "building", {
+    paint: {
+      "fill-color": DARK.building,
+      "fill-outline-color": DARK.land,
+    },
+  })
+
   patchLayer(style, "highway_major_casing", {
     paint: {
       "line-color": DARK.majorCasing,
@@ -285,6 +311,10 @@ const createBasemapStyle = (
   }
 
   insertOverlaySlots(style)
+  style.metadata = {
+    ...(style.metadata as Record<string, unknown> | undefined),
+    [BASEMAP_THEME_METADATA_KEY]: theme,
+  }
   return style
 }
 
@@ -300,3 +330,70 @@ export const MAP_TILE_STYLES = {
 } as const
 
 export const getMapStyle = (theme: MapTheme = "light") => MAP_TILE_STYLES[theme]
+
+export const getBasemapTheme = (
+  style: StyleSpecification | undefined
+): MapTheme | null => {
+  const theme = (style?.metadata as Record<string, unknown> | undefined)?.[
+    BASEMAP_THEME_METADATA_KEY
+  ]
+  return theme === "light" || theme === "dark" ? theme : null
+}
+
+const BASEMAP_LAYER_IDS = new Set(
+  [...MAP_TILE_STYLES.light.layers, ...MAP_TILE_STYLES.dark.layers].map(
+    (layer) => layer.id
+  )
+)
+
+const BASEMAP_SOURCE_IDS = new Set([
+  ...Object.keys(MAP_TILE_STYLES.light.sources),
+  ...Object.keys(MAP_TILE_STYLES.dark.sources),
+])
+
+/**
+ * `transformStyle` for a diffed basemap swap. Keeps every noise / transit
+ * layer and source the app added at runtime, anchored before the same slot
+ * layer, so MapLibre only re-paints the basemap instead of tearing down and
+ * re-fetching the overlays.
+ */
+export const carryOverOverlays = (
+  previous: StyleSpecification | undefined,
+  next: StyleSpecification
+): StyleSpecification => {
+  if (!previous) return next
+
+  const nextIds = new Set(next.layers.map((layer) => layer.id))
+  const insertBefore = new Map<string, LayerSpecification[]>()
+  let pending: LayerSpecification[] = []
+
+  for (const layer of previous.layers) {
+    if (!BASEMAP_LAYER_IDS.has(layer.id)) {
+      pending.push(layer)
+      continue
+    }
+    // Only anchor on layers the next style keeps (the slots always are).
+    if (pending.length === 0 || !nextIds.has(layer.id)) continue
+
+    insertBefore.set(layer.id, [
+      ...(insertBefore.get(layer.id) ?? []),
+      ...pending,
+    ])
+    pending = []
+  }
+
+  const layers: LayerSpecification[] = []
+  for (const layer of next.layers) {
+    const overlays = insertBefore.get(layer.id)
+    if (overlays) layers.push(...overlays)
+    layers.push(layer)
+  }
+  layers.push(...pending)
+
+  const sources = { ...next.sources }
+  for (const [id, source] of Object.entries(previous.sources)) {
+    if (!BASEMAP_SOURCE_IDS.has(id)) sources[id] = source
+  }
+
+  return { ...next, sources, layers }
+}

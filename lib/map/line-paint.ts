@@ -4,11 +4,16 @@ import type { TubeLineFeatureCollection } from "@/lib/map/geojson-types"
 /** OpenFreeMap Positron / Dark Matter background fills. */
 export const MAP_BACKGROUND_HEX: Record<MapTheme, string> = {
   light: "#f2f3f0",
-  dark: "#0c0c0c",
+  dark: "#07080b",
 }
 
 const RAIL_STROKE_HEX = "#475569"
-const TRANSIT_CASING_HEX = "#ffffff"
+/** By day a white casing separates parallel lines; at night a black one lets the colour glow. */
+const TRANSIT_CASING_HEX: Record<MapTheme, string> = {
+  light: "#ffffff",
+  dark: "#000000",
+}
+const RAIL_STROKE_OPACITY: Record<MapTheme, number> = { light: 0.85, dark: 0.6 }
 
 const parseHex = (value: string) => {
   const hex = value.replace("#", "")
@@ -44,10 +49,18 @@ export const mixHexOntoBackground = (
 }
 
 export const railStrokeColor = (theme: MapTheme) =>
-  mixHexOntoBackground(RAIL_STROKE_HEX, MAP_BACKGROUND_HEX[theme], 0.85)
+  mixHexOntoBackground(
+    RAIL_STROKE_HEX,
+    MAP_BACKGROUND_HEX[theme],
+    RAIL_STROKE_OPACITY[theme]
+  )
 
 export const transitCasingColor = (theme: MapTheme) =>
-  mixHexOntoBackground(TRANSIT_CASING_HEX, MAP_BACKGROUND_HEX[theme], 0.92)
+  mixHexOntoBackground(
+    TRANSIT_CASING_HEX[theme],
+    MAP_BACKGROUND_HEX[theme],
+    0.92
+  )
 
 export const mixTransitLineColors = (
   lines: TubeLineFeatureCollection,

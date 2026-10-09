@@ -24,57 +24,19 @@ const DemoFrame = ({
   </figure>
 )
 
-const DemoTimeGrid = () => (
-  <div
-    aria-hidden
-    className="map-help-demo-time pointer-events-none rounded-3xl border border-border/40 bg-background/80 px-3 py-2 shadow-sm"
-  >
-    <p className="mb-1.5 text-center text-[11px] font-medium text-foreground">
+/** Mini map window: lighting cycles day/night, the frame cycles plain/warm glow. */
+const DemoTimeWindow = () => (
+  <div aria-hidden className="pointer-events-none flex flex-col items-center gap-2">
+    <div className="map-help-demo-time-frame rounded-2xl p-2">
+      <div className="map-help-demo-time-map relative h-16 w-28 overflow-hidden rounded-xl">
+        <span className="absolute inset-x-0 top-1/2 h-0.5 -translate-y-1/2 -rotate-12 bg-current opacity-30" />
+        <span className="absolute inset-y-0 left-2/3 w-0.5 rotate-6 bg-current opacity-30" />
+        <span className="absolute top-3 left-6 size-8 rounded-full bg-orange-500/45 blur-[6px]" />
+      </div>
+    </div>
+    <p className="text-[11px] font-medium text-foreground">
       <span className="map-help-demo-time-label" />
     </p>
-    <div className="grid grid-cols-[auto_auto_auto] items-center gap-x-1.5 gap-y-1">
-      <span />
-      <span className="text-center text-[9px] font-medium tracking-[-0.06em] text-muted-foreground">
-        MTWTF
-      </span>
-      <span className="text-center text-[9px] font-medium tracking-[-0.06em] text-muted-foreground">
-        SS
-      </span>
-      <span className="pr-0.5 text-[10px] font-medium text-muted-foreground">
-        Day
-      </span>
-      <span className="map-help-demo-slot map-help-demo-slot-weekday-day inline-flex h-7 items-center justify-center rounded-lg border p-1">
-        <span className="flex h-full gap-[3px]">
-          {Array.from({ length: 5 }, (_, index) => (
-            <span key={index} className="w-1.5 rounded-sm bg-current" />
-          ))}
-        </span>
-      </span>
-      <span className="map-help-demo-slot map-help-demo-slot-weekend-day inline-flex h-7 items-center justify-center rounded-lg border p-1">
-        <span className="flex h-full gap-[3px]">
-          {Array.from({ length: 2 }, (_, index) => (
-            <span key={index} className="w-1.5 rounded-sm bg-current" />
-          ))}
-        </span>
-      </span>
-      <span className="pr-0.5 text-[10px] font-medium text-muted-foreground">
-        Night
-      </span>
-      <span className="map-help-demo-slot map-help-demo-slot-weekday-night inline-flex h-5 items-center justify-center rounded-lg border p-1">
-        <span className="flex h-full gap-[3px]">
-          {Array.from({ length: 5 }, (_, index) => (
-            <span key={index} className="w-1.5 rounded-sm bg-current" />
-          ))}
-        </span>
-      </span>
-      <span className="map-help-demo-slot map-help-demo-slot-weekend-night inline-flex h-5 items-center justify-center rounded-lg border p-1">
-        <span className="flex h-full gap-[3px]">
-          {Array.from({ length: 2 }, (_, index) => (
-            <span key={index} className="w-1.5 rounded-sm bg-current" />
-          ))}
-        </span>
-      </span>
-    </div>
   </div>
 )
 
@@ -126,8 +88,8 @@ const DemoVisualLayers = () => (
 
 export const MapLayerHelpDemos = {
   Time: () => (
-    <DemoFrame label="Time selector">
-      <DemoTimeGrid />
+    <DemoFrame label="The map lights up for day and goes dark for night; weekends add a warm glow around it">
+      <DemoTimeWindow />
     </DemoFrame>
   ),
   Layers: () => (

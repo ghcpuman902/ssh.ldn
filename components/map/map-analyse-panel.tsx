@@ -256,17 +256,9 @@ const NoiseScoreCard = ({
             {WEEK_SEGMENTS.map((week) => (
               <p
                 key={week}
-                className="self-end text-center text-[9px] font-medium leading-none text-muted-foreground"
+                className="self-end whitespace-nowrap text-center text-[10px] font-medium leading-none text-muted-foreground"
               >
-                {week === "weekend" ? (
-                  <>
-                    Week
-                    <br />
-                    ends
-                  </>
-                ) : (
-                  "Weekdays"
-                )}
+                {week === "weekend" ? "Sat–Sun" : "Mon–Fri"}
               </p>
             ))}
 

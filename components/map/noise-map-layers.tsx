@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
 import type { ExpressionSpecification, FilterSpecification } from "maplibre-gl"
 import { Layer, Source } from "react-map-gl/maplibre"
 
@@ -19,6 +19,11 @@ import {
   POI_DENSITY_TILE_MIN_ZOOM,
 } from "@/lib/map/config"
 import { nightlifeEmojiImageId } from "@/lib/map/nightlife-emoji-images"
+import {
+  isNightGlowProtocolReady,
+  nightGlowTileUrl,
+  registerNightGlowProtocol,
+} from "@/lib/map/night-glow-tiles"
 import {
   POI_EMOJI_PRIORITY_MIN_ZOOM,
   poiDensitySlotFromParts,
@@ -165,6 +170,30 @@ const kindsForRevealStage = (
   return DEFRA_MAP_RENDER_ORDER.filter((kind) => visibility[kind])
 }
 
+/**
+ * Night tiles are recoloured to glow (see night-glow-tiles.ts), which already
+ * fades the quiet bands, so the layer itself can sit closer to opaque.
+ */
+const NIGHT_GLOW_OPACITY_BOOST = 1.35
+
+/** Registers the glow protocol on mount so a later switch to night is instant. */
+const useNightGlowReady = () => {
+  const [ready, setReady] = useState(isNightGlowProtocolReady)
+
+  useEffect(() => {
+    if (ready) return
+    let cancelled = false
+    void registerNightGlowProtocol().then(() => {
+      if (!cancelled) setReady(true)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [ready])
+
+  return ready
+}
+
 const DefraNoiseRasterLayers = ({
   visibility,
   timeSlot,
@@ -174,26 +203,37 @@ const DefraNoiseRasterLayers = ({
   rasterFadeMs,
 }: DefraNoiseRasterLayersProps) => {
   const period = defraPeriodFromDayPart(timeSlot.part)
-  const kinds = kindsForRevealStage(revealStage, visibility)
+  const isNight = timeSlot.part === "night"
+  const glowReady = useNightGlowReady()
+  const glow = isNight && glowReady
+  // Wait the few ms for the protocol rather than fetching plain night tiles
+  // and then re-fetching them as glow.
+  const kinds =
+    isNight && !glowReady ? [] : kindsForRevealStage(revealStage, visibility)
 
   const getOpacity = (kind: DefraMapKind) =>
     (opacity[kind] ?? DEFAULT_NOISE_LAYER_OPACITY[kind]) *
-    (kind === "road" && timeSlot.part === "night" ? weekendNightBoost : 1)
+    (kind === "road" && isNight ? weekendNightBoost : 1) *
+    (glow ? NIGHT_GLOW_OPACITY_BOOST : 1)
 
   return (
     <>
       {kinds.map((kind) => (
         <Source
-          key={`defra-${kind}-${period}`}
-          id={`defra-noise-${kind}-${period}`}
+          key={`defra-${kind}-${period}${glow ? "-glow" : ""}`}
+          id={`defra-noise-${kind}-${period}${glow ? "-glow" : ""}`}
           type="raster"
-          tiles={[defraTileUrl(kind, period)]}
+          tiles={[
+            glow
+              ? nightGlowTileUrl(defraTileUrl(kind, period))
+              : defraTileUrl(kind, period),
+          ]}
           tileSize={256}
           minzoom={NOISE_TILE_MIN_ZOOM}
           maxzoom={NOISE_TILE_PAINT_MAX_ZOOM}
         >
           <Layer
-            id={`defra-noise-${kind}-${period}-layer`}
+            id={`defra-noise-${kind}-${period}${glow ? "-glow" : ""}-layer`}
             type="raster"
             beforeId={NOISE_OVERLAY_SLOT_ID}
             layout={{ visibility: layerVisibility(visibility[kind]) }}
@@ -201,8 +241,9 @@ const DefraNoiseRasterLayers = ({
               "raster-opacity": Math.min(getOpacity(kind), 0.95),
               "raster-fade-duration": rasterFadeMs,
               // DEFRA noise is categorical dB bands — keep crisp band edges
-              // when overzooming past the cached level instead of blurring.
-              "raster-resampling": "nearest",
+              // when overzooming past the cached level. At night the soft
+              // edge is the point: it reads as light spilling, not a grid.
+              "raster-resampling": glow ? "linear" : "nearest",
             }}
           />
         </Source>
@@ -215,7 +256,15 @@ type NightlifeVenueLayersProps = {
   visible: boolean
   data: NightlifeFeatureCollection | null
   opacity: number
+  night: boolean
 }
+
+/**
+ * At night venues read as small warm lights: the glow dots start at city
+ * zoom and the mid-zoom emoji step aside. Street-level emoji stay.
+ */
+const NIGHTLIFE_LIGHT_MIN_ZOOM = { day: 13, night: 11 } as const
+const NIGHTLIFE_NIGHT_CORE_BOOST = 1.6
 
 const PoiDensityRasterLayer = ({
   visible,
@@ -258,8 +307,12 @@ const NightlifeVenueLayers = ({
   visible,
   data,
   opacity,
+  night,
 }: NightlifeVenueLayersProps) => {
   if (!data || data.features.length === 0) return null
+
+  const lightMinZoom = NIGHTLIFE_LIGHT_MIN_ZOOM[night ? "night" : "day"]
+  const coreOpacity = opacity * (night ? NIGHTLIFE_NIGHT_CORE_BOOST : 1)
 
   return (
     <Source id="nightlife-venues" type="geojson" data={data}>
@@ -267,7 +320,7 @@ const NightlifeVenueLayers = ({
         id="nightlife-venues-noise-aura"
         type="circle"
         beforeId={NOISE_OVERLAY_SLOT_ID}
-        minzoom={13}
+        minzoom={lightMinZoom}
         filter={ACTIVE_LOCAL_SOURCE_FILTER}
         layout={{
           visibility: layerVisibility(visible),
@@ -406,7 +459,7 @@ const NightlifeVenueLayers = ({
         id="nightlife-venues-noise-core"
         type="circle"
         beforeId={NOISE_OVERLAY_SLOT_ID}
-        minzoom={13}
+        minzoom={lightMinZoom}
         filter={ACTIVE_LOCAL_SOURCE_FILTER}
         layout={{
           visibility: layerVisibility(visible),
@@ -467,7 +520,7 @@ const NightlifeVenueLayers = ({
             12,
             [
               "*",
-              opacity * 0.22,
+              coreOpacity * 0.22,
               [
                 "interpolate",
                 ["linear"],
@@ -483,7 +536,7 @@ const NightlifeVenueLayers = ({
             15,
             [
               "*",
-              opacity * 0.3,
+              coreOpacity * 0.3,
               [
                 "interpolate",
                 ["linear"],
@@ -517,7 +570,7 @@ const NightlifeVenueLayers = ({
           ],
         ]}
         layout={{
-          visibility: layerVisibility(visible),
+          visibility: layerVisibility(visible && !night),
           "icon-image": NIGHTLIFE_ICON_IMAGE,
           "icon-size": [
             "interpolate",
@@ -664,6 +717,7 @@ export const NoiseMapLayers = ({
           visible={visibility.nightlife}
           data={enrichedNightlife}
           opacity={nightlifeOpacity}
+          night={timeSlot.part === "night"}
         />
       ) : null}
     </>

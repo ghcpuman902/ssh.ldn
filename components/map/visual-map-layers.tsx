@@ -57,6 +57,34 @@ const TRANSIT_INNER_WIDTH: ExpressionSpecification = [
   3.4,
 ]
 
+/** Night halo: a wide, blurred copy of the line in its own colour. */
+const TRANSIT_GLOW_WIDTH: ExpressionSpecification = [
+  "interpolate",
+  ["linear"],
+  ["zoom"],
+  10,
+  8,
+  14,
+  16,
+  16,
+  22,
+]
+
+const TRANSIT_GLOW_BLUR: ExpressionSpecification = [
+  "interpolate",
+  ["linear"],
+  ["zoom"],
+  10,
+  6,
+  14,
+  12,
+  16,
+  16,
+]
+
+/** Paint-only so the halo crossfades with the basemap instead of popping in. */
+const TRANSIT_GLOW_OPACITY: Record<MapTheme, number> = { light: 0, dark: 0.4 }
+
 const TRANSIT_LABEL_SIZE: ExpressionSpecification = [
   "interpolate",
   ["linear"],
@@ -102,6 +130,23 @@ const TransitLineLayers = ({
 
   return (
     <Source id={`${idPrefix}-lines`} type="geojson" data={paintedLines}>
+      <Layer
+        id={`${idPrefix}-lines-glow`}
+        type="line"
+        beforeId={STATION_OVERLAY_SLOT_ID}
+        layout={{
+          visibility: layerVisibility(visible),
+          "line-join": "round",
+          "line-cap": "round",
+        }}
+        paint={{
+          "line-color": ["coalesce", ["get", "color"], "#6366f1"],
+          "line-width": TRANSIT_GLOW_WIDTH,
+          "line-blur": TRANSIT_GLOW_BLUR,
+          "line-offset": TRANSIT_LINE_OFFSET,
+          "line-opacity": TRANSIT_GLOW_OPACITY[theme],
+        }}
+      />
       <Layer
         id={`${idPrefix}-lines-casing`}
         type="line"

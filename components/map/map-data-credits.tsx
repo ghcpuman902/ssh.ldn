@@ -91,7 +91,7 @@ export const MapDataCredits = () => {
       ref={containerRef}
       aria-label="Data source credits"
       className={cn(
-        "relative w-full text-[10px] leading-none text-muted-foreground",
+        "map-data-credits relative w-full text-[10px] leading-none text-foreground/70",
         shouldMarquee && "map-data-credits-marquee-mask overflow-hidden"
       )}
       style={

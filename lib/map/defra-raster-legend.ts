@@ -1,6 +1,7 @@
 import type { DefraMapKind } from "@/lib/map/defra-layers";
 
-const DEFRA_RASTER_BANDS = [
+/** DEFRA contour colours, quietest first. */
+export const DEFRA_RASTER_BANDS = [
   { rgb: [0, 176, 80], intensity: 0.2 },
   { rgb: [146, 208, 80], intensity: 0.35 },
   { rgb: [255, 255, 0], intensity: 0.5 },

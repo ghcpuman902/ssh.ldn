@@ -8,6 +8,7 @@ const MapShell = dynamic(
     ssr: false,
     loading: () => (
       <div
+        role="status"
         aria-busy="true"
         aria-label="Loading map"
         className="h-svh w-full animate-pulse bg-muted"

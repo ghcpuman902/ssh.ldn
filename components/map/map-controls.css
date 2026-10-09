@@ -191,6 +191,14 @@
   cursor: pointer !important;
 }
 
+/* Credits sit over live map labels; a tight halo keeps them readable. */
+.map-data-credits {
+  text-shadow:
+    0 0 2px var(--background),
+    0 0 2px var(--background),
+    0 0 4px var(--background);
+}
+
 .map-data-credits-marquee-mask {
   -webkit-mask-image: linear-gradient(
     to right,
@@ -240,31 +248,223 @@
   }
 }
 
+/* ── Time slice: weekday/weekend frame ─────────────────────────────────
+   Lives in the page gutter behind the rounded map window. Weekdays are the
+   plain page; weekends get one soft warm glow from two corners that slowly
+   breathes. Theme tokens throughout, so it works on light and dark chrome.
+   Only opacity animates, so it stays on the compositor. */
+.map-time-frame {
+  --map-weekend-a: var(--noise-traffic);
+  --map-weekend-b: var(--noise-nightlife);
+  --map-weekend-strength: 22%;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 600ms ease-out;
+}
+
+.dark .map-time-frame {
+  --map-weekend-strength: 18%;
+}
+
+.map-time-frame[data-part="night"] {
+  --map-weekend-a: var(--noise-music-venue);
+}
+
+.map-time-frame[data-week="weekend"] {
+  opacity: 1;
+}
+
+.map-time-frame-glow {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in oklch, var(--map-weekend-a) var(--map-weekend-strength), transparent),
+      transparent 42%
+    ),
+    linear-gradient(
+      315deg,
+      color-mix(in oklch, var(--map-weekend-b) var(--map-weekend-strength), transparent),
+      transparent 42%
+    ),
+    color-mix(in oklch, var(--map-weekend-a) 5%, transparent);
+  animation: map-time-frame-breathe 9s ease-in-out infinite alternate;
+}
+
+.map-time-frame[data-week="weekday"] .map-time-frame-glow {
+  animation-play-state: paused;
+}
+
+@keyframes map-time-frame-breathe {
+  from {
+    opacity: 0.6;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* Weekend chip in the time picker carries the same warm tint. */
+.map-time-weekend-chip {
+  background: linear-gradient(
+    135deg,
+    color-mix(in oklch, var(--noise-traffic) 16%, var(--background)),
+    color-mix(in oklch, var(--noise-nightlife) 12%, var(--background))
+  );
+}
+
+/* ── Map lighting: vignette and dark-theme day dimming ─────────────────
+   The vignette follows the map's lighting (day = page tone, night = black)
+   so a light theme never greys out the night map. In dark theme the day
+   map is dimmed with a uniform brightness filter on the canvas only:
+   it scales every colour equally (noise hues and their order are kept),
+   leaves markers and controls alone and costs one compositor colour matrix. */
+.map-lighting-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in oklch, var(--background) 10%, transparent),
+    transparent 50%,
+    color-mix(in oklch, var(--background) 20%, transparent)
+  );
+}
+
+[data-map-lighting="night"] .map-lighting-vignette {
+  background: linear-gradient(
+    to bottom,
+    rgb(0 0 0 / 0.16),
+    transparent 45%,
+    rgb(0 0 0 / 0.28)
+  );
+}
+
+[data-map-lighting] .maplibregl-canvas {
+  transition: filter 550ms ease-out;
+}
+
+.dark [data-map-lighting="day"] .maplibregl-canvas {
+  filter: brightness(0.84);
+}
+
+/* ── Time slice: dusk / dawn sweep over the map during a day↔night swap ── */
+.map-time-veil {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0;
+  animation: map-time-veil 900ms ease-in-out forwards;
+}
+
+.map-time-veil[data-to="night"] {
+  background: linear-gradient(
+    to bottom,
+    rgb(251 146 60 / 0.45),
+    rgb(244 63 94 / 0.3) 45%,
+    rgb(67 56 202 / 0.4)
+  );
+}
+
+.map-time-veil[data-to="day"] {
+  background: linear-gradient(
+    to top,
+    rgb(253 186 116 / 0.5),
+    rgb(254 240 138 / 0.3) 50%,
+    rgb(186 230 253 / 0.25)
+  );
+}
+
+@keyframes map-time-veil {
+  0% {
+    opacity: 0;
+  }
+
+  35% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .map-time-frame,
+  [data-map-lighting] .maplibregl-canvas {
+    transition: none;
+  }
+
+  .map-time-frame-glow {
+    animation: none;
+  }
+
+  .map-time-veil {
+    display: none;
+  }
+}
+
 .map-help-demo-time-label::after {
   content: "weekday day";
   animation: map-help-time-label 8s steps(1, end) infinite;
 }
 
-.map-help-demo-slot {
-  color: color-mix(in oklch, var(--primary) 35%, transparent);
-  border-color: transparent;
+.map-help-demo-time-frame {
   background-color: var(--muted);
+  background-size: 48px 48px;
+  animation: map-help-demo-frame 8s steps(1, end) infinite;
 }
 
-.map-help-demo-slot-weekday-day {
-  animation: map-help-slot-weekday-day 8s steps(1, end) infinite;
+.map-help-demo-time-map {
+  color: #52525b;
+  background-color: #f2f3f0;
+  animation: map-help-demo-map 8s steps(1, end) infinite;
 }
 
-.map-help-demo-slot-weekend-day {
-  animation: map-help-slot-weekend-day 8s steps(1, end) infinite;
+@keyframes map-help-demo-frame {
+  0%,
+  49.9% {
+    background-image: none;
+  }
+  50%,
+  100% {
+    background-image: linear-gradient(
+      135deg,
+      color-mix(in oklch, var(--noise-traffic) 30%, transparent),
+      transparent 55%,
+      color-mix(in oklch, var(--noise-nightlife) 26%, transparent)
+    );
+  }
 }
 
-.map-help-demo-slot-weekday-night {
-  animation: map-help-slot-weekday-night 8s steps(1, end) infinite;
-}
-
-.map-help-demo-slot-weekend-night {
-  animation: map-help-slot-weekend-night 8s steps(1, end) infinite;
+@keyframes map-help-demo-map {
+  0%,
+  24.9% {
+    color: #52525b;
+    background-color: #f2f3f0;
+  }
+  25%,
+  49.9% {
+    color: #a1a1aa;
+    background-color: #07080b;
+  }
+  50%,
+  74.9% {
+    color: #52525b;
+    background-color: #f2f3f0;
+  }
+  75%,
+  100% {
+    color: #a1a1aa;
+    background-color: #07080b;
+  }
 }
 
 .map-help-demo-layer-ring {
@@ -314,42 +514,6 @@
   }
 }
 
-@keyframes map-help-slot-weekday-day {
-  0%,
-  24.9% {
-    color: var(--primary);
-    border-color: var(--primary);
-    background-color: var(--background);
-  }
-}
-
-@keyframes map-help-slot-weekday-night {
-  25%,
-  49.9% {
-    color: var(--foreground);
-    border-color: #52525b;
-    background-color: var(--background);
-  }
-}
-
-@keyframes map-help-slot-weekend-day {
-  50%,
-  74.9% {
-    color: #8b5cf6;
-    border-color: #8b5cf6;
-    background-color: var(--background);
-  }
-}
-
-@keyframes map-help-slot-weekend-night {
-  75%,
-  100% {
-    color: #6d28d9;
-    border-color: #6d28d9;
-    background-color: var(--background);
-  }
-}
-
 @keyframes map-help-layer-ring {
   0%,
   15% {
@@ -388,10 +552,46 @@
 
 @media (prefers-reduced-motion: reduce) {
   .map-help-demo-time-label::after,
-  .map-help-demo-slot,
+  .map-help-demo-time-frame,
+  .map-help-demo-time-map,
   .map-help-demo-layer-ring,
   .map-help-demo-visual-tube,
   .map-help-demo-visual-park {
+    animation: none;
+  }
+}
+
+/* ── Layer hint: a tail pointing at the layer buttons, plus a small nudge ── */
+.map-layer-hint::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: -4.5px;
+  width: 8px;
+  height: 8px;
+  border-top: 1px solid color-mix(in oklch, var(--border) 50%, transparent);
+  border-right: 1px solid color-mix(in oklch, var(--border) 50%, transparent);
+  background-color: color-mix(in oklch, var(--background) 95%, transparent);
+  transform: translateY(-50%) rotate(45deg);
+}
+
+.map-layer-hint[data-state="shown"] {
+  animation: map-layer-hint-nudge 1.2s ease-in-out 600ms 2;
+}
+
+@keyframes map-layer-hint-nudge {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  50% {
+    transform: translateX(3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .map-layer-hint[data-state="shown"] {
     animation: none;
   }
 }

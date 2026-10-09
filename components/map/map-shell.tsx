@@ -17,7 +17,6 @@ import Map, {
   type MapLayerMouseEvent,
   type MapRef,
 } from "react-map-gl/maplibre"
-import { useTheme } from "next-themes"
 import { toast } from "sonner"
 import { useCursorNoise } from "@/hooks/use-cursor-noise"
 import { useMapLongPress } from "@/hooks/use-map-long-press"
@@ -28,6 +27,7 @@ import { useIsMobile } from "@/hooks/use-mobile"
 import { useShiftDragRotate } from "@/hooks/use-shift-drag-rotate"
 import { useViewportNightlifeGeoJson } from "@/hooks/use-viewport-nightlife-geojson"
 import { useNoiseReveal } from "@/hooks/use-noise-reveal"
+import { useBasemapLighting } from "@/hooks/use-basemap-lighting"
 import { useSafariAudioUnlock } from "@/hooks/use-safari-audio-unlock"
 import type { AnalyseState } from "@/components/map/map-analyse-panel"
 // Voice mode is temporarily unwired so ElevenLabs stays off the map load path.
@@ -44,6 +44,7 @@ import {
 import { MapHelpControl } from "@/components/map/map-help-control"
 import { MapLayerHelpSheet } from "@/components/map/map-layer-help-sheet"
 import { NoiseLayerControls } from "@/components/map/noise-layer-controls"
+import { MapTimeFrame, MapTimeVeil } from "@/components/map/map-time-frame"
 import { VisualMapLayers } from "@/components/map/visual-map-layers"
 import { useVisualLayerData } from "@/hooks/use-visual-layer-data"
 import type { MapTheme } from "@/lib/map/config"
@@ -52,6 +53,7 @@ import {
   DEFAULT_NOISE_TIME_SLOT,
   decodeNoiseTimeSlot,
   getCurrentNoiseTimeSlot,
+  mapThemeForTimeSlot,
 } from "@/lib/map/noise-time"
 import { buildShareQuery } from "@/lib/map/share-card"
 // import { locationContextFromAnalyse } from "@/lib/voice/location-context"
@@ -135,9 +137,6 @@ type PlanningApplicationResponse = {
   linkKind: "direct" | "entity" | "portal" | null
 }
 
-const resolveMapTheme = (resolvedTheme: string | undefined): MapTheme =>
-  resolvedTheme === "dark" ? "dark" : "light"
-
 const parseShareCoordinates = (
   latParam: string | null,
   lngParam: string | null
@@ -175,7 +174,6 @@ const replaceShareUrl = (query: string) => {
 }
 
 export const MapShell = () => {
-  const { resolvedTheme } = useTheme()
   const isMobile = useIsMobile()
   const [mounted, setMounted] = useState(false)
   const [layerVisibility, setLayerVisibility] = useState(
@@ -185,6 +183,11 @@ export const MapShell = () => {
     readVisualLayerVisibility
   )
   const [timeSlot, setTimeSlot] = useState(DEFAULT_NOISE_TIME_SLOT)
+  // The Map keeps the style it mounted with; later day/night swaps go through
+  // useBasemapLighting so runtime layers survive the diff.
+  const [initialMapTheme, setInitialMapTheme] = useState<MapTheme>(() =>
+    mapThemeForTimeSlot(DEFAULT_NOISE_TIME_SLOT)
+  )
   const [mapReady, setMapReady] = useState(false)
   const [mapHasIdled, setMapHasIdled] = useState(false)
   const [backgroundPrefetchReady, setBackgroundPrefetchReady] = useState(false)
@@ -244,7 +247,10 @@ export const MapShell = () => {
       lineUpgrade: noiseReveal.lineUpgrade,
     }
   )
-  const mapTheme = resolveMapTheme(resolvedTheme)
+  // Basemap lighting shows the selected time (day = light, night = dark);
+  // the site theme only styles the chrome around it.
+  const mapTheme = mapThemeForTimeSlot(timeSlot)
+  useBasemapLighting(mapRef, mapTheme, mounted && mapReady)
   const audioSampleMode = isMobile ? "center" : "cursor"
   const { intensityPercentages, localAmenityPercentages } = useCursorNoise({
     mapRef,
@@ -257,8 +263,12 @@ export const MapShell = () => {
   })
 
   useEffect(() => {
+    const initialSlot =
+      decodeNoiseTimeSlot(getShareSearchParams().get("timeSlot") ?? "") ??
+      getCurrentNoiseTimeSlot()
     setMounted(true)
-    setTimeSlot(getCurrentNoiseTimeSlot())
+    setTimeSlot(initialSlot)
+    setInitialMapTheme(mapThemeForTimeSlot(initialSlot))
   }, [])
 
   useEffect(() => {
@@ -1068,6 +1078,8 @@ export const MapShell = () => {
 
   return (
     <div className="relative h-svh w-full bg-background p-4 md:p-5">
+      <MapTimeFrame timeSlot={timeSlot} />
+
       <div
         className={cn(
           "pointer-events-auto absolute z-50 max-md:hidden",
@@ -1089,7 +1101,7 @@ export const MapShell = () => {
       <div
         ref={layoutGridRef}
         className={cn(
-          "grid h-full min-h-0 grid-cols-1",
+          "relative grid h-full min-h-0 grid-cols-1",
           "md:transition-[grid-template-columns,gap] md:duration-300 md:ease-in-out",
           analyseOpen
             ? "md:grid-cols-[minmax(0,1fr)_var(--map-panel-width)] md:gap-4"
@@ -1100,6 +1112,7 @@ export const MapShell = () => {
         <div
           ref={mapWindowRef}
           data-map-window
+          data-map-lighting={timeSlot.part}
           className="relative z-0 min-h-0 min-w-0"
         >
           <div
@@ -1112,7 +1125,7 @@ export const MapShell = () => {
             <Map
               ref={mapRef}
               initialViewState={LONDON_VIEWPORT}
-              mapStyle={getMapStyle(mapTheme)}
+              mapStyle={getMapStyle(initialMapTheme)}
               minZoom={MAP_CONFIG.minZoom}
               maxZoom={MAP_CONFIG.maxZoom}
               maxBounds={LONDON_BOUNDS}
@@ -1238,10 +1251,9 @@ export const MapShell = () => {
               />
             </Map>
 
-            <div
-              aria-hidden
-              className="pointer-events-none absolute inset-0 bg-linear-to-b from-background/10 via-transparent to-background/20"
-            />
+            <MapTimeVeil part={timeSlot.part} />
+
+            <div aria-hidden className="map-lighting-vignette" />
             {showMapCenterCrosshair ? <MapCenterCrosshair /> : null}
 
             {/* Sit inside the map clip so backdrop-filter can sample the canvas. */}

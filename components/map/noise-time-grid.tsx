@@ -1,7 +1,7 @@
 "use client"
 
-import { Fragment, type ComponentProps, type ReactNode } from "react"
-import { Info } from "lucide-react"
+import { type ComponentProps, type ReactNode } from "react"
+import { Info, Moon, Sun } from "lucide-react"
 
 import {
   Tooltip,
@@ -11,18 +11,18 @@ import {
 import { useIsMobile } from "@/hooks/use-mobile"
 import {
   DEFRA_TIME_SLOT_NOTE,
-  encodeNoiseTimeSlot,
-  formatNoiseTimeSlotShort,
+  formatNoiseTimeSlotTitle,
   NOISE_DAY_PARTS,
   type NoiseDayPart,
   type NoiseTimeSlot,
   type NoiseWeekSegment,
+  WEEK_SEGMENT_DAYS,
   WEEK_SEGMENT_LABELS,
-  WEEK_SEGMENT_LETTERS,
+  WEEK_SEGMENTS,
 } from "@/lib/map/noise-time"
 import { cn } from "@/lib/utils"
 
-type NoiseTimeGridProps = {
+type NoiseTimePickerProps = {
   value: NoiseTimeSlot
   onChange: (slot: NoiseTimeSlot) => void
 }
@@ -63,146 +63,81 @@ export const OptionalMapTooltip = ({
   )
 }
 
-const WEEK_SEGMENTS = ["weekday", "weekend"] as const
+const PART_ICON: Record<NoiseDayPart, typeof Sun> = { day: Sun, night: Moon }
 
-const WEEKDAY_BAR_COUNT = 5
-const WEEKEND_BAR_COUNT = 2
-
-const BAR_COUNT: Record<NoiseWeekSegment, number> = {
-  weekday: WEEKDAY_BAR_COUNT,
-  weekend: WEEKEND_BAR_COUNT,
+/** Selected chips preview the screen: Day lit like the light map, Night dark. */
+const PART_SELECTED_CLASS: Record<NoiseDayPart, string> = {
+  day: "bg-amber-50 text-amber-950 ring-amber-300/70",
+  night: "bg-indigo-950 text-indigo-50 ring-indigo-400/50",
 }
 
-/** w-1.5 (6px); bar gap and column gap are derived from this width. */
-const NOISE_BAR_WIDTH_CLASS = "w-1.5"
-const NOISE_BAR_GAP_CLASS = "gap-[3px]"
-const NOISE_BAR_ROW_CLASS = cn("flex items-stretch", NOISE_BAR_GAP_CLASS)
-const NOISE_GROUP_GAP_CLASS =
-  "gap-x-1.5 gap-y-1 max-md:gap-x-1 max-md:gap-y-0.5"
-
-const getButtonStyles = (slot: NoiseTimeSlot, isSelected: boolean): string => {
-  const { week, part } = slot
-  const isNight = part === "night"
-  const isWeekend = week === "weekend"
-
-  if (isSelected) {
-    if (isWeekend && isNight) return "border-violet-700 bg-background"
-    if (isWeekend) return "border-violet-500 bg-background"
-    if (isNight) return "border-zinc-600 bg-background"
-    return "border-primary bg-background"
-  }
-
-  if (isWeekend && isNight) {
-    return "border-transparent bg-muted hover:bg-muted/80"
-  }
-  if (isWeekend) {
-    return "border-transparent bg-muted/80 hover:bg-muted"
-  }
-  if (isNight) {
-    return "border-transparent bg-muted hover:bg-muted/80"
-  }
-  return "border-transparent bg-muted/80 hover:bg-muted"
+const WEEK_SELECTED_CLASS: Record<NoiseWeekSegment, string> = {
+  weekday: "bg-background text-foreground ring-border",
+  weekend: "map-time-weekend-chip text-foreground ring-amber-400/40",
 }
 
-const getBarStyles = (slot: NoiseTimeSlot, isSelected: boolean): string => {
-  const { week, part } = slot
-  const isNight = part === "night"
-  const isWeekend = week === "weekend"
-
-  if (isSelected) {
-    if (isWeekend && isNight) return "bg-violet-700"
-    if (isWeekend) return "bg-violet-500"
-    if (isNight) return "bg-zinc-600"
-    return "bg-primary"
-  }
-
-  if (isWeekend && isNight) return "bg-violet-600/50"
-  if (isWeekend) return "bg-violet-500/40"
-  if (isNight) return "bg-zinc-400/55"
-  return "bg-primary/35"
-}
-
-const SelectedTimeHeading = ({ slot }: { slot: NoiseTimeSlot }) => {
-  const slotLabel = formatNoiseTimeSlotShort(slot)
-
-  return (
-    <div className="flex w-fit max-w-[calc(100vw-5.5rem)] justify-end self-end text-right max-md:justify-center max-md:self-center max-md:text-center">
-      <p className="text-xs font-medium whitespace-nowrap text-foreground">
-        {slotLabel}
-      </p>
-    </div>
-  )
-}
-
-const TimeSlotButton = ({
-  slot,
-  selectedId,
-  onChange,
+const SegmentButton = ({
+  selected,
+  selectedClassName,
+  label,
+  tooltip,
   showTooltip,
+  onClick,
+  children,
 }: {
-  slot: NoiseTimeSlot
-  selectedId: string
-  onChange: (slot: NoiseTimeSlot) => void
+  selected: boolean
+  selectedClassName: string
+  label: string
+  tooltip: string
   showTooltip: boolean
-}) => {
-  const slotId = encodeNoiseTimeSlot(slot)
-  const isSelected = slotId === selectedId
-  const partMeta = NOISE_DAY_PARTS.find((part) => part.part === slot.part)
-  const partLabel = partMeta?.label ?? ""
-  const hours = partMeta?.hours ?? ""
-  const barCount = BAR_COUNT[slot.week]
-
-  return (
-    <OptionalMapTooltip
-      enabled={showTooltip}
-      side={slot.part === "day" ? "top" : "bottom"}
-      className="whitespace-nowrap"
-      content={
-        <>
-          {WEEK_SEGMENT_LABELS[slot.week]} · {hours}
-        </>
-      }
-    >
-      <button
-        type="button"
-        aria-pressed={isSelected}
-        aria-label={`${WEEK_SEGMENT_LABELS[slot.week]} ${partLabel}, ${hours}`}
-        onClick={() => onChange(slot)}
-        className={cn(
-          "inline-flex w-fit items-center justify-center rounded-lg border p-1 transition-colors",
-          slot.part === "day" ? "h-7" : "h-5",
-          getButtonStyles(slot, isSelected)
-        )}
-      >
-        <div className={cn("h-full", NOISE_BAR_ROW_CLASS)} aria-hidden="true">
-          {Array.from({ length: barCount }, (_, index) => (
-            <span
-              key={index}
-              className={cn(
-                NOISE_BAR_WIDTH_CLASS,
-                "rounded-sm",
-                getBarStyles(slot, isSelected)
-              )}
-            />
-          ))}
-        </div>
-      </button>
-    </OptionalMapTooltip>
-  )
-}
-
-export const NoiseTimeGrid = ({ value, onChange }: NoiseTimeGridProps) => {
-  const selectedId = encodeNoiseTimeSlot(value)
-  const isMobile = useIsMobile()
-
-  return (
-    <div
+  onClick: () => void
+  children: ReactNode
+}) => (
+  <OptionalMapTooltip
+    enabled={showTooltip}
+    side="top"
+    className="whitespace-nowrap"
+    content={tooltip}
+  >
+    <button
+      type="button"
+      aria-pressed={selected}
+      aria-label={label}
+      onClick={onClick}
       className={cn(
-        "map-float-chrome pointer-events-auto flex w-fit flex-col items-end space-y-1 rounded-3xl p-2 max-md:items-center max-md:space-y-1.5 max-md:pt-1.5"
+        "inline-flex h-5.5 flex-1 cursor-pointer touch-manipulation items-center justify-center gap-0.5 rounded-full px-1.5 text-[10px] leading-none font-medium whitespace-nowrap select-none",
+        "transition-[background-color,color,box-shadow] duration-200 ease-out motion-reduce:transition-none",
+        selected
+          ? cn("shadow-sm ring-1", selectedClassName)
+          : "text-muted-foreground hover:bg-background/60 hover:text-foreground"
       )}
     >
-      <div className="flex w-fit items-center justify-end gap-0.5 max-md:w-full max-md:justify-center">
-        <SelectedTimeHeading slot={value} />
+      {children}
+    </button>
+  </OptionalMapTooltip>
+)
+
+const SEGMENT_TRACK_CLASS =
+  "flex w-full items-center gap-0.5 rounded-full bg-muted/70 p-0.5"
+
+/**
+ * Compact time picker: the slice in words on top, then two segmented rows
+ * (Day/Night, weekday/weekend days). Hours live in the tooltips, aria labels
+ * and the live region. The card sizes to its content, so nothing truncates.
+ */
+export const NoiseTimePicker = ({ value, onChange }: NoiseTimePickerProps) => {
+  const isMobile = useIsMobile()
+  const title = formatNoiseTimeSlotTitle(value)
+  const hours =
+    NOISE_DAY_PARTS.find((item) => item.part === value.part)?.hours ?? ""
+  const weekDays = WEEK_SEGMENT_DAYS[value.part]
+
+  return (
+    <div className="map-float-chrome pointer-events-auto flex w-fit flex-col gap-1 rounded-[1.125rem] p-1.5 pt-1">
+      <div className="flex items-center justify-center gap-1 px-1">
+        <p className="text-[11px] leading-4 font-semibold whitespace-nowrap text-foreground">
+          {title}
+        </p>
         <Tooltip>
           <TooltipTrigger asChild>
             <button
@@ -218,46 +153,62 @@ export const NoiseTimeGrid = ({ value, onChange }: NoiseTimeGridProps) => {
             align="end"
             className="max-w-56 flex-col items-start whitespace-normal"
           >
-            {DEFRA_TIME_SLOT_NOTE}
+            {`${title}, ${hours}. ${DEFRA_TIME_SLOT_NOTE}`}
           </MapTooltipContent>
         </Tooltip>
       </div>
 
+      <div role="group" aria-label="Day or night" className={SEGMENT_TRACK_CLASS}>
+        {NOISE_DAY_PARTS.map(({ part, label, hours: partHours }) => {
+          const Icon = PART_ICON[part]
+          return (
+            <SegmentButton
+              key={part}
+              selected={value.part === part}
+              selectedClassName={PART_SELECTED_CLASS[part]}
+              label={`${label}, ${partHours}`}
+              tooltip={
+                part === "day"
+                  ? `${partHours} · light map`
+                  : `${partHours} · noise glows on a dark map`
+              }
+              showTooltip={!isMobile}
+              onClick={() => onChange({ ...value, part })}
+            >
+              <Icon aria-hidden="true" className="size-3" />
+              {label}
+            </SegmentButton>
+          )
+        })}
+      </div>
+
       <div
         role="group"
-        aria-label="Weekday or weekend and day or night noise period"
-        className={cn(
-          "grid w-fit grid-cols-[auto_auto_auto] items-center",
-          NOISE_GROUP_GAP_CLASS
-        )}
+        aria-label="Weekday or weekend"
+        className={SEGMENT_TRACK_CLASS}
       >
-        <div aria-hidden="true" />
         {WEEK_SEGMENTS.map((week) => (
-          <p
+          <SegmentButton
             key={week}
-            className="text-center text-[9px] leading-none font-medium tracking-[-0.06em] text-muted-foreground"
+            selected={value.week === week}
+            selectedClassName={WEEK_SELECTED_CLASS[week]}
+            label={`${WEEK_SEGMENT_LABELS[week]}, ${weekDays[week]}${value.part === "night" ? " nights" : ""}`}
+            tooltip={
+              week === "weekday"
+                ? `${WEEK_SEGMENT_LABELS[week]} · ${weekDays[week]}${value.part === "night" ? " nights" : ""}`
+                : `${WEEK_SEGMENT_LABELS[week]} · ${weekDays[week]}${value.part === "night" ? " nights" : ""} · warm frame`
+            }
+            showTooltip={!isMobile}
+            onClick={() => onChange({ ...value, week })}
           >
-            {WEEK_SEGMENT_LETTERS[week].replace(/ /g, "")}
-          </p>
-        ))}
-
-        {NOISE_DAY_PARTS.map(({ part, label }) => (
-          <Fragment key={part}>
-            <p className="pr-0.5 text-[10px] font-medium text-muted-foreground">
-              {label}
-            </p>
-            {WEEK_SEGMENTS.map((week) => (
-              <TimeSlotButton
-                key={encodeNoiseTimeSlot({ week, part: part as NoiseDayPart })}
-                slot={{ week, part: part as NoiseDayPart }}
-                selectedId={selectedId}
-                onChange={onChange}
-                showTooltip={!isMobile}
-              />
-            ))}
-          </Fragment>
+            {weekDays[week]}
+          </SegmentButton>
         ))}
       </div>
+
+      <p aria-live="polite" className="sr-only">
+        {`Showing ${title.toLowerCase()} noise, ${hours}.`}
+      </p>
     </div>
   )
 }
