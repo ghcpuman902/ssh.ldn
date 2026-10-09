@@ -1,13 +1,33 @@
 import type { DefraMapKind } from "@/lib/map/defra-layers";
 
 /** DEFRA contour colours, quietest first. */
-export const DEFRA_RASTER_BANDS = [
+const DEFRA_RASTER_BANDS = [
   { rgb: [0, 176, 80], intensity: 0.2 },
   { rgb: [146, 208, 80], intensity: 0.35 },
   { rgb: [255, 255, 0], intensity: 0.5 },
   { rgb: [255, 192, 0], intensity: 0.65 },
   { rgb: [255, 0, 0], intensity: 0.82 },
   { rgb: [112, 48, 160], intensity: 1 },
+] as const;
+
+/**
+ * The colours the Round 4 WMS styles actually paint (road, rail and airport,
+ * day and night), quietest first. It is a diverging ramp: white and cool
+ * greens for quiet, then tan → orange → red → purple for loud. The order comes
+ * from which bands touch in real tiles.
+ */
+export const DEFRA_ROUND4_PALETTE = [
+  [255, 255, 255],
+  [160, 186, 191],
+  [184, 214, 209],
+  [206, 228, 204],
+  [226, 242, 191],
+  [243, 198, 131],
+  [232, 126, 77],
+  [205, 70, 62],
+  [161, 26, 77],
+  [117, 8, 92],
+  [67, 10, 74],
 ] as const;
 
 /** Ignore faint or mostly transparent pixels that are not visible on the map. */

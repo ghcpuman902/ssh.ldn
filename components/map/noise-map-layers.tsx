@@ -225,7 +225,7 @@ const DefraNoiseRasterLayers = ({
           type="raster"
           tiles={[
             glow
-              ? nightGlowTileUrl(defraTileUrl(kind, period))
+              ? nightGlowTileUrl(defraTileUrl(kind, period), "defra")
               : defraTileUrl(kind, period),
           ]}
           tileSize={256}
@@ -241,9 +241,8 @@ const DefraNoiseRasterLayers = ({
               "raster-opacity": Math.min(getOpacity(kind), 0.95),
               "raster-fade-duration": rasterFadeMs,
               // DEFRA noise is categorical dB bands — keep crisp band edges
-              // when overzooming past the cached level. At night the soft
-              // edge is the point: it reads as light spilling, not a grid.
-              "raster-resampling": glow ? "linear" : "nearest",
+              // when overzooming past the cached level, day and night.
+              "raster-resampling": "nearest",
             }}
           />
         </Source>
@@ -276,19 +275,30 @@ const PoiDensityRasterLayer = ({
   opacity: number
 }) => {
   const slot = poiDensitySlotFromParts(timeSlot)
+  const isNight = timeSlot.part === "night"
+  const glowReady = useNightGlowReady()
+  const glow = isNight && glowReady
+  const id = `poi-density-${slot}${glow ? "-glow" : ""}`
+
+  // Same as the DEFRA rasters: wait for the protocol instead of fetching twice.
+  if (isNight && !glowReady) return null
 
   return (
     <Source
-      key={`poi-density-${slot}`}
-      id={`poi-density-${slot}`}
+      key={id}
+      id={id}
       type="raster"
-      tiles={[poiDensityTileUrl(slot)]}
+      tiles={[
+        glow
+          ? nightGlowTileUrl(poiDensityTileUrl(slot), "venues")
+          : poiDensityTileUrl(slot),
+      ]}
       tileSize={256}
       minzoom={POI_DENSITY_TILE_MIN_ZOOM}
       maxzoom={POI_DENSITY_PAINT_MAX_ZOOM}
     >
       <Layer
-        id={`poi-density-${slot}-layer`}
+        id={`${id}-layer`}
         type="raster"
         beforeId={NOISE_OVERLAY_SLOT_ID}
         layout={{ visibility: layerVisibility(visible) }}
