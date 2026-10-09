@@ -31,7 +31,7 @@ export const metadata: Metadata = {
 }
 
 const CodeBlock = ({ children }: { children: string }) => (
-  <pre className="overflow-x-auto rounded-xl border border-border bg-muted/40 p-4 text-sm text-foreground">
+  <pre tabIndex={0} className="overflow-x-auto rounded-xl border border-border bg-muted/40 p-4 text-sm text-foreground">
     <code>{children}</code>
   </pre>
 )
