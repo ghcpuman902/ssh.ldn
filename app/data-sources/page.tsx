@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import Link from "next/link"
 
 import {
@@ -9,11 +10,28 @@ import {
   VISUAL_DATA_CREDITS,
 } from "@/lib/map/data-credits"
 import { DEFRA_TIME_SLOT_NOTE } from "@/lib/map/noise-time"
+import { SITE_NAME, SITE_URL } from "@/lib/site"
 
-export const metadata = {
-  title: "Data sources — ssh-ldn",
-  description:
-    "Dataset attributions and licences for the ssh-ldn London noise map.",
+const DATA_SOURCES_DESCRIPTION =
+  "Dataset attributions and licences for the ssh-ldn London noise map: DEFRA Round 4 noise maps, OpenStreetMap, Transport for London and OpenFreeMap."
+
+export const metadata: Metadata = {
+  title: "Data sources",
+  description: DATA_SOURCES_DESCRIPTION,
+  alternates: { canonical: "/data-sources" },
+  openGraph: {
+    title: `Data sources — ${SITE_NAME}`,
+    description: DATA_SOURCES_DESCRIPTION,
+    url: `${SITE_URL}/data-sources`,
+    siteName: SITE_NAME,
+    locale: "en_GB",
+    type: "article",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `Data sources — ${SITE_NAME}`,
+    description: DATA_SOURCES_DESCRIPTION,
+  },
 }
 
 const CreditCard = ({ credit }: { credit: DataCredit }) => (

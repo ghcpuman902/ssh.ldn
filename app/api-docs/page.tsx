@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import Link from "next/link"
 
 import {
@@ -7,10 +8,26 @@ import {
   SITE_URL,
 } from "@/lib/site"
 
-export const metadata = {
-  title: `API docs — ${SITE_NAME}`,
-  description:
-    "Public read-only API and MCP tools for turning a London address into a noise score and explanation.",
+const API_DOCS_DESCRIPTION =
+  "Public read-only API and MCP tools for turning a London address into a noise score and explanation."
+
+export const metadata: Metadata = {
+  title: "API docs",
+  description: API_DOCS_DESCRIPTION,
+  alternates: { canonical: "/api-docs" },
+  openGraph: {
+    title: `API docs — ${SITE_NAME}`,
+    description: API_DOCS_DESCRIPTION,
+    url: `${SITE_URL}/api-docs`,
+    siteName: SITE_NAME,
+    locale: "en_GB",
+    type: "article",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `API docs — ${SITE_NAME}`,
+    description: API_DOCS_DESCRIPTION,
+  },
 }
 
 const CodeBlock = ({ children }: { children: string }) => (

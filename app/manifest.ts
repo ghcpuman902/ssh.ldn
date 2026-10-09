@@ -11,8 +11,11 @@ export default function manifest(): MetadataRoute.Manifest {
     name: SITE_NAME,
     short_name: SITE_SHORT_NAME,
     description: SITE_DESCRIPTION,
+    id: "/",
     start_url: "/",
+    scope: "/",
     display: "standalone",
+    orientation: "any",
     background_color: "#ffffff",
     theme_color: "#ffffff",
     lang: "en-GB",
@@ -21,6 +24,11 @@ export default function manifest(): MetadataRoute.Manifest {
       {
         src: "/icon",
         sizes: "32x32",
+        type: "image/png",
+      },
+      {
+        src: "/apple-icon",
+        sizes: "180x180",
         type: "image/png",
       },
     ],

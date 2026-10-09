@@ -1,4 +1,4 @@
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { Geist, Geist_Mono, Inter } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 
@@ -10,6 +10,7 @@ import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import {
   SITE_DESCRIPTION,
+  SITE_GITHUB_URL,
   SITE_KEYWORDS,
   SITE_NAME,
   SITE_TITLE,
@@ -24,15 +25,34 @@ const fontMono = Geist_Mono({
   variable: "--font-mono",
 })
 
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+  ],
+}
+
+// Canonical URLs are set per page; a layout-level canonical would leak onto
+// every child route. The default share image comes from `opengraph-image.tsx`
+// and `twitter-image.tsx`.
 export const metadata: Metadata = {
-  title: SITE_TITLE,
+  title: { default: SITE_TITLE, template: `%s — ${SITE_NAME}` },
   description: SITE_DESCRIPTION,
   metadataBase: new URL(SITE_URL),
   applicationName: SITE_NAME,
   keywords: SITE_KEYWORDS,
   category: "utilities",
-  alternates: {
-    canonical: "/",
+  authors: [{ name: SITE_NAME, url: SITE_GITHUB_URL }],
+  creator: SITE_NAME,
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
   openGraph: {
     title: SITE_TITLE,
@@ -41,13 +61,11 @@ export const metadata: Metadata = {
     siteName: SITE_NAME,
     locale: "en_GB",
     type: "website",
-    images: [{ url: "/readme-screenshot.png", width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
-    images: ["/readme-screenshot.png"],
   },
 }
 

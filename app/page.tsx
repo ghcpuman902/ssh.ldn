@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { connection } from "next/server"
 import { preconnect, prefetchDNS, preload } from "react-dom"
 
+import { HomeSummary } from "@/components/home-summary"
 import { MapPage } from "@/components/map/map-page"
 import {
   buildShareCardPath,
@@ -32,7 +33,7 @@ export const generateMetadata = async ({
 }: HomePageProps): Promise<Metadata> => {
   const params = await searchParams
   const card = parseShareCardSearchParams(params)
-  if (!card) return {}
+  if (!card) return { alternates: { canonical: "/" } }
 
   const lines = splitShareAddress(card.address)
   const title = formatShareMetaTitle(lines, card.score)
@@ -42,7 +43,7 @@ export const generateMetadata = async ({
   const query = buildShareQuery({ ...card, timeSlot })
 
   return {
-    title,
+    title: { absolute: title },
     description,
     alternates: {
       canonical: `/?${query}`,
@@ -91,6 +92,7 @@ export default function Page() {
   return (
     <>
       <MapPage />
+      <HomeSummary />
       <Suspense>
         <Connection />
       </Suspense>
