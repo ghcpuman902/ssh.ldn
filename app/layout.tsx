@@ -4,6 +4,7 @@ import { Analytics } from "@vercel/analytics/next"
 
 import "./globals.css"
 import { SiteJsonLd } from "@/components/site-json-ld"
+import { ThemeColorSync } from "@/components/theme-color-sync"
 import { ThemeProvider } from "@/components/theme-provider"
 import { ThemeShortcuts } from "@/components/theme-shortcuts"
 import { Toaster } from "@/components/ui/sonner"
@@ -16,6 +17,7 @@ import {
   SITE_TITLE,
   SITE_URL,
 } from "@/lib/site"
+import { THEME_COLOR_SCRIPT, THEME_COLORS } from "@/lib/theme-color"
 import { cn } from "@/lib/utils"
 
 const inter = Inter({subsets:['latin'],variable:'--font-sans'})
@@ -25,10 +27,12 @@ const fontMono = Geist_Mono({
   variable: "--font-mono",
 })
 
+// Without JS these follow the OS; THEME_COLOR_SCRIPT and ThemeColorSync
+// repoint them at the site theme, which is a manual toggle.
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+    { media: "(prefers-color-scheme: light)", color: THEME_COLORS.light },
+    { media: "(prefers-color-scheme: dark)", color: THEME_COLORS.dark },
   ],
 }
 
@@ -78,11 +82,18 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn("antialiased", fontMono.variable, "font-sans", inter.variable)}
+      className={cn(
+        "bg-background antialiased",
+        fontMono.variable,
+        "font-sans",
+        inter.variable
+      )}
     >
       <body>
+        <script dangerouslySetInnerHTML={{ __html: THEME_COLOR_SCRIPT }} />
         <SiteJsonLd />
         <ThemeProvider>
+          <ThemeColorSync />
           <ThemeShortcuts />
           <TooltipProvider>{children}</TooltipProvider>
           <Toaster position="top-center" />

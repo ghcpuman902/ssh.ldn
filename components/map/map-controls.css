@@ -266,12 +266,26 @@
   transition: opacity 600ms ease-out;
 }
 
-.dark .map-time-frame {
-  --map-weekend-strength: 18%;
-}
-
 .map-time-frame[data-part="night"] {
   --map-weekend-a: var(--noise-music-venue);
+}
+
+/* On near-black chrome violet and fuchsia read as a purple page edge, so dark
+   theme keeps the glow warm (amber + rose), day or night, and quieter. */
+.dark .map-time-frame,
+.dark .map-time-frame[data-part="night"] {
+  --map-weekend-a: var(--noise-traffic);
+  --map-weekend-b: oklch(0.7 0.17 25);
+  --map-weekend-strength: 14%;
+}
+
+/* Phones: keep the strip under the status bar the plain page colour. iOS 26
+   Safari tints its bars from the top edge of the page, not theme-color. */
+@media (max-width: 767px) {
+  .map-time-frame {
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 3rem);
+    mask-image: linear-gradient(to bottom, transparent 0, #000 3rem);
+  }
 }
 
 .map-time-frame[data-week="weekend"] {
