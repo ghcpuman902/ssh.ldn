@@ -284,6 +284,51 @@ const GreenSpacesToggle = ({
   )
 }
 
+/**
+ * Phones only (desktop has the speaker by "Noise layers"). One thumb-sized
+ * switch that silences every sound layer at once; pressed = muted. The shell
+ * remembers it, so sound stays off on the next visit.
+ */
+const MuteAllToggle = ({
+  muted,
+  onToggle,
+}: {
+  muted: boolean
+  onToggle: () => void
+}) => {
+  const { pressed, pressHandlers } = useTogglePress()
+
+  return (
+    <div className="map-layer-icons pointer-events-auto flex md:hidden">
+      <button
+        type="button"
+        aria-pressed={muted}
+        aria-label="Mute all sound"
+        onClick={onToggle}
+        {...pressHandlers}
+        className="relative flex size-7 cursor-pointer touch-manipulation items-center justify-center rounded-full p-0 select-none before:absolute before:-inset-2 before:content-['']"
+      >
+        <span
+          className={cn(
+            "relative flex size-full items-center justify-center rounded-full",
+            "transition-[transform,background-color,color] duration-150 ease-out motion-reduce:transition-none",
+            pressed ? "scale-[0.8]" : "scale-100",
+            muted
+              ? "bg-foreground text-background"
+              : "bg-background text-foreground"
+          )}
+        >
+          {muted ? (
+            <VolumeX className="size-3.5" aria-hidden="true" />
+          ) : (
+            <Volume2 className="size-3.5" aria-hidden="true" />
+          )}
+        </span>
+      </button>
+    </div>
+  )
+}
+
 const LAYER_TOGGLE_HINT_KEY = "ssh.ldn.layer-toggle-hint-seen"
 /** Long enough to read once, short enough to be gone before it nags. */
 const LAYER_TOGGLE_HINT_MS = 5000
@@ -457,6 +502,11 @@ export const NoiseLayerControls = ({
     onAudioEnabledChange(!audioEnabled)
   }
 
+  const handleMuteAllToggle = () => {
+    layerCaption.announce("Sound", !audioEnabled)
+    handleAudioToggle()
+  }
+
   const nightlifeSegments = visibility.nightlife
     ? buildNightlifeSegments(localAmenityPercentages)
     : undefined
@@ -583,19 +633,25 @@ export const NoiseLayerControls = ({
           </OptionalMapTooltip>
         </div>
 
-        <div
-          role="group"
-          aria-label="Visual layer visibility"
-          className="map-layer-icons pointer-events-auto flex w-fit flex-row gap-1"
-        >
-          <TubeLayerToggle
-            active={transitLayersActive}
-            onToggle={handleTransitToggle}
+        <div className="flex items-center gap-2">
+          <MuteAllToggle
+            muted={!audioEnabled}
+            onToggle={handleMuteAllToggle}
           />
-          <GreenSpacesToggle
-            active={visualVisibility.greenSpaces}
-            onToggle={handleGreenSpacesToggle}
-          />
+          <div
+            role="group"
+            aria-label="Visual layer visibility"
+            className="map-layer-icons pointer-events-auto flex w-fit flex-row gap-1"
+          >
+            <TubeLayerToggle
+              active={transitLayersActive}
+              onToggle={handleTransitToggle}
+            />
+            <GreenSpacesToggle
+              active={visualVisibility.greenSpaces}
+              onToggle={handleGreenSpacesToggle}
+            />
+          </div>
         </div>
       </div>
     </section>

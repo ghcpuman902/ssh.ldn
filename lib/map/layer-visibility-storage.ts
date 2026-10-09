@@ -86,3 +86,30 @@ export const writeVisualLayerVisibility = (
     JSON.stringify(visibility)
   )
 }
+
+const SOUND_MUTED_KEY = "ssh.ldn.sound-muted"
+
+/** Mute-all for the sound preview; remembered so phones stay quiet on return. */
+export const readSoundMuted = (): boolean => {
+  if (typeof window === "undefined") {
+    return false
+  }
+
+  try {
+    return window.localStorage.getItem(SOUND_MUTED_KEY) === "1"
+  } catch {
+    return false
+  }
+}
+
+export const writeSoundMuted = (muted: boolean): void => {
+  if (typeof window === "undefined") {
+    return
+  }
+
+  try {
+    window.localStorage.setItem(SOUND_MUTED_KEY, muted ? "1" : "0")
+  } catch {
+    // Private mode: the mute holds for this visit only.
+  }
+}

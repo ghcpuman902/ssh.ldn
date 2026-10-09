@@ -79,8 +79,10 @@ import {
 } from "@/lib/map/nightlife-emoji-images"
 import {
   readNoiseLayerVisibility,
+  readSoundMuted,
   readVisualLayerVisibility,
   writeNoiseLayerVisibility,
+  writeSoundMuted,
   writeVisualLayerVisibility,
 } from "@/lib/map/layer-visibility-storage"
 import { noiseAudioEngine } from "@/lib/map/noise-audio-engine"
@@ -271,9 +273,10 @@ export const MapShell = () => {
     setInitialMapTheme(mapThemeForTimeSlot(initialSlot))
   }, [])
 
+  // Phones start with sound on unless the visitor muted it last time.
   useEffect(() => {
     if (!isMobile) return
-    setAudioEnabled(true)
+    setAudioEnabled(!readSoundMuted())
   }, [isMobile])
 
   useEffect(() => {
@@ -950,6 +953,7 @@ export const MapShell = () => {
         noiseAudioEngine.unlockFromUserGesture()
       }
       setAudioEnabled(nextEnabled)
+      writeSoundMuted(!nextEnabled)
 
       if (!isMobile) return
 
@@ -977,7 +981,7 @@ export const MapShell = () => {
       isMobile ||
       (typeof window !== "undefined" && window.innerWidth < 768)
 
-    if (!mobileViewport && !audioEnabled) return
+    if (!audioEnabled && (!mobileViewport || readSoundMuted())) return
 
     noiseAudioEngine.unlockFromUserGesture()
     if (mobileViewport && !audioEnabled) {
