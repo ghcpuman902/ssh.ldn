@@ -276,12 +276,13 @@ const PoiDensityRasterLayer = ({
 }) => {
   const slot = poiDensitySlotFromParts(timeSlot)
   const isNight = timeSlot.part === "night"
-  const glowReady = useNightGlowReady()
-  const glow = isNight && glowReady
-  const id = `poi-density-${slot}${glow ? "-glow" : ""}`
+  const protocolReady = useNightGlowReady()
+  const id = `poi-density-${slot}`
 
-  // Same as the DEFRA rasters: wait for the protocol instead of fetching twice.
-  if (isNight && !glowReady) return null
+  // Density tiles fade out in a smooth alpha gradient, so day and night both
+  // go through the protocol to flatten it into hard-edged bands. Wait for it
+  // rather than fetching the soft tiles first.
+  if (!protocolReady) return null
 
   return (
     <Source
@@ -289,9 +290,10 @@ const PoiDensityRasterLayer = ({
       id={id}
       type="raster"
       tiles={[
-        glow
-          ? nightGlowTileUrl(poiDensityTileUrl(slot), "venues")
-          : poiDensityTileUrl(slot),
+        nightGlowTileUrl(
+          poiDensityTileUrl(slot),
+          isNight ? "venues" : "venues-day"
+        ),
       ]}
       tileSize={256}
       minzoom={POI_DENSITY_TILE_MIN_ZOOM}
@@ -312,7 +314,11 @@ const PoiDensityRasterLayer = ({
   )
 }
 
-/** Local source markers — always on top of noise heatmaps. */
+/**
+ * Local source markers. The lights sit in the noise slot with the rasters; the
+ * emoji draw above everything. There's no blurred halo around them: the
+ * density raster already shows each venue's footprint, as crisp pixels.
+ */
 const NightlifeVenueLayers = ({
   visible,
   data,
@@ -326,145 +332,6 @@ const NightlifeVenueLayers = ({
 
   return (
     <Source id="nightlife-venues" type="geojson" data={data}>
-      <Layer
-        id="nightlife-venues-noise-aura"
-        type="circle"
-        beforeId={NOISE_OVERLAY_SLOT_ID}
-        minzoom={lightMinZoom}
-        filter={ACTIVE_LOCAL_SOURCE_FILTER}
-        layout={{
-          visibility: layerVisibility(visible),
-        }}
-        paint={{
-          "circle-radius": [
-            "interpolate",
-            ["linear"],
-            ["zoom"],
-            9.8,
-            0,
-            11,
-            [
-              "interpolate",
-              ["linear"],
-              ["coalesce", ["get", "heatWeight"], 0],
-              0,
-              2,
-              0.5,
-              7,
-              1,
-              12,
-            ],
-            13.5,
-            [
-              "interpolate",
-              ["linear"],
-              ["coalesce", ["get", "heatWeight"], 0],
-              0,
-              5,
-              0.5,
-              13,
-              1,
-              22,
-            ],
-            16,
-            [
-              "interpolate",
-              ["linear"],
-              ["coalesce", ["get", "heatWeight"], 0],
-              0,
-              6,
-              0.5,
-              16,
-              1,
-              26,
-            ],
-          ],
-          "circle-color": [
-            "match",
-            ["get", "amenity"],
-            "pub",
-            "rgba(249, 115, 22, 0.58)",
-            "bar",
-            "rgba(249, 115, 22, 0.58)",
-            "nightclub",
-            "rgba(239, 68, 68, 0.62)",
-            "music_venue",
-            "rgba(239, 68, 68, 0.6)",
-            "hospital",
-            "rgba(59, 130, 246, 0.42)",
-            "rgba(234, 179, 8, 0.44)",
-          ],
-          "circle-opacity": [
-            "interpolate",
-            ["linear"],
-            ["zoom"],
-            9.8,
-            0,
-            11,
-            [
-              "*",
-              opacity * 0.14,
-              [
-                "interpolate",
-                ["linear"],
-                ["coalesce", ["get", "heatWeight"], 0],
-                0,
-                0.04,
-                0.5,
-                0.26,
-                1,
-                0.42,
-              ],
-            ],
-            13.5,
-            [
-              "*",
-              opacity * 0.22,
-              [
-                "interpolate",
-                ["linear"],
-                ["coalesce", ["get", "heatWeight"], 0],
-                0,
-                0.05,
-                0.5,
-                0.3,
-                1,
-                0.5,
-              ],
-            ],
-            16,
-            [
-              "*",
-              opacity * 0.16,
-              [
-                "interpolate",
-                ["linear"],
-                ["coalesce", ["get", "heatWeight"], 0],
-                0,
-                0.04,
-                0.5,
-                0.24,
-                1,
-                0.42,
-              ],
-            ],
-          ],
-          "circle-blur": [
-            "match",
-            ["get", "amenity"],
-            "pub",
-            0.7,
-            "bar",
-            0.7,
-            "nightclub",
-            0.65,
-            "music_venue",
-            0.65,
-            0.85,
-          ],
-          "circle-stroke-width": 0,
-        }}
-      />
       <Layer
         id="nightlife-venues-noise-core"
         type="circle"

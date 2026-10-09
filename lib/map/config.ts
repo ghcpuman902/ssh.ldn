@@ -52,11 +52,15 @@ export const isWithinLondonBounds = (latitude: number, longitude: number) =>
 const OSM_ATTRIBUTION =
   "© OpenStreetMap contributors · © OpenFreeMap"
 
-/** Retina-aware canvas scale; cap at 2× so first paint stays sharp without 3× tile cost. */
+/**
+ * Match the device's pixel ratio (up to 3×). Tile count doesn't depend on it,
+ * only fill. Capping at 2× on 3× phones made the browser stretch the canvas
+ * 1.5× with smoothing, which softened every noise pixel edge.
+ */
 export const getMapPixelRatio = () => {
   if (typeof window === "undefined") return 1
 
-  return Math.min(Math.max(window.devicePixelRatio || 1, 1), 2)
+  return Math.min(Math.max(window.devicePixelRatio || 1, 1), 3)
 }
 
 export const MAP_CONFIG = {

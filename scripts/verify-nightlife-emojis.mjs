@@ -87,7 +87,7 @@ const main = async () => {
       layers: ["nightlife-venues-symbol"],
     })
     const renderedCircles = map.queryRenderedFeatures({
-      layers: ["nightlife-venues-noise-aura"],
+      layers: ["nightlife-venues-noise-core"],
     })
 
     const center = map.getCenter()

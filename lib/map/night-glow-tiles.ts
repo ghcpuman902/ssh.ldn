@@ -5,7 +5,9 @@ import { DEFRA_ROUND4_PALETTE } from "@/lib/map/defra-raster-legend"
  * basemap: quiet bands fade into the dark, a warm amber glow builds with
  * loudness, and from the red band up it turns white-hot and then icy blue, so
  * busy roads read as charged cores in an amber falloff (noise, not
- * streetlight). Brighter (luminance × alpha) always means louder. Runs once per tile (not per frame); gauges and audio sample
+ * streetlight). Brighter (luminance × alpha) always means louder. Venue
+ * density tiles also come through here by day, to flatten their alpha into
+ * hard-edged bands. Runs once per tile (not per frame); gauges and audio sample
  * the original tiles, so the data is untouched.
  */
 export const NIGHT_GLOW_PROTOCOL = "ssh-glow"
@@ -13,10 +15,32 @@ export const NIGHT_GLOW_PROTOCOL = "ssh-glow"
 type Rgb = readonly [number, number, number]
 type Glow = readonly [number, number, number, number]
 
-/** [r, g, b, alpha 0–1] per band, indexed like the source palette. */
-type GlowPalette = { source: ReadonlyArray<Rgb>; glow: ReadonlyArray<Glow> }
+/**
+ * `glow` is [r, g, b, alpha 0–1] per band, indexed like the source palette.
+ * `flatAlpha` (0–255) replaces the source pixel's alpha per band, for tiles
+ * whose alpha is a smooth gradient: without it they read as soft blobs even
+ * with nearest resampling.
+ */
+type GlowPalette = {
+  source: ReadonlyArray<Rgb>
+  glow: ReadonlyArray<Glow>
+  flatAlpha?: ReadonlyArray<number>
+}
 
-export type NightGlowPalette = "defra" | "venues"
+/** "venues-day" keeps the day colours and only flattens the alpha. */
+export type NightGlowPalette = "defra" | "venues" | "venues-day"
+
+// POI density ramp from scripts/generate-poi-density-tiles.mjs, sparsest
+// first, and the middle of each band's alpha range there (34–72, 83–120,
+// 126–168, 171–206, 203–224).
+const VENUE_SOURCE: ReadonlyArray<Rgb> = [
+  [56, 189, 248],
+  [34, 197, 94],
+  [250, 204, 21],
+  [249, 115, 22],
+  [239, 68, 68],
+]
+const VENUE_FLAT_ALPHA = [56, 100, 146, 188, 216]
 
 const GLOW_PALETTES: Record<NightGlowPalette, GlowPalette> = {
   defra: {
@@ -35,16 +59,9 @@ const GLOW_PALETTES: Record<NightGlowPalette, GlowPalette> = {
       [200, 230, 255, 1],
     ],
   },
-  // POI density ramp from scripts/generate-poi-density-tiles.mjs, sparsest
-  // first. A rosier ember than the roads, so venues stay distinguishable.
+  // A rosier ember than the roads, so venues stay distinguishable.
   venues: {
-    source: [
-      [56, 189, 248],
-      [34, 197, 94],
-      [250, 204, 21],
-      [249, 115, 22],
-      [239, 68, 68],
-    ],
+    source: VENUE_SOURCE,
     glow: [
       [170, 80, 60, 1],
       [215, 110, 80, 1],
@@ -52,6 +69,12 @@ const GLOW_PALETTES: Record<NightGlowPalette, GlowPalette> = {
       [255, 185, 140, 1],
       [255, 215, 190, 1],
     ],
+    flatAlpha: VENUE_FLAT_ALPHA,
+  },
+  "venues-day": {
+    source: VENUE_SOURCE,
+    glow: VENUE_SOURCE.map(([red, green, blue]) => [red, green, blue, 1]),
+    flatAlpha: VENUE_FLAT_ALPHA,
   },
 }
 
@@ -106,7 +129,9 @@ const recolourToGlow = (pixels: Uint8ClampedArray, palette: GlowPalette) => {
     pixels[index] = glow[0]
     pixels[index + 1] = glow[1]
     pixels[index + 2] = glow[2]
-    pixels[index + 3] = Math.round(alpha * glow[3])
+    pixels[index + 3] = Math.round(
+      (palette.flatAlpha?.[band] ?? alpha) * glow[3]
+    )
   }
 }
 
