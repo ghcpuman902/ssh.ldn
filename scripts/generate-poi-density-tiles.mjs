@@ -221,7 +221,9 @@ const probeDatesForSlot = (slot) => {
     ])
   }
 
-  const nightStarts = week === "weekday" ? [6, 7, 8, 9] : [10, 11]
+  // Nights belong to the evening they start: Sun–Thu weekday, Fri–Sat weekend
+  // (matches slotToProbeDates in lib/map/venue-time.ts).
+  const nightStarts = week === "weekday" ? [5, 6, 7, 8, 9] : [10, 11]
   return nightStarts.flatMap((day) => [
     new Date(Date.UTC(year, month, day, 23, 0, 0)),
     new Date(Date.UTC(year, month, day + 1, 1, 0, 0)),

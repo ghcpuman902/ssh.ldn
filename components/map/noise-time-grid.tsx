@@ -122,8 +122,9 @@ const SEGMENT_TRACK_CLASS =
 
 /**
  * Compact time picker: the slice in words on top, then two segmented rows
- * (Day/Night, weekday/weekend days). Hours live in the tooltips, aria labels
- * and the live region. The card sizes to its content, so nothing truncates.
+ * (Day/Night, Weekday/Weekend). Hours and the exact days live in the tooltips,
+ * aria labels and the live region. The card sizes to its content, so nothing
+ * truncates.
  */
 export const NoiseTimePicker = ({ value, onChange }: NoiseTimePickerProps) => {
   const isMobile = useIsMobile()
@@ -187,23 +188,27 @@ export const NoiseTimePicker = ({ value, onChange }: NoiseTimePickerProps) => {
         aria-label="Weekday or weekend"
         className={SEGMENT_TRACK_CLASS}
       >
-        {WEEK_SEGMENTS.map((week) => (
-          <SegmentButton
-            key={week}
-            selected={value.week === week}
-            selectedClassName={WEEK_SELECTED_CLASS[week]}
-            label={`${WEEK_SEGMENT_LABELS[week]}, ${weekDays[week]}${value.part === "night" ? " nights" : ""}`}
-            tooltip={
-              week === "weekday"
-                ? `${WEEK_SEGMENT_LABELS[week]} · ${weekDays[week]}${value.part === "night" ? " nights" : ""}`
-                : `${WEEK_SEGMENT_LABELS[week]} · ${weekDays[week]}${value.part === "night" ? " nights" : ""} · warm frame`
-            }
-            showTooltip={!isMobile}
-            onClick={() => onChange({ ...value, week })}
-          >
-            {weekDays[week]}
-          </SegmentButton>
-        ))}
+        {WEEK_SEGMENTS.map((week) => {
+          const days = `${weekDays[week]}${value.part === "night" ? " nights" : ""}`
+          return (
+            <SegmentButton
+              key={week}
+              selected={value.week === week}
+              selectedClassName={WEEK_SELECTED_CLASS[week]}
+              label={`${WEEK_SEGMENT_LABELS[week]}, ${days}`}
+              tooltip={
+                week === "weekday"
+                  ? `${WEEK_SEGMENT_LABELS[week]} · ${days}`
+                  : `${WEEK_SEGMENT_LABELS[week]} · ${days} · warm frame`
+              }
+              showTooltip={!isMobile}
+              onClick={() => onChange({ ...value, week })}
+            >
+              {/* Stable words, so switching Day/Night never moves the row. */}
+              {WEEK_SEGMENT_LABELS[week]}
+            </SegmentButton>
+          )
+        })}
       </div>
 
       <p aria-live="polite" className="sr-only">
