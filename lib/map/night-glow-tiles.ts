@@ -3,9 +3,11 @@ import { DEFRA_ROUND4_PALETTE } from "@/lib/map/defra-raster-legend"
 /**
  * Night tiles go through this protocol so noise reads as light on the dark
  * basemap: quiet bands fade into the dark, a warm amber glow builds with
- * loudness, and from the red band up it turns white-hot and then icy blue, so
+ * loudness, and from the red band up it cools through pale to icy blue, so
  * busy roads read as charged cores in an amber falloff (noise, not
- * streetlight). Brighter (luminance × alpha) always means louder. Venue
+ * streetlight). Brighter (luminance × alpha) always means louder, but the top
+ * bands are compressed (alpha ≤ 0.58) so labels, transit lines and the river
+ * stay readable through the loudest cores. Venue
  * density tiles also come through here by day, to flatten their alpha into
  * hard-edged bands. Runs once per tile (not per frame); gauges and audio sample
  * the original tiles, so the data is untouched.
@@ -49,25 +51,25 @@ const GLOW_PALETTES: Record<NightGlowPalette, GlowPalette> = {
       [0, 0, 0, 0],
       [0, 0, 0, 0],
       [0, 0, 0, 0],
-      [130, 68, 28, 0.07],
-      [150, 80, 32, 0.12],
-      [205, 120, 48, 0.24],
-      [250, 160, 70, 0.5],
-      [255, 226, 180, 0.6],
-      [240, 240, 245, 0.8],
-      [210, 232, 255, 0.95],
-      [200, 230, 255, 1],
+      [130, 68, 28, 0.05],
+      [150, 80, 32, 0.09],
+      [205, 120, 48, 0.16],
+      [245, 150, 66, 0.32],
+      [250, 196, 140, 0.42],
+      [232, 222, 220, 0.44],
+      [200, 216, 240, 0.52],
+      [186, 212, 248, 0.58],
     ],
   },
   // A rosier ember than the roads, so venues stay distinguishable.
   venues: {
     source: VENUE_SOURCE,
     glow: [
-      [170, 80, 60, 1],
-      [215, 110, 80, 1],
-      [245, 150, 100, 1],
-      [255, 185, 140, 1],
-      [255, 215, 190, 1],
+      [170, 80, 60, 0.35],
+      [215, 110, 80, 0.55],
+      [245, 150, 100, 0.58],
+      [250, 175, 130, 0.6],
+      [250, 195, 165, 0.62],
     ],
     flatAlpha: VENUE_FLAT_ALPHA,
   },
