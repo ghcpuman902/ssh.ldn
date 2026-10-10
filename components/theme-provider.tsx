@@ -10,8 +10,9 @@ function ThemeProvider({
   return (
     <NextThemesProvider
       attribute="class"
-      defaultTheme="light"
-      enableSystem={false}
+      defaultTheme="system"
+      enableSystem
+      storageKey="ssh-ldn-theme-system"
       disableTransitionOnChange
       {...props}
     >

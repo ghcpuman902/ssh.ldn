@@ -6,7 +6,6 @@ import "./globals.css"
 import { SiteJsonLd } from "@/components/site-json-ld"
 import { ThemeColorSync } from "@/components/theme-color-sync"
 import { ThemeProvider } from "@/components/theme-provider"
-import { ThemeShortcuts } from "@/components/theme-shortcuts"
 import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import {
@@ -27,9 +26,10 @@ const fontMono = Geist_Mono({
   variable: "--font-mono",
 })
 
-// Without JS these follow the OS; THEME_COLOR_SCRIPT and ThemeColorSync
-// repoint them at the site theme, which is a manual toggle.
+// The site theme follows the OS (prefers-color-scheme); ThemeColorSync keeps
+// the status bar in step with live changes.
 export const viewport: Viewport = {
+  colorScheme: "light dark",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: THEME_COLORS.light },
     { media: "(prefers-color-scheme: dark)", color: THEME_COLORS.dark },
@@ -94,7 +94,6 @@ export default function RootLayout({
         <SiteJsonLd />
         <ThemeProvider>
           <ThemeColorSync />
-          <ThemeShortcuts />
           <TooltipProvider>{children}</TooltipProvider>
           <Toaster position="top-center" />
         </ThemeProvider>
