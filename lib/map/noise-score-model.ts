@@ -25,15 +25,6 @@ export const NOISE_SCORE_CONFIG: Record<
   airport: { scoreFloor: 0.1, scoreBase: 4, scoreCurve: 1.7 },
 };
 
-/**
- * Aircraft contours are sparse but extreme — boost raster intensity for the
- * audio preview path only (not used in score presence after sanitization).
- */
-export const boostAirportRasterIntensity = (intensity: number) => {
-  if (intensity <= 0.04) return 0;
-  return clamp(intensity ** 0.68 * 1.22, 0, 1);
-};
-
 const normalizeDbToPresence = (
   db: number | null,
   min = 45,
@@ -60,8 +51,13 @@ export const roadRasterToPresence = (intensity: number) =>
 export const railRasterToPresence = (intensity: number) =>
   clamp(intensity, 0, 1);
 
+/**
+ * Flat, like road and rail. Airport tiles used to read at half intensity (their
+ * alpha 128 scaled the band), and a boost made up for it; with alpha now only
+ * a coverage gate, that boost pinned crimson and up at 100.
+ */
 export const airportRasterToPresence = (intensity: number) =>
-  boostAirportRasterIntensity(intensity);
+  clamp(intensity, 0, 1);
 
 export const rasterToPresence = (intensity: number, kind: DefraMapKind) => {
   if (kind === "airport") return airportRasterToPresence(intensity);
