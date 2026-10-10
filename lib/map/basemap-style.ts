@@ -46,20 +46,29 @@ const LIGHT = {
 } as const
 
 /**
- * Night is "London from a plane": a deep blue-black ground with quiet labels
- * and road casings, so the noise rasters and transit lines read as light.
+ * Night is "London from a plane", but one you can still navigate: a dark
+ * ground with a visibly blue river, faint green parks and dim grey streets,
+ * so the noise reads as light without losing where you are. Labels are
+ * near-white on a dark halo so they read over the glow.
  */
 const DARK = {
-  background: "#07080b",
-  water: "#0d1118",
-  land: "#0b0c0f",
-  building: "#0a0b0e",
-  label: "#a1a1aa",
-  labelMuted: "#71717a",
-  halo: "rgba(4,5,8,0.9)",
-  majorCasing: "rgba(72,74,82,0.85)",
-  motorwayCasing: "rgba(84,86,94,0.9)",
-  majorSubtle: "#24252b",
+  background: "#0a0c11",
+  water: "#1c4672",
+  waterway: "#245585",
+  waterLabel: "#9cc8f0",
+  park: "#163626",
+  wood: "#143022",
+  building: "#11131a",
+  path: "#1c1f27",
+  minor: "#252933",
+  majorInner: "#1d2029",
+  rail: "#3a3e4a",
+  label: "#f4f4f5",
+  labelMuted: "#e4e4e7",
+  halo: "rgba(0,0,0,0.92)",
+  majorCasing: "rgba(98,104,118,0.9)",
+  motorwayCasing: "rgba(112,118,132,0.92)",
+  majorSubtle: "#30333c",
 } as const
 
 const slotLayer = (id: string): LayerSpecification => ({
@@ -212,21 +221,36 @@ const applyLightReadability = (style: StyleSpecification) => {
   })
 }
 
+const DARK_LABEL_PAINT = {
+  "text-color": DARK.label,
+  "text-halo-color": DARK.halo,
+  "text-halo-width": 1.8,
+  "text-halo-blur": 0.4,
+}
+
 const applyDarkReadability = (style: StyleSpecification) => {
   patchLayer(style, "background", {
     paint: { "background-color": DARK.background },
   })
   patchLayer(style, "water", { paint: { "fill-color": DARK.water } })
-  patchLayer(style, "waterway", { paint: { "line-color": DARK.water } })
-  for (const id of ["landuse_park", "landcover_wood"]) {
-    patchLayer(style, id, { paint: { "fill-color": DARK.land } })
-  }
+  patchLayer(style, "waterway", { paint: { "line-color": DARK.waterway } })
+  patchLayer(style, "landuse_park", { paint: { "fill-color": DARK.park } })
+  patchLayer(style, "landcover_wood", { paint: { "fill-color": DARK.wood } })
   patchLayer(style, "building", {
     paint: {
       "fill-color": DARK.building,
-      "fill-outline-color": DARK.land,
+      "fill-outline-color": DARK.background,
     },
   })
+
+  patchLayer(style, "highway_path", { paint: { "line-color": DARK.path } })
+  patchLayer(style, "highway_minor", { paint: { "line-color": DARK.minor } })
+  patchLayer(style, "highway_major_inner", {
+    paint: { "line-color": DARK.majorInner },
+  })
+  for (const id of ["railway_transit", "railway_minor", "railway"]) {
+    patchLayer(style, id, { paint: { "line-color": DARK.rail } })
+  }
 
   patchLayer(style, "highway_major_casing", {
     paint: {
@@ -274,23 +298,29 @@ const applyDarkReadability = (style: StyleSpecification) => {
           14,
         ],
       },
+      paint: DARK_LABEL_PAINT,
+    })
+  }
+
+  for (const id of ["place_city", "place_city_large"]) {
+    patchLayer(style, id, { maxzoom: 11, paint: DARK_LABEL_PAINT })
+  }
+
+  for (const id of ["highway_name_other", "highway_name_motorway"]) {
+    patchLayer(style, id, {
+      layout: { "text-transform": "none" },
       paint: {
-        "text-color": DARK.label,
-        "text-halo-color": DARK.halo,
-        "text-halo-width": 1.7,
+        ...DARK_LABEL_PAINT,
+        "text-color": DARK.labelMuted,
+        "text-halo-width": 1.6,
       },
     })
   }
 
-  patchLayer(style, "place_city", { maxzoom: 11 })
-  patchLayer(style, "place_city_large", { maxzoom: 11 })
-
-  patchLayer(style, "highway_name_other", {
-    layout: { "text-transform": "none" },
+  patchLayer(style, "water_name", {
     paint: {
-      "text-color": DARK.labelMuted,
-      "text-halo-color": DARK.halo,
-      "text-halo-width": 1.5,
+      ...DARK_LABEL_PAINT,
+      "text-color": DARK.waterLabel,
     },
   })
 }

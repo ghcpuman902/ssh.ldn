@@ -4,16 +4,25 @@ import type { TubeLineFeatureCollection } from "@/lib/map/geojson-types"
 /** OpenFreeMap Positron / Dark Matter background fills. */
 export const MAP_BACKGROUND_HEX: Record<MapTheme, string> = {
   light: "#f2f3f0",
-  dark: "#07080b",
+  dark: "#0a0c11",
 }
 
-const RAIL_STROKE_HEX = "#475569"
-/** By day a white casing separates parallel lines; at night a black one lets the colour glow. */
+/** At night a lighter slate, so National Rail reads over the dark ground. */
+const RAIL_STROKE_HEX: Record<MapTheme, string> = {
+  light: "#475569",
+  dark: "#94a3b8",
+}
+/**
+ * A light casing separates parallel lines, day and night: at night it also
+ * keeps dark lines (Northern) visible on the dark ground and over the glow.
+ */
 const TRANSIT_CASING_HEX: Record<MapTheme, string> = {
   light: "#ffffff",
-  dark: "#000000",
+  dark: "#e4e4e7",
 }
-const RAIL_STROKE_OPACITY: Record<MapTheme, number> = { light: 0.85, dark: 0.6 }
+const RAIL_STROKE_OPACITY: Record<MapTheme, number> = { light: 0.85, dark: 1 }
+/** Line colours stay true at night; by day they sit a touch into the paper. */
+const TRANSIT_LINE_OPACITY: Record<MapTheme, number> = { light: 0.95, dark: 1 }
 
 const parseHex = (value: string) => {
   const hex = value.replace("#", "")
@@ -50,7 +59,7 @@ export const mixHexOntoBackground = (
 
 export const railStrokeColor = (theme: MapTheme) =>
   mixHexOntoBackground(
-    RAIL_STROKE_HEX,
+    RAIL_STROKE_HEX[theme],
     MAP_BACKGROUND_HEX[theme],
     RAIL_STROKE_OPACITY[theme]
   )
@@ -76,7 +85,7 @@ export const mixTransitLineColors = (
         color: mixHexOntoBackground(
           feature.properties.color || "#6366f1",
           background,
-          0.95
+          TRANSIT_LINE_OPACITY[theme]
         ),
       },
     })),
