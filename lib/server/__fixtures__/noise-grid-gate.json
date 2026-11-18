@@ -1,0 +1,306 @@
+{
+ "tolerance": 0.5,
+ "source": "DEFRA WMS GetFeatureInfo, 18 Nov 2026, random valid cells across Greater London",
+ "points": [
+  {
+   "layer": "road_Lden",
+   "easting": 542330,
+   "northing": 161330,
+   "exactDb": 53.39
+  },
+  {
+   "layer": "road_Lden",
+   "easting": 511890,
+   "northing": 193630,
+   "exactDb": 51.37
+  },
+  {
+   "layer": "road_Lden",
+   "easting": 515560,
+   "northing": 184410,
+   "exactDb": 48.03
+  },
+  {
+   "layer": "road_Lden",
+   "easting": 550880,
+   "northing": 198600,
+   "exactDb": 51.09
+  },
+  {
+   "layer": "road_Lden",
+   "easting": 522450,
+   "northing": 171870,
+   "exactDb": 46.54
+  },
+  {
+   "layer": "road_Lden",
+   "easting": 518460,
+   "northing": 184650,
+   "exactDb": 45.53
+  },
+  {
+   "layer": "road_Lden",
+   "easting": 515500,
+   "northing": 201480,
+   "exactDb": 49.87
+  },
+  {
+   "layer": "road_Lden",
+   "easting": 545930,
+   "northing": 179940,
+   "exactDb": 66.63
+  },
+  {
+   "layer": "road_Lnight",
+   "easting": 545710,
+   "northing": 171960,
+   "exactDb": 40.31
+  },
+  {
+   "layer": "road_Lnight",
+   "easting": 552750,
+   "northing": 161450,
+   "exactDb": 39.58
+  },
+  {
+   "layer": "road_Lnight",
+   "easting": 553700,
+   "northing": 193330,
+   "exactDb": 38.34
+  },
+  {
+   "layer": "road_Lnight",
+   "easting": 519960,
+   "northing": 187270,
+   "exactDb": 44.4
+  },
+  {
+   "layer": "road_Lnight",
+   "easting": 547320,
+   "northing": 197620,
+   "exactDb": 39.63
+  },
+  {
+   "layer": "road_Lnight",
+   "easting": 541630,
+   "northing": 193990,
+   "exactDb": 53.87
+  },
+  {
+   "layer": "road_Lday",
+   "easting": 534510,
+   "northing": 173730,
+   "exactDb": 46.97
+  },
+  {
+   "layer": "road_Lday",
+   "easting": 548820,
+   "northing": 166600,
+   "exactDb": 44.36
+  },
+  {
+   "layer": "road_Lday",
+   "easting": 508160,
+   "northing": 177850,
+   "exactDb": 61.87
+  },
+  {
+   "layer": "road_Lday",
+   "easting": 517480,
+   "northing": 196470,
+   "exactDb": 52.85
+  },
+  {
+   "layer": "road_Leve",
+   "easting": 506150,
+   "northing": 194560,
+   "exactDb": 48.65
+  },
+  {
+   "layer": "road_Leve",
+   "easting": 530290,
+   "northing": 185510,
+   "exactDb": 44.85
+  },
+  {
+   "layer": "road_Leve",
+   "easting": 513980,
+   "northing": 180820,
+   "exactDb": 44.94
+  },
+  {
+   "layer": "road_Leve",
+   "easting": 561460,
+   "northing": 180350,
+   "exactDb": 46.09
+  },
+  {
+   "layer": "rail_Lden",
+   "easting": 506230,
+   "northing": 179490,
+   "exactDb": 45.86
+  },
+  {
+   "layer": "rail_Lden",
+   "easting": 536220,
+   "northing": 195340,
+   "exactDb": 50.07
+  },
+  {
+   "layer": "rail_Lden",
+   "easting": 521540,
+   "northing": 166550,
+   "exactDb": 46.96
+  },
+  {
+   "layer": "rail_Lden",
+   "easting": 547630,
+   "northing": 187340,
+   "exactDb": 40.86
+  },
+  {
+   "layer": "rail_Lden",
+   "easting": 518700,
+   "northing": 182620,
+   "exactDb": 66.95
+  },
+  {
+   "layer": "rail_Lnight",
+   "easting": 545230,
+   "northing": 191390,
+   "exactDb": 39.85
+  },
+  {
+   "layer": "rail_Lnight",
+   "easting": 558380,
+   "northing": 184540,
+   "exactDb": 43.01
+  },
+  {
+   "layer": "rail_Lnight",
+   "easting": 508710,
+   "northing": 154120,
+   "exactDb": 38.44
+  },
+  {
+   "layer": "rail_Lnight",
+   "easting": 533850,
+   "northing": 181890,
+   "exactDb": 36.11
+  },
+  {
+   "layer": "rail_Lday",
+   "easting": 529770,
+   "northing": 175620,
+   "exactDb": 42.76
+  },
+  {
+   "layer": "rail_Lday",
+   "easting": 537430,
+   "northing": 182660,
+   "exactDb": 47.96
+  },
+  {
+   "layer": "rail_Lday",
+   "easting": 541620,
+   "northing": 185540,
+   "exactDb": 44.96
+  },
+  {
+   "layer": "rail_Leve",
+   "easting": 540450,
+   "northing": 189170,
+   "exactDb": 42.83
+  },
+  {
+   "layer": "rail_Leve",
+   "easting": 520270,
+   "northing": 161050,
+   "exactDb": 47.27
+  },
+  {
+   "layer": "rail_Leve",
+   "easting": 525600,
+   "northing": 165640,
+   "exactDb": 42.41
+  },
+  {
+   "layer": "airport_Lden",
+   "easting": 520580,
+   "northing": 176370,
+   "exactDb": 55.242
+  },
+  {
+   "layer": "airport_Lden",
+   "easting": 540760,
+   "northing": 179680,
+   "exactDb": 47.6
+  },
+  {
+   "layer": "airport_Lden",
+   "easting": 523500,
+   "northing": 175920,
+   "exactDb": 53.494
+  },
+  {
+   "layer": "airport_Lden",
+   "easting": 525110,
+   "northing": 177450,
+   "exactDb": 51.315
+  },
+  {
+   "layer": "airport_Lden",
+   "easting": 521230,
+   "northing": 176750,
+   "exactDb": 55.027
+  },
+  {
+   "layer": "airport_Lnight",
+   "easting": 525450,
+   "northing": 176490,
+   "exactDb": 44.324
+  },
+  {
+   "layer": "airport_Lnight",
+   "easting": 513970,
+   "northing": 174800,
+   "exactDb": 49.729
+  },
+  {
+   "layer": "airport_Lnight",
+   "easting": 537120,
+   "northing": 182210,
+   "exactDb": 35.0
+  },
+  {
+   "layer": "airport_Lnight",
+   "easting": 510410,
+   "northing": 176530,
+   "exactDb": 59.612
+  },
+  {
+   "layer": "airport_Lday",
+   "easting": 512330,
+   "northing": 177630,
+   "exactDb": 52.021
+  },
+  {
+   "layer": "airport_Lday",
+   "easting": 503460,
+   "northing": 177020,
+   "exactDb": 59.992
+  },
+  {
+   "layer": "airport_Leve",
+   "easting": 542040,
+   "northing": 179730,
+   "exactDb": 42.9
+  },
+  {
+   "layer": "airport_Leve",
+   "easting": 548440,
+   "northing": 181080,
+   "exactDb": 41.4
+  }
+ ]
+}
