@@ -11,6 +11,9 @@
  *   0 = no data). Empty chunks have length 0 and are not stored.
  *
  * Self-contained on purpose (node: built-ins only) so node --test can run it.
+ *
+ * Design and feedback rules: doc/noise-data/DESIGN.md (principles are fixed;
+ * bug reports mean an implementation detail is wrong; log in COMPLAINTS.md).
  */
 import { open, readFile } from "node:fs/promises"
 import path from "node:path"
