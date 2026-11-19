@@ -24,7 +24,7 @@ def init():
     V = {L: np.load(f"master/{L}.npz")["band"] for L in LAYERS}; INV = {}
     for L in LAYERS:
         t = bake_tiles.lut(L); INV[L] = {int((int(t[b][0]) << 24) | (int(t[b][1]) << 16) | (int(t[b][2]) << 8) | int(t[b][3])): b for b in range(256) if t[b][3] or b == 0}
-        INV[L][0] = 0
+        INV[L].setdefault(0, 0)
 if __name__ == "__main__":
     from merc import tile_range
     jobs = [(z, x, y) for z in range(8, 14) for x in range(tile_range(z)[0], tile_range(z)[1] + 1) for y in range(tile_range(z)[2], tile_range(z)[3] + 1)]

@@ -1,7 +1,7 @@
 // Gate (day 2 step 3): baked tiles look like DEFRA's own styled tiles.
 // Usage: node scripts/noise-bake/compare-defra-tiles.mjs <tiles-merc dir> [zoom=13]
 // Compares every locally cached DEFRA PNG (data/noise/tiles/<kind>/<period>/<z>) with the baked WebP.
-// DEFRA paints below-threshold cells white at alpha 179 and the bake leaves them transparent, so white counts as empty.
+// Below-threshold cells are white at alpha 179 (DEFRA, and the bake for road and rail except rail Lnight); white counts as empty on both sides.
 import { createRequire } from "node:module"
 import { readdirSync, existsSync } from "node:fs"
 import path from "node:path"
@@ -25,7 +25,7 @@ for (const kind of ["road", "rail", "airport"]) for (const period of ["day", "ni
     tiles++
     for (let i = 0; i < a.length; i += 4) {
       const defraEmpty = a[i + 3] === 0 || (a[i] === 255 && a[i + 1] === 255 && a[i + 2] === 255)
-      const bakedEmpty = b[i + 3] === 0
+      const bakedEmpty = b[i + 3] === 0 || (b[i] === 255 && b[i + 1] === 255 && b[i + 2] === 255)
       if (defraEmpty && bakedEmpty) continue
       painted++
       if (defraEmpty) onlyBaked++

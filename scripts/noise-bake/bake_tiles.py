@@ -1,13 +1,13 @@
 """Day 2 step 1a: bake Web Mercator tiles z8-13 for all 12 layers, DEFRA colours baked in, lossless WebP RGBA.
 Band -> RGBA comes from palette_derived.json (derived from DEFRA's own styled tiles, see PROGRESS.md).
 z12-13: band of the 10 m cell under the pixel centre. z8-11: loudest band in the pixel footprint (4x4 samples) so thin roads survive.
-band 0 (below threshold / no data) is transparent unless WHITE_FILL=1 (DEFRA paints it white at alpha 179 for road/rail)."""
+band 0 is white a179 for road + rail Lden/Lday/Leve like DEFRA (WHITE_FILL=0 turns it off); transparent elsewhere."""
 import os, io, sys, json, time, numpy as np
 from multiprocessing import Pool
 from PIL import Image
 from bake import LAYERS
 from merc import tile_range, cell_index
-OUT = "baked/tiles-merc"; ZS = range(8, 14); WHITE = os.environ.get("WHITE_FILL") == "1"
+OUT = "baked/tiles-merc"; ZS = range(8, 14); WHITE = os.environ.get("WHITE_FILL", "1") == "1"
 def lut(L):
     d = json.load(open("palette_derived.json"))
     pal = d[L]
@@ -15,17 +15,19 @@ def lut(L):
     t = np.zeros((256, 4), np.uint8)
     for b, v in pal.items():
         if int(b) > 0: t[int(b)] = v["rgba"]
-    if WHITE and L.startswith(("road", "rail")): t[0] = (255, 255, 255, 179)
+    # DEFRA paints below-threshold cells inside the model extent white at alpha 179 (road and rail day/evening/Lden: 93-98% of band-0
+    # cells in the box). Rail Lnight is only ~50% white (its extent is smaller and not recoverable), so it stays transparent.
+    if WHITE and (L.startswith("road") or L in ("rail_Lden", "rail_Lday", "rail_Leve")): t[0] = (255, 255, 255, 179)
     return t
-_bands = {}; _luts = {}
+ONLY = os.environ.get("ONLY", ",".join(LAYERS)).split(","); _bands = {}; _luts = {}
 def init():
-    for L in LAYERS: _bands[L] = np.load(f"master/{L}.npz")["band"]; _luts[L] = lut(L)
+    for L in ONLY: _bands[L] = np.load(f"master/{L}.npz")["band"]; _luts[L] = lut(L)
 def webp(rgba):
     b = io.BytesIO(); Image.fromarray(rgba, "RGBA").save(b, "WEBP", lossless=True, quality=100, method=6, exact=True); return b.getvalue()
 def job(a):
     z, x, y = a; sub = 4 if z <= 11 else 1
     r, c, ok = cell_index(x, y, z, sub); res = {}
-    for L in LAYERS:
+    for L in ONLY:
         band = _bands[L]; g = np.zeros(r.shape, np.uint8); g[ok] = band[r[ok], c[ok]]
         if sub > 1: g = g.reshape(256, sub, 256, sub).max(axis=(1, 3))
         rgba = _luts[L][g]; rgba[(rgba[..., 3] == 0)] = 0

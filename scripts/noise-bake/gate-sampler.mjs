@@ -67,7 +67,7 @@ for (const p of picks) {
     const i = (tile.pixelY * 256 + tile.pixelX) * 4
     const alpha = data[i + 3]
     const idx = alpha < 88 ? -1 : nearestDefraRound4Band(data[i], data[i + 1], data[i + 2])
-    const samplerBand = idx < 0 ? 0 : paletteIndexToBand(layer).get(idx) ?? -99
+    const samplerBand = idx < 0 || idx === 0 ? 0 : paletteIndexToBand(layer).get(idx) ?? -99
     const apiBand = api[source]?.[period]?.band ?? 0
     // A z13 pixel is 11.9 m and shows the cell under its centre, so near a band
     // edge it may show a neighbouring 10 m cell. Record whether the sampler's
