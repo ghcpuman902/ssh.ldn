@@ -4,8 +4,9 @@
  * of live DEFRA WMS GetFeatureInfo calls.
  *
  * Archive layout (built by the bake script, see _agent/defra-fetch):
- * - index.json: grid geometry, layer order, byte offsets and lengths
- * - data.bin: one gzip record per 128 x 128-cell chunk; each record holds,
+ * - index.json: grid geometry and layer order (v1 also holds byte offsets and
+ *   lengths; v2 keeps them in index.bin)
+ * - data.bin: one gzip record per chunk (128 cells in v1, 32 in v2); each record holds,
  *   for every layer in order, a dB plane (value / 2 = dB, 0 = no data or
  *   below DEFRA's mapping threshold) then a band plane (DEFRA band index,
  *   0 = no data). Empty chunks have length 0 and are not stored.
@@ -45,6 +46,8 @@ export type NoiseGridIndex = {
   layersPresent: string[]
   offsets: number[]
   lengths: number[]
+  /** Version 2 archives keep offsets and lengths in this binary file instead. */
+  indexBin?: string
   built?: string
   attribution?: string
 }
@@ -52,6 +55,22 @@ export type NoiseGridIndex = {
 export type NoiseGridReader = {
   readIndex: () => Promise<NoiseGridIndex>
   readRange: (offset: number, length: number) => Promise<Uint8Array>
+}
+
+/** Version 2: `index.bin` is uint32 little-endian [offset, length] pairs, one per chunk. */
+const decodeBinaryIndex = (idx: NoiseGridIndex, bytes: Uint8Array) => {
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
+  const count = Math.floor(bytes.byteLength / 8)
+  if (count !== idx.cols * idx.rows) {
+    throw new Error(`noise grid index.bin has ${count} chunks, expected ${idx.cols * idx.rows}`)
+  }
+  idx.offsets = new Array<number>(count)
+  idx.lengths = new Array<number>(count)
+  for (let i = 0; i < count; i++) {
+    idx.offsets[i] = view.getUint32(i * 8, true)
+    idx.lengths[i] = view.getUint32(i * 8 + 4, true)
+  }
+  return idx
 }
 
 const isUrl = (base: string) => /^https?:\/\//i.test(base)
@@ -64,7 +83,11 @@ export const createNoiseGridReader = (base: string): NoiseGridReader => {
       readIndex: async () => {
         const res = await fetch(`${root}/index.json`)
         if (!res.ok) throw new Error(`noise grid index ${res.status}`)
-        return (await res.json()) as NoiseGridIndex
+        const idx = (await res.json()) as NoiseGridIndex
+        if (idx.offsets || !idx.indexBin) return idx
+        const bin = await fetch(`${root}/${idx.indexBin}`)
+        if (!bin.ok) throw new Error(`noise grid index.bin ${bin.status}`)
+        return decodeBinaryIndex(idx, new Uint8Array(await bin.arrayBuffer()))
       },
       readRange: async (offset, length) => {
         const res = await fetch(`${root}/data.bin`, {
@@ -78,10 +101,13 @@ export const createNoiseGridReader = (base: string): NoiseGridReader => {
     }
   }
   return {
-    readIndex: async () =>
-      JSON.parse(
+    readIndex: async () => {
+      const idx = JSON.parse(
         await readFile(path.join(base, "index.json"), "utf8")
-      ) as NoiseGridIndex,
+      ) as NoiseGridIndex
+      if (idx.offsets || !idx.indexBin) return idx
+      return decodeBinaryIndex(idx, await readFile(path.join(base, idx.indexBin)))
+    },
     readRange: async (offset, length) => {
       const fh = await open(path.join(base, "data.bin"), "r")
       try {
