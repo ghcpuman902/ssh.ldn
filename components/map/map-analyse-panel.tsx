@@ -38,6 +38,7 @@ import {
   type LocalAmenityHint,
 } from "@/lib/map/noise-contributor-copy"
 import { getNoiseContributorMeta } from "@/lib/map/noise-contributor-meta"
+import type { NoiseLevelPeriod, NoiseLevels } from "@/lib/map/noise-levels"
 import {
   ANALYSIS_DAY_PARTS,
   WEEK_SEGMENT_LETTERS,
@@ -105,6 +106,8 @@ export type AnalyseState =
       address: string
       testPointId?: string
       geocode: AnalyseTask<GeocodeResult>
+      /** DEFRA dB from /api/noise/point. Fetched first; never waits for Google. */
+      noiseLevels?: AnalyseTask<NoiseLevels>
       score: AnalyseTask<ScoreSummary>
       planning: AnalyseTask<ScorePlanningApplication[]>
       noisyPois: AnalyseTask<NearbyNoisyPoiSummary[]>
@@ -906,6 +909,37 @@ type AnalyseBodyProps = {
   scrollRef?: RefObject<HTMLDivElement | null>
 }
 
+const LEVEL_ROWS = [
+  ["road", "Road"],
+  ["rail", "Rail"],
+  ["airport", "Aircraft"],
+] as const
+
+const formatDb = (db: number | null) =>
+  db === null ? "below mapped level" : `${db.toFixed(1)} dB`
+
+const NoiseLevelsCard = ({
+  levels,
+  period,
+}: {
+  levels: NoiseLevels
+  period: NoiseLevelPeriod
+}) => (
+  <div className="space-y-1" data-testid="noise-levels">
+    <p className="text-xs font-medium text-muted-foreground">
+      DEFRA noise here · {period === "Lnight" ? "night" : "day"}
+    </p>
+    <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-0.5 text-sm">
+      {LEVEL_ROWS.map(([source, label]) => (
+        <Fragment key={source}>
+          <dt className="text-muted-foreground">{label}</dt>
+          <dd className="tabular-nums">{formatDb(levels[source][period])}</dd>
+        </Fragment>
+      ))}
+    </dl>
+  </div>
+)
+
 export const AnalyseBody = ({
   state,
   timeSlot,
@@ -950,6 +984,13 @@ export const AnalyseBody = ({
 
       {state.geocode.status === "failed" ? (
         <p className="text-sm text-destructive">{state.geocode.message}</p>
+      ) : null}
+
+      {state.noiseLevels?.status === "done" ? (
+        <NoiseLevelsCard
+          levels={state.noiseLevels.data}
+          period={timeSlot.part === "night" ? "Lnight" : "Lday"}
+        />
       ) : null}
 
       {state.score.status === "queued" || state.score.status === "running" ? (

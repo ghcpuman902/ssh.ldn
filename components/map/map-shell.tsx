@@ -22,6 +22,7 @@ import { useCursorNoise } from "@/hooks/use-cursor-noise"
 import { useMapLongPress } from "@/hooks/use-map-long-press"
 import { useMapTypeToSearch } from "@/hooks/use-map-type-to-search"
 import { useMapWindowClip } from "@/hooks/use-map-window-clip"
+import { fetchNoiseLevels } from "@/lib/map/noise-levels"
 import { useNoisePrefetch } from "@/hooks/use-noise-prefetch"
 import { useMapZoomControlStyles } from "@/hooks/use-map-zoom-control-styles"
 import { useIsMobile } from "@/hooks/use-mobile"
@@ -383,7 +384,7 @@ export const MapShell = () => {
         patch: Partial<
           Pick<
             Extract<AnalyseState, { status: "analysing" }>,
-            "geocode" | "score" | "planning" | "noisyPois"
+            "geocode" | "noiseLevels" | "score" | "planning" | "noisyPois"
           >
         >
       ) => {
@@ -402,6 +403,36 @@ export const MapShell = () => {
           duration: 1200,
         })
       }
+
+      // Our own numbers come first and never wait for Google (DESIGN section 7).
+      const runNoiseLevelsTask = async (latitude: number, longitude: number) => {
+        patchAnalyse({ noiseLevels: { status: "running" } })
+
+        try {
+          const data = await fetchNoiseLevels({ latitude, longitude })
+          patchAnalyse({ noiseLevels: { status: "done", data } })
+        } catch (error) {
+          patchAnalyse({
+            noiseLevels: {
+              status: "failed",
+              message:
+                error instanceof Error ? error.message : "Noise levels unavailable",
+            },
+          })
+        }
+      }
+
+      // Google loads after the point API has answered (or 2.5 s, whichever is
+      // first), so its script never competes with our numbers on a slow link.
+      const runNoisyPoiAfterLevels = (
+        levels: Promise<void>,
+        latitude: number,
+        longitude: number
+      ) =>
+        Promise.race([
+          levels,
+          new Promise<void>((resolve) => setTimeout(resolve, 2500)),
+        ]).then(() => runNoisyPoiTask(latitude, longitude))
 
       const runInstantScoreTask = async (
         latitude: number,
@@ -535,7 +566,12 @@ export const MapShell = () => {
 
       try {
         if (resolvedGeocode) {
+          const levels = runNoiseLevelsTask(
+            resolvedGeocode.latitude,
+            resolvedGeocode.longitude
+          )
           await Promise.all([
+            levels,
             runInstantScoreTask(
               resolvedGeocode.latitude,
               resolvedGeocode.longitude
@@ -544,7 +580,8 @@ export const MapShell = () => {
               resolvedGeocode.latitude,
               resolvedGeocode.longitude
             ),
-            runNoisyPoiTask(
+            runNoisyPoiAfterLevels(
+              levels,
               resolvedGeocode.latitude,
               resolvedGeocode.longitude
             ),
@@ -555,6 +592,10 @@ export const MapShell = () => {
           if (isStale()) return
 
           if (geocodeResult) {
+            const levels = runNoiseLevelsTask(
+              geocodeResult.latitude,
+              geocodeResult.longitude
+            )
             void runInstantScoreTask(
               geocodeResult.latitude,
               geocodeResult.longitude
@@ -563,7 +604,8 @@ export const MapShell = () => {
               geocodeResult.latitude,
               geocodeResult.longitude
             )
-            void runNoisyPoiTask(
+            void runNoisyPoiAfterLevels(
+              levels,
               geocodeResult.latitude,
               geocodeResult.longitude
             )
