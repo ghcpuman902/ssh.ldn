@@ -79,3 +79,13 @@ When Mangle reports a bug, or says something doesn't work or feels wrong:
 7. Chrome and Safari checks, 20 venues old versus new, then a PR. Push, preview and merge only on Mangle's fresh OK.
 
 If time runs out, cut in this order: idle prefetch, then the night-glow tile variant (keep its live proxy), then the report-tab change.
+
+## Day 2 implementation notes (19 Nov 2026)
+
+These record how the principles above were built. They change no principle.
+
+- Tiles: `scripts/noise-bake/bake_tiles.py`, z8–13, 12 layers, lossless RGBA WebP. Colours come from DEFRA's own styled tiles (`palette_derived.json`), so the sampler's palette matching is unchanged. z12–13 show the band of the cell under the pixel centre; z8–11 show the loudest band in the pixel's footprint so thin roads survive. Road and rail (except rail Lnight) keep DEFRA's white wash for below-threshold cells; rail Lnight's smaller extent can't be recovered, so it stays transparent there.
+- A z13 pixel is 11.9 m and a cell is 10 m, so near a band edge the sampler can show the neighbouring cell's band. Measured: 108 of 120 sampler/API comparisons are identical and the other 12 are all within one cell. Exact agreement everywhere needs z14 (not built; ask Mangle).
+- Archive version 2: 32-cell chunks, `index.json` (geometry only) plus `index.bin` (uint32 little-endian offset and length per chunk). The loader reads both v1 and v2.
+- Publishing: the code reads `NEXT_PUBLIC_NOISE_DATA_BASE` (`<public Blob origin>/noise/<hash>`). Unset means the map keeps using the live WMS proxy and the point API keeps using the local folder, so nothing changes until a bake is published.
+- Gates: `scripts/noise-bake/verify_tiles.py`, `verify_archive32.py`, `gate-sampler.mjs`, `compare-defra-tiles.mjs`, `compare-venues.mjs`.
