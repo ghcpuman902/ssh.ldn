@@ -20,6 +20,14 @@ import {
 } from "@/lib/map/config"
 import { nightlifeEmojiImageId } from "@/lib/map/nightlife-emoji-images"
 import {
+  BAKED_TILE_BOUNDS,
+  BAKED_TILE_MAX_ZOOM,
+  BAKED_TILE_MIN_ZOOM,
+  NOISE_DATA_BASE_URL,
+  bakedTileTemplate,
+  type BakedNoisePeriod,
+} from "@/lib/map/noise-tiles"
+import {
   isNightGlowProtocolReady,
   nightGlowTileUrl,
   registerNightGlowProtocol,
@@ -114,8 +122,15 @@ const ACTIVE_LOCAL_SOURCE_FILTER: FilterSpecification = [
   0.1,
 ]
 
+/**
+ * Baked tiles (DESIGN section 3) when a bake is published, else the live WMS
+ * proxy. The URL is a plain template, so MapLibre keeps ordering, caching and
+ * parent/child fallback for us.
+ */
 const defraTileUrl = (kind: DefraMapKind, period: string) =>
-  `/api/map/defra/${kind}/{z}/{x}/{y}.png?period=${period}`
+  NOISE_DATA_BASE_URL
+    ? bakedTileTemplate(NOISE_DATA_BASE_URL, kind, period as BakedNoisePeriod)
+    : `/api/map/defra/${kind}/{z}/{x}/{y}.png?period=${period}`
 
 const poiDensityTileUrl = (slot: string) =>
   `/api/map/poi-density/${slot}/{z}/{x}/{y}.png`
@@ -229,8 +244,13 @@ const DefraNoiseRasterLayers = ({
               : defraTileUrl(kind, period),
           ]}
           tileSize={256}
-          minzoom={NOISE_TILE_MIN_ZOOM}
-          maxzoom={NOISE_TILE_PAINT_MAX_ZOOM}
+          minzoom={
+            NOISE_DATA_BASE_URL ? BAKED_TILE_MIN_ZOOM : NOISE_TILE_MIN_ZOOM
+          }
+          maxzoom={
+            NOISE_DATA_BASE_URL ? BAKED_TILE_MAX_ZOOM : NOISE_TILE_PAINT_MAX_ZOOM
+          }
+          bounds={NOISE_DATA_BASE_URL ? BAKED_TILE_BOUNDS : undefined}
         >
           <Layer
             id={`defra-noise-${kind}-${period}${glow ? "-glow" : ""}-layer`}

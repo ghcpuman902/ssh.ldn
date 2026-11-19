@@ -7,6 +7,13 @@ import {
   defraRasterPixelToIntensity,
   sanitizeTransportRasterIntensity,
 } from "@/lib/map/defra-raster-legend"
+import {
+  BAKED_TILE_BOUNDS,
+  BAKED_TILE_MAX_ZOOM,
+  NOISE_DATA_BASE_URL,
+  bakedTileUrl,
+  type BakedNoisePeriod,
+} from "@/lib/map/noise-tiles"
 import { lngLatToTilePixel } from "@/lib/map/web-mercator"
 
 const TILE_SIZE = 256
@@ -25,11 +32,25 @@ type SampleInput = {
 
 const tileCache = new Map<string, Promise<TilePixels>>()
 
+/**
+ * Baked tiles go to z13 (11.9 m pixels) and read the same files the map
+ * paints, so a lookup is usually already in the HTTP cache. The live proxy
+ * stays at z12.
+ */
 const clampTileZoom = (zoom: number) =>
-  Math.min(
-    NOISE_TILE_PRECACHE_MAX_ZOOM,
-    Math.max(NOISE_TILE_MIN_ZOOM, Math.floor(zoom))
+  NOISE_DATA_BASE_URL
+    ? Math.min(BAKED_TILE_MAX_ZOOM, Math.max(NOISE_TILE_MIN_ZOOM, Math.floor(zoom)))
+    : Math.min(
+        NOISE_TILE_PRECACHE_MAX_ZOOM,
+        Math.max(NOISE_TILE_MIN_ZOOM, Math.floor(zoom))
+      )
+
+const insideBakedBounds = (longitude: number, latitude: number) => {
+  const [west, south, east, north] = BAKED_TILE_BOUNDS
+  return (
+    longitude >= west && longitude <= east && latitude >= south && latitude <= north
   )
+}
 
 const createCanvas = () => {
   if (typeof OffscreenCanvas !== "undefined") {
@@ -82,7 +103,16 @@ const getTilePixels = ({
   const cached = tileCache.get(cacheKey)
   if (cached) return cached
 
-  const url = `/api/map/defra/${kind}/${z}/${x}/${y}.png?period=${period}`
+  const url = NOISE_DATA_BASE_URL
+    ? bakedTileUrl(
+        NOISE_DATA_BASE_URL,
+        kind,
+        period as BakedNoisePeriod,
+        z,
+        x,
+        y
+      )
+    : `/api/map/defra/${kind}/${z}/${x}/${y}.png?period=${period}`
   const loading = loadTilePixels(url).catch((error) => {
     tileCache.delete(cacheKey)
     throw error
@@ -99,6 +129,10 @@ export const sampleDefraRasterIntensity = async ({
   latitude,
   zoom,
 }: SampleInput) => {
+  // The baked tiles only cover London; outside it there is nothing to read
+  // (and no tile to 404 on).
+  if (NOISE_DATA_BASE_URL && !insideBakedBounds(longitude, latitude)) return 0
+
   const z = clampTileZoom(zoom)
   const tile = lngLatToTilePixel({
     longitude,

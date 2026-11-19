@@ -22,6 +22,7 @@ import { useCursorNoise } from "@/hooks/use-cursor-noise"
 import { useMapLongPress } from "@/hooks/use-map-long-press"
 import { useMapTypeToSearch } from "@/hooks/use-map-type-to-search"
 import { useMapWindowClip } from "@/hooks/use-map-window-clip"
+import { useNoisePrefetch } from "@/hooks/use-noise-prefetch"
 import { useMapZoomControlStyles } from "@/hooks/use-map-zoom-control-styles"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useShiftDragRotate } from "@/hooks/use-shift-drag-rotate"
@@ -232,6 +233,7 @@ export const MapShell = () => {
   const layoutGridRef = useRef<HTMLDivElement>(null)
   const applyZoomControlStyles = useMapZoomControlStyles(mapRef)
   const noiseReveal = useNoiseReveal(mapRef, mounted && mapReady)
+  useNoisePrefetch(mapRef, mounted && mapReady && mapHasIdled)
   const {
     geoJson: nightlifeGeoJson,
     isFetching: nightlifeIsFetching,
