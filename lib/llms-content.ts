@@ -8,6 +8,8 @@ import {
   SITE_URL,
 } from "@/lib/site"
 
+const POINT_API_EXAMPLE = `${SITE_URL}/api/noise/point?lat=51.5072&lng=-0.1276`
+
 const EXAMPLE_API_URL = `${SITE_URL}/api/noise-address?address=5%20Euston%20Road%20London&timeSlot=weekday-night`
 
 export const LLMS_TXT = `# ${SITE_NAME}
@@ -26,6 +28,7 @@ ssh-ldn covers Greater London only. Noise values come from DEFRA Round 4 strateg
 
 - [API docs](${SITE_URL}/api-docs): Human-readable guide to the address-to-noise service.
 - [Noise address API](${SITE_URL}/api/noise-address): Public read-only, rate-limited endpoint. Example: \`${EXAMPLE_API_URL}\`
+- [Noise point API](${SITE_URL}/api/noise/point): Public read-only lookup by coordinates, at most 50 points per call, 60 requests a minute. Returns road, rail and aircraft noise separately as dB and DEFRA band for Lden, Lday, Leve and Lnight, plus the DEFRA attribution. Example: \`${POINT_API_EXAMPLE}\`
 - [MCP endpoint](${SITE_URL}/api/mcp/mcp): Public read-only Model Context Protocol server with the \`explain_london_noise_for_address\` tool.
 
 ## Optional
@@ -59,6 +62,8 @@ REST (read-only, rate-limited):
 \`GET ${SITE_URL}/api/noise-address?address=<London address or postcode>&timeSlot=<weekday-day|weekday-night|weekend-day|weekend-night>\`
 
 Optional parameters: \`floor\` (ground floor is 0) and \`facing\` (street-facing orientation). The response is a JSON noise report with a score, confidence, dominant sources, time profile and plain-language explanation.
+
+Point lookup (read-only, rate-limited, 60 a minute): \`GET ${SITE_URL}/api/noise/point?lat=<lat>&lng=<lng>\`, \`GET ...?points=lat,lng;lat,lng\` or \`POST\` with \`{ "points": [{ "lat": 51.5, "lng": -0.12 }] }\`, at most 50 points. Each result has road, rail and airport (kept separate), each with Lden, Lday, Leve and Lnight as dB in 0.5 dB steps (null when there is no data or it is below DEFRA's mapping threshold) and the DEFRA band. Keep the attribution from the response when quoting values.
 
 MCP (read-only): \`${SITE_URL}/api/mcp/mcp\`, tool \`explain_london_noise_for_address\` with \`address\` and optional \`timeSlot\`.
 

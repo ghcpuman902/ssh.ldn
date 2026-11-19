@@ -454,9 +454,13 @@ export const handleNoisePointRequest = async (
 }
 
 /** Where the baked grid lives. Prod location (Blob vs static) is undecided. */
-export const defaultNoiseGridBase = () =>
-  process.env.NOISE_GRID_BASE ??
-  path.join(process.cwd(), "_agent", "defra-fetch", "baked", "points")
+export const defaultNoiseGridBase = () => {
+  if (process.env.NOISE_GRID_BASE) return process.env.NOISE_GRID_BASE
+  // The published bake (public Blob, content-hashed) serves the archive under /points.
+  const published = process.env.NEXT_PUBLIC_NOISE_DATA_BASE?.replace(/\/+$/, "")
+  if (published) return `${published}/points`
+  return path.join(process.cwd(), "_agent", "defra-fetch", "baked", "points")
+}
 
 let sharedGrid: NoiseGrid | null = null
 export const getNoiseGrid = () => {
