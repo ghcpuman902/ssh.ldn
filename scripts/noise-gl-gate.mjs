@@ -31,8 +31,19 @@
 //    rounding of the palette texture and the blend). Band 0 with an alpha-0
 //    palette entry (airport) expects the clear colour.
 // 5. Prints pass/fail counts and the first failures; exit code 1 unless 100%.
+//
+// Flags (after the positional args):
+//   --perturb=shift   negative control: query the point API 1 cell (10 m) east and 10 m north of each pixel
+//   --perturb=rotate  negative control: rotate each sample point 1.5 degrees about the view centre
+//                     Both must FAIL clearly; they prove the gate can see a 1-cell or 1.5-degree misalignment.
+//   --subpixel        sample a random point inside each pixel (not its centre) and keep edge pixels too.
+//                     A mismatch is "sub-pixel" when the pixel still equals the band at its own centre: a
+//                     pixel can show one cell only, so a point in the same pixel but the next cell differs.
 
-const [pageUrl, apiOrigin, nArg = "200", cdp = "http://127.0.0.1:9333"] = process.argv.slice(2)
+const flags = process.argv.slice(2).filter((a) => a.startsWith("--"))
+const [pageUrl, apiOrigin, nArg = "200", cdp = "http://127.0.0.1:9333"] = process.argv.slice(2).filter((a) => !a.startsWith("--"))
+const PERTURB = flags.find((f) => f.startsWith("--perturb="))?.split("=")[1] ?? null
+const SUBPIXEL = flags.includes("--subpixel")
 if (!pageUrl || !apiOrigin) {
   console.error("usage: node scripts/noise-gl-gate.mjs <gate page URL> <point API origin> [n] [cdp]")
   process.exit(2)
@@ -116,14 +127,37 @@ try {
     })()`)
     const centre = block[4]
     const flat = block.every((s) => s.rgba.every((v, i) => v === centre.rgba[i]))
-    if (flat) samples.push({ x, y, ...centre })
+    if (SUBPIXEL) {
+      // Linear map of the pixel from its neighbours' centres; offset in [-0.5, 0.5) on each axis.
+      const u = rnd() - 0.5, v = rnd() - 0.5, right = block[5], down = block[7]
+      samples.push({ x, y, ...centre, centreLat: centre.lat, centreLng: centre.lng,
+        lat: centre.lat + u * (right.lat - centre.lat) + v * (down.lat - centre.lat),
+        lng: centre.lng + u * (right.lng - centre.lng) + v * (down.lng - centre.lng), edge: !flat })
+    } else if (flat) samples.push({ x, y, ...centre })
   }
   if (samples.length < N) console.warn(`only ${samples.length} flat pixels found in ${tries} tries`)
 
+  // Negative controls move the queried point, not the pixel.
+  if (PERTURB) {
+    const view = await evaluate("window.__noiseGate.samplePixel(" + Math.floor(info.width / 2) + "," + Math.floor(info.height / 2) + ")")
+    const mLat = 111320, mLng = 111320 * Math.cos((view.lat * Math.PI) / 180), th = (1.5 * Math.PI) / 180
+    for (const s of samples) {
+      if (PERTURB === "shift") { s.lat += 10 / mLat; s.lng += 10 / mLng }
+      else if (PERTURB === "rotate") {
+        const dx = (s.lng - view.lng) * mLng, dy = (s.lat - view.lat) * mLat
+        s.lng = view.lng + (dx * Math.cos(th) - dy * Math.sin(th)) / mLng
+        s.lat = view.lat + (dx * Math.sin(th) + dy * Math.cos(th)) / mLat
+      } else throw new Error("unknown --perturb " + PERTURB)
+    }
+  }
+
   // 3: bands from the point API
   const [source, period] = info.layer.split("_")
-  for (let i = 0; i < samples.length; i += 50) {
-    const batch = samples.slice(i, i + 50)
+  const queries = SUBPIXEL
+    ? samples.flatMap((s) => [{ s, key: "band", lat: s.lat, lng: s.lng }, { s, key: "centreBand", lat: s.centreLat, lng: s.centreLng }])
+    : samples.map((s) => ({ s, key: "band", lat: s.lat, lng: s.lng }))
+  for (let i = 0; i < queries.length; i += 50) {
+    const batch = queries.slice(i, i + 50)
     const res = await fetch(`${apiOrigin.replace(/\/+$/, "")}/api/noise/point`, {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -132,10 +166,11 @@ try {
     if (!res.ok) throw new Error(`point API ${res.status}`)
     const body = await res.json()
     body.results.forEach((r, k) => {
-      batch[k].inCoverage = r.inCoverage
-      batch[k].band = r[source]?.[period]?.band ?? 0
+      const q = batch[k]
+      if (q.key === "band") q.s.inCoverage = r.inCoverage
+      q.s[q.key] = r[source]?.[period]?.band ?? 0
     })
-    if (i + 50 < samples.length) await new Promise((r) => setTimeout(r, 1100)) // stay under 60 a minute
+    if (i + 50 < queries.length) await new Promise((r) => setTimeout(r, 1100)) // stay under 60 a minute
   }
 
   // 4: compare
@@ -144,18 +179,25 @@ try {
     const a = (a8 / 255) * info.opacity
     return [r, g, b].map((c, i) => Math.round(c * a + info.clearRgb[i] * (1 - a)))
   }
-  let pass = 0
+  const matches = (band, rgba) => expectedFor(band).every((v, i) => Math.abs(v - rgba[i]) <= TOLERANCE)
+  let pass = 0, subpixel = 0, edges = 0
   const failures = []
   for (const s of samples) {
     const expected = s.inCoverage ? expectedFor(s.band) : [...info.clearRgb]
     const ok = expected.every((v, i) => Math.abs(v - s.rgba[i]) <= TOLERANCE)
+    if (s.edge) edges++
     if (ok) pass++
+    else if (SUBPIXEL && matches(s.centreBand, s.rgba)) subpixel++
     else failures.push({ x: s.x, y: s.y, lat: s.lat, lng: s.lng, band: s.band, expected, got: s.rgba.slice(0, 3) })
   }
-  console.log(`${pass}/${samples.length} pixels match the point API band`)
-  for (const f of failures.slice(0, 20)) console.log("FAIL", JSON.stringify(f))
+  const mode = PERTURB ? `NEGATIVE CONTROL ${PERTURB}: ` : SUBPIXEL ? "SUBPIXEL: " : ""
+  const pct = ((100 * pass) / samples.length).toFixed(1)
+  console.log(`${mode}${pass}/${samples.length} pixels match the point API band (${pct}%)` +
+    (SUBPIXEL ? `; ${subpixel} sub-pixel cell-edge cases; ${failures.length} unexplained; ${edges} samples on band edges` : ""))
+  for (const f of failures.slice(0, PERTURB ? 3 : 20)) console.log("FAIL", JSON.stringify(f))
   await closeTab()
-  process.exit(samples.length > 0 && pass === samples.length ? 0 : 1)
+  const clean = SUBPIXEL ? failures.length === 0 : pass === samples.length
+  process.exit(samples.length > 0 && clean ? 0 : 1)
 } catch (error) {
   console.error(error)
   await closeTab()
