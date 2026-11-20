@@ -89,3 +89,14 @@ These record how the principles above were built. They change no principle.
 - Archive version 2: 32-cell chunks, `index.json` (geometry only) plus `index.bin` (uint32 little-endian offset and length per chunk). The loader reads both v1 and v2.
 - Publishing: the code reads `NEXT_PUBLIC_NOISE_DATA_BASE` (`<public Blob origin>/noise/<hash>`). Unset means the map keeps using the live WMS proxy and the point API keeps using the local folder, so nothing changes until a bake is published.
 - Gates: `scripts/noise-bake/verify_tiles.py`, `verify_archive32.py`, `gate-sampler.mjs`, `compare-defra-tiles.mjs`, `compare-venues.mjs`.
+
+## WebGL grid layer (20 Nov 2026)
+
+Mangle asked for the GPU layer section 3 kept for later ("I want 100% exact", COMPLAINTS.md). It replaces the baked Mercator tiles in the app; everything else in section 3 (DEFRA's palette, lossless bands, view-first loading) still holds.
+
+- Data: `<base>/grid/index.json` and `grid/<layer>/<level>/<x>_<y>.gz`, gzip of uint8[256 × 256] DEFRA bands, row 0 north. Level 0 is the 10 m grid, cell for cell equal to the points archive; level k is the loudest of its 2^k × 2^k cells. Absent chunks are all band 0 and are never fetched.
+- Drawing: `lib/map/noise-grid-gl-layer.ts`, a MapLibre custom layer per source. A Web Mercator mesh carries each vertex's exact BNG position (`wgs84ToBng`, the point API's transform); the GPU interpolates it per triangle and the fragment shader reads the band of the cell under the pixel. Mesh squares are tile-zoom-16 squares (about 380 m): max affine error 7 mm, measured. Each square carries an integer base cell so float32 keeps sub-millimetre precision.
+- Level rule: the exact 10 m cells whenever a CSS pixel is 12 m or less (MapLibre zoom 12 and up in London, the old tile z13); coarser views use the max-band pyramid so thin roads survive.
+- Loading: only chunks in view plus one chunk of margin, nearest first, 6 at a time, stale fetches aborted; GPU atlas of 32–128 chunks per source with LRU eviction. A chunk not loaded yet falls back to any loaded level, so loaded areas never blank on pan or zoom. Idle prefetch (section 6) now warms grid chunks: coarse levels for all 12 layers, then 10 m rings around the view.
+- Palette: `palette_derived.json` as before, band 0 white at alpha 179 for every road and rail layer, transparent for airport. Night recolours the palette with the same glow as `night-glow-tiles.ts`.
+- Gates: tests A (mesh vs exact transform, and transform vs pyproj) and B (shader maths on the CPU vs the points archive, 2,000 points, 100%) in `lib/map/noise-grid-gl-math.test.mjs`; the GPU gate is `app/dev/noise-gl-gate` plus `scripts/noise-gl-gate.mjs`.
