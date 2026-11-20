@@ -8,11 +8,9 @@ import {
   sanitizeTransportRasterIntensity,
 } from "@/lib/map/defra-raster-legend"
 import {
-  BAKED_TILE_BOUNDS,
-  BAKED_TILE_MAX_ZOOM,
   NOISE_DATA_BASE_URL,
+  NOISE_GRID_BOUNDS,
   bakedLayerName,
-  bakedTileUrl,
   type BakedNoiseKind,
   type BakedNoisePeriod,
 } from "@/lib/map/noise-tiles"
@@ -36,21 +34,15 @@ type SampleInput = {
 
 const tileCache = new Map<string, Promise<TilePixels>>()
 
-/**
- * Baked tiles go to z13 (11.9 m pixels) and read the same files the map
- * paints, so a lookup is usually already in the HTTP cache. The live proxy
- * stays at z12.
- */
+/** Live proxy tiles only (no bake published); they stop at z12. */
 const clampTileZoom = (zoom: number) =>
-  NOISE_DATA_BASE_URL
-    ? Math.min(BAKED_TILE_MAX_ZOOM, Math.max(NOISE_TILE_MIN_ZOOM, Math.floor(zoom)))
-    : Math.min(
-        NOISE_TILE_PRECACHE_MAX_ZOOM,
-        Math.max(NOISE_TILE_MIN_ZOOM, Math.floor(zoom))
-      )
+  Math.min(
+    NOISE_TILE_PRECACHE_MAX_ZOOM,
+    Math.max(NOISE_TILE_MIN_ZOOM, Math.floor(zoom))
+  )
 
 const insideBakedBounds = (longitude: number, latitude: number) => {
-  const [west, south, east, north] = BAKED_TILE_BOUNDS
+  const [west, south, east, north] = NOISE_GRID_BOUNDS
   return (
     longitude >= west && longitude <= east && latitude >= south && latitude <= north
   )
@@ -107,16 +99,7 @@ const getTilePixels = ({
   const cached = tileCache.get(cacheKey)
   if (cached) return cached
 
-  const url = NOISE_DATA_BASE_URL
-    ? bakedTileUrl(
-        NOISE_DATA_BASE_URL,
-        kind,
-        period as BakedNoisePeriod,
-        z,
-        x,
-        y
-      )
-    : `/api/map/defra/${kind}/${z}/${x}/${y}.png?period=${period}`
+  const url = `/api/map/defra/${kind}/${z}/${x}/${y}.png?period=${period}`
   const loading = loadTilePixels(url).catch((error) => {
     tileCache.delete(cacheKey)
     throw error
@@ -130,8 +113,9 @@ const getTilePixels = ({
  * With a published bake, point values come from the 10 m cell under the point
  * (the same cell /api/noise/point reads), not from a tile pixel: a Mercator
  * pixel shows the cell under its own centre, which differs at band edges at
- * every zoom. The band is turned into the colour the tile would paint for it,
- * so the intensity scale is unchanged.
+ * every zoom. The band is turned into the colour the map paints for it (the
+ * same palette the WebGL grid layer uses), so the intensity scale is
+ * unchanged.
  */
 let cellReader: ReturnType<typeof createNoiseCellReader> | null = null
 const bandColours = bakePalette as Record<string, Record<string, { rgba: number[] }>>
@@ -163,8 +147,7 @@ export const sampleDefraRasterIntensity = async ({
   latitude,
   zoom,
 }: SampleInput) => {
-  // The baked tiles only cover London; outside it there is nothing to read
-  // (and no tile to 404 on).
+  // The baked grid only covers London; outside it there is nothing to read.
   if (NOISE_DATA_BASE_URL && !insideBakedBounds(longitude, latitude)) return 0
   if (NOISE_DATA_BASE_URL) return sampleBakedCell({ kind, period, longitude, latitude })
 

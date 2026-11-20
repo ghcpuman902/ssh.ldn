@@ -105,6 +105,24 @@ const nearestBand = (
   return best
 }
 
+/**
+ * The night glow for one flat DEFRA colour, exactly as `recolourToGlow` paints
+ * it: [r, g, b, a] in 0-255, or null when the band fades out. The WebGL noise
+ * layer recolours its palette with this instead of every tile pixel.
+ */
+export const defraGlowRgba = (
+  red: number,
+  green: number,
+  blue: number,
+  alpha: number
+): [number, number, number, number] | null => {
+  const palette = GLOW_PALETTES.defra
+  const band = nearestBand(palette.source, red, green, blue)
+  const glow = band >= 0 ? palette.glow[band] : null
+  if (!glow || glow[3] === 0 || alpha === 0) return null
+  return [glow[0], glow[1], glow[2], Math.round(alpha * glow[3])]
+}
+
 const recolourToGlow = (pixels: Uint8ClampedArray, palette: GlowPalette) => {
   // Tiles hold a handful of flat colours, so cache the lookup per colour.
   const bands = new Map<number, number>()

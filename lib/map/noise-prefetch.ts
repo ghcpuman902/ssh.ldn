@@ -1,19 +1,15 @@
 /**
- * Idle prefetch of the baked noise tiles (DESIGN section 6: view first, then
- * idle prefetch). Pure logic, no React and no map: `planPrefetch` orders the
- * tiles and `createIdlePrefetcher` runs them politely. The map hook is
- * hooks/use-noise-prefetch.ts.
+ * Idle prefetch of the baked noise grid chunks the WebGL layer draws (DESIGN
+ * section 6: view first, then idle prefetch). Pure logic, no React and no
+ * map: `planPrefetch` orders the chunk files and `createIdlePrefetcher` runs
+ * them politely. The map hook is hooks/use-noise-prefetch.ts. The layer
+ * fetches the same URLs, so a prefetched chunk comes from the HTTP cache.
  *
- * Self-contained on purpose (no imports; the tile layout is passed in) so node --test can load it.
+ * Self-contained on purpose (no imports; the grid index is passed in) so node --test can load it.
  */
-type BakedNoiseKind = "road" | "rail" | "airport"
-type BakedNoisePeriod = "day" | "night" | "evening" | "all"
 
-const KINDS: BakedNoiseKind[] = ["road", "rail", "airport"]
-const PERIODS: BakedNoisePeriod[] = ["day", "night", "evening", "all"]
-
-/** Coarse levels for all 12 layers (about 2.9 MB), then z13 rings outward from the view. */
-export const COARSE_ZOOMS = [8, 9, 10, 11, 12]
+/** Pyramid levels from this one up count as coarse (40 m cells and up): all 12 layers about 4 MB. */
+export const COARSE_MIN_LEVEL = 2
 export const MAX_CONCURRENT = 2
 /** Quiet time with no input before prefetch may start. */
 export const IDLE_DELAY_MS = 2000
@@ -29,7 +25,7 @@ type NetworkInformationLike = { saveData?: boolean; effectiveType?: string }
 
 /**
  * Chromium exposes Save-Data and effectiveType; Safari exposes neither, so it
- * gets the coarse levels plus a 5 km ring (about 4 MB).
+ * gets the coarse levels plus a 5 km ring of 10 m chunks.
  */
 export const prefetchBudget = (
   connection: NetworkInformationLike | undefined
@@ -42,84 +38,78 @@ export const prefetchBudget = (
   return { allowed: true, ringsKm: [5, 10, 20] }
 }
 
-const tileXY = (lng: number, lat: number, z: number) => {
-  const n = 2 ** z
-  const x = ((lng + 180) / 360) * n
-  const latRad = (lat * Math.PI) / 180
-  const y = ((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2) * n
-  return { x, y }
+/** The parts of `<base>/grid/index.json` the plan needs. */
+export type PrefetchGridIndex = {
+  cellMeters: number
+  chunkCells: number
+  levels: Record<string, { cols: number; rows: number }>
+  /** layer -> level -> chunk ids that have a file. */
+  layers: Record<string, Record<string, number[]>>
 }
 
-const metersPerTile = (z: number, lat: number) =>
-  (40075016.686 * Math.cos((lat * Math.PI) / 180)) / 2 ** z
+type Chunk = { level: number; id: number; distKm: number }
 
-type Tile = { z: number; x: number; y: number; distKm: number }
-
-/** Every baked tile at zoom z, with its distance from the view centre in km. */
-const tilesAtZoom = (
-  z: number,
-  centre: { lng: number; lat: number },
-  bounds: readonly [number, number, number, number]
-): Tile[] => {
-  const [west, south, east, north] = bounds
-  const a = tileXY(west, north, z)
-  const b = tileXY(east, south, z)
-  const c = tileXY(centre.lng, centre.lat, z)
-  const size = metersPerTile(z, centre.lat) / 1000
-  const out: Tile[] = []
-  for (let x = Math.floor(a.x); x <= Math.floor(b.x); x++) {
-    for (let y = Math.floor(a.y); y <= Math.floor(b.y); y++) {
-      out.push({ z, x, y, distKm: Math.hypot(x + 0.5 - c.x, y + 0.5 - c.y) * size })
+/** Every chunk at a level, with its centre's distance from the view centre in km. */
+const chunksAtLevel = (index: PrefetchGridIndex, level: number, centre: { col: number; row: number }) => {
+  const L = index.levels[String(level)]
+  const span = index.chunkCells * 2 ** level
+  const km = (span * index.cellMeters) / 1000
+  const out: Chunk[] = []
+  for (let y = 0; y < L.rows; y++) {
+    for (let x = 0; x < L.cols; x++) {
+      const d = Math.hypot(x + 0.5 - centre.col / span, y + 0.5 - centre.row / span) * km
+      out.push({ level, id: y * L.cols + x, distKm: d })
     }
   }
   return out.sort((p, q) => p.distKm - q.distKm)
 }
 
 export type PrefetchPlanInput = {
-  /** Tile URL for one layer and tile (see bakedTileUrl in noise-tiles.ts). */
-  urlFor: (
-    kind: BakedNoiseKind,
-    period: BakedNoisePeriod,
-    z: number,
-    x: number,
-    y: number
-  ) => string
-  /** West, south, east, north of the baked tiles. */
-  bounds: readonly [number, number, number, number]
-  /** Zoom of the finest baked tiles (the rings). */
-  maxZoom: number
-  centre: { lng: number; lat: number }
+  /** Chunk URL for one layer, level and chunk id (see gridChunkUrl in noise-grid-gl-math.ts). */
+  urlFor: (layer: string, level: number, id: number, cols: number) => string
+  index: PrefetchGridIndex
+  /** View centre in level-0 grid cells (col east of originE, row south of originN). */
+  centre: { col: number; row: number }
   budget: PrefetchBudget
-  /** Tile URLs to leave out, e.g. ones the view just loaded. */
+  /** URLs to leave out, e.g. ones the view just loaded. */
   skip?: ReadonlySet<string>
 }
 
 /**
- * Ordered URLs: coarse zooms first (all 12 layers, nearest tiles first), then
- * z13 rings outward from `centre` (the user's current view, not a fixed
- * point). Empty when the budget says no.
+ * Ordered URLs: coarse levels first (coarsest first, all 12 layers, nearest
+ * chunks first), then rings of 10 m chunks outward from `centre` (the user's
+ * current view, not a fixed point). Only chunks that have a file. Empty when
+ * the budget says no.
  */
-export const planPrefetch = ({ urlFor, bounds, maxZoom, centre, budget, skip }: PrefetchPlanInput) => {
+export const planPrefetch = ({ urlFor, index, centre, budget, skip }: PrefetchPlanInput) => {
   if (!budget.allowed) return []
-  const urls: string[] = []
-  const push = (kind: BakedNoiseKind, period: BakedNoisePeriod, t: Tile) => {
-    const url = urlFor(kind, period, t.z, t.x, t.y)
-    if (!skip?.has(url)) urls.push(url)
+  const layers = Object.keys(index.layers)
+  const present = new Map<string, Set<number>>()
+  const has = (layer: string, level: number, id: number) => {
+    const key = `${layer}/${level}`
+    let set = present.get(key)
+    if (!set) present.set(key, (set = new Set(index.layers[layer]?.[String(level)] ?? [])))
+    return set.has(id)
   }
-  for (const z of COARSE_ZOOMS) {
-    for (const t of tilesAtZoom(z, centre, bounds)) {
-      for (const kind of KINDS) for (const period of PERIODS) push(kind, period, t)
+  const urls: string[] = []
+  const push = (c: Chunk) => {
+    const cols = index.levels[String(c.level)].cols
+    for (const layer of layers) {
+      if (!has(layer, c.level, c.id)) continue
+      const url = urlFor(layer, c.level, c.id, cols)
+      if (!skip?.has(url)) urls.push(url)
     }
   }
-  const z13 = tilesAtZoom(maxZoom, centre, bounds)
+  const levels = Object.keys(index.levels).map(Number).sort((a, b) => b - a)
+  for (const level of levels) {
+    if (level < COARSE_MIN_LEVEL) continue
+    for (const c of chunksAtLevel(index, level, centre)) push(c)
+  }
+  const fine = chunksAtLevel(index, 0, centre)
   let from = 0
   for (const km of budget.ringsKm) {
-    // A tile belongs to the ring that contains its centre.
-    for (const t of z13) {
-      if (t.distKm >= from && t.distKm < km) {
-        for (const kind of KINDS) for (const period of PERIODS) push(kind, period, t)
-      }
-    }
+    // A chunk belongs to the ring that contains its centre.
+    for (const c of fine) if (c.distKm >= from && c.distKm < km) push(c)
     from = km
   }
   return urls
@@ -192,7 +182,7 @@ export const createIdlePrefetcher = ({
           return
         }
         // Low priority and a plain HTTP cache: the response is stored for
-        // MapLibre and the sampler, nothing is read here.
+        // the WebGL grid layer, nothing is read here.
         fetchImpl(url, { priority: "low", signal: controller?.signal } as RequestInit)
           .then((res) => res.arrayBuffer())
           .catch(() => undefined)
