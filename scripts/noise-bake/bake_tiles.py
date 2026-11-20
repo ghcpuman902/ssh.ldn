@@ -16,8 +16,9 @@ def lut(L):
     for b, v in pal.items():
         if int(b) > 0: t[int(b)] = v["rgba"]
     # DEFRA paints below-threshold cells inside the model extent white at alpha 179 (road and rail day/evening/Lden: 93-98% of band-0
-    # cells in the box). Rail Lnight is only ~50% white (its extent is smaller and not recoverable), so it stays transparent.
-    if WHITE and (L.startswith("road") or L in ("rail_Lden", "rail_Lday", "rail_Leve")): t[0] = (255, 255, 255, 179)
+    # cells in the box). Rail Lnight gets it too: its live tiles lack the wash only in one rectangular block of z12 tiles
+    # (x 2044-2050, y 1358-1363), a DEFRA rendering artefact, not a smaller model extent (box evidence/nightrail.json).
+    if WHITE and (L.startswith("road") or L.startswith("rail")): t[0] = (255, 255, 255, 179)
     return t
 ONLY = os.environ.get("ONLY", ",".join(LAYERS)).split(","); _bands = {}; _luts = {}
 def init():

@@ -11,10 +11,14 @@ import {
   BAKED_TILE_BOUNDS,
   BAKED_TILE_MAX_ZOOM,
   NOISE_DATA_BASE_URL,
+  bakedLayerName,
   bakedTileUrl,
+  type BakedNoiseKind,
   type BakedNoisePeriod,
 } from "@/lib/map/noise-tiles"
+import { createNoiseCellReader } from "@/lib/map/noise-cell-reader"
 import { lngLatToTilePixel } from "@/lib/map/web-mercator"
+import bakePalette from "@/scripts/noise-bake/palette_derived.json"
 
 const TILE_SIZE = 256
 
@@ -122,6 +126,36 @@ const getTilePixels = ({
   return loading
 }
 
+/**
+ * With a published bake, point values come from the 10 m cell under the point
+ * (the same cell /api/noise/point reads), not from a tile pixel: a Mercator
+ * pixel shows the cell under its own centre, which differs at band edges at
+ * every zoom. The band is turned into the colour the tile would paint for it,
+ * so the intensity scale is unchanged.
+ */
+let cellReader: ReturnType<typeof createNoiseCellReader> | null = null
+const bandColours = bakePalette as Record<string, Record<string, { rgba: number[] }>>
+
+const sampleBakedCell = async ({
+  kind,
+  period,
+  longitude,
+  latitude,
+}: Omit<SampleInput, "zoom">) => {
+  cellReader ??= createNoiseCellReader(`${NOISE_DATA_BASE_URL}/points`)
+  const layer = bakedLayerName(kind as BakedNoiseKind, period as BakedNoisePeriod)
+  const band = await cellReader.bandAt(latitude, longitude, layer)
+  const rgba = band ? bandColours[layer]?.[String(band)]?.rgba : undefined
+  if (!rgba) return 0
+  const intensity = defraRasterPixelToIntensity({
+    red: rgba[0],
+    green: rgba[1],
+    blue: rgba[2],
+    alpha: 255,
+  })
+  return sanitizeTransportRasterIntensity(intensity, kind)
+}
+
 export const sampleDefraRasterIntensity = async ({
   kind,
   period,
@@ -132,6 +166,7 @@ export const sampleDefraRasterIntensity = async ({
   // The baked tiles only cover London; outside it there is nothing to read
   // (and no tile to 404 on).
   if (NOISE_DATA_BASE_URL && !insideBakedBounds(longitude, latitude)) return 0
+  if (NOISE_DATA_BASE_URL) return sampleBakedCell({ kind, period, longitude, latitude })
 
   const z = clampTileZoom(zoom)
   const tile = lngLatToTilePixel({
