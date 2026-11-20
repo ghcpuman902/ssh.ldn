@@ -72,6 +72,12 @@ export const loadGridIndex = (base: string) => {
 }
 
 const gunzip = async (bytes: ArrayBuffer) => {
+  // A host that adds Content-Encoding: gzip has already had the browser
+  // decompress it; a raw chunk is exactly 256 x 256 bytes with no gzip magic.
+  const head = new Uint8Array(bytes, 0, Math.min(2, bytes.byteLength))
+  if (bytes.byteLength === CHUNK * CHUNK && !(head[0] === 0x1f && head[1] === 0x8b)) {
+    return new Uint8Array(bytes)
+  }
   const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"))
   return new Uint8Array(await new Response(stream).arrayBuffer())
 }
