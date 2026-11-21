@@ -39,6 +39,8 @@ import {
 } from "@/lib/map/noise-contributor-copy"
 import { getNoiseContributorMeta } from "@/lib/map/noise-contributor-meta"
 import type { NoiseLevelPeriod, NoiseLevels } from "@/lib/map/noise-levels"
+import { roadPlusLocalDb } from "@/lib/map/noise-local-levels"
+import type { LocalNoiseSlot } from "@/lib/map/noise-tiles"
 import {
   ANALYSIS_DAY_PARTS,
   WEEK_SEGMENT_LETTERS,
@@ -921,10 +923,15 @@ const formatDb = (db: number | null) =>
 const NoiseLevelsCard = ({
   levels,
   period,
+  slot,
 }: {
   levels: NoiseLevels
   period: NoiseLevelPeriod
-}) => (
+  slot: LocalNoiseSlot
+}) => {
+  const local = levels.local?.[slot]
+  const roadDb = levels.road[period]
+  return (
   <div className="space-y-1" data-testid="noise-levels">
     <p className="text-xs font-medium text-muted-foreground">
       DEFRA noise here · {period === "Lnight" ? "night" : "day"}
@@ -936,9 +943,20 @@ const NoiseLevelsCard = ({
           <dd className="tabular-nums">{formatDb(levels[source][period])}</dd>
         </Fragment>
       ))}
+      {local?.db ? (
+        <>
+          <dt className="text-muted-foreground">Local sources</dt>
+          <dd className="tabular-nums">≈ {local.db.toFixed(1)} dB (estimate)</dd>
+          <dt className="text-muted-foreground">Road + local</dt>
+          <dd className="tabular-nums" data-road-band={local.roadBand}>
+            ≈ {roadPlusLocalDb(roadDb, local.db)?.toFixed(1)} dB
+          </dd>
+        </>
+      ) : null}
     </dl>
   </div>
-)
+  )
+}
 
 export const AnalyseBody = ({
   state,
@@ -990,6 +1008,7 @@ export const AnalyseBody = ({
         <NoiseLevelsCard
           levels={state.noiseLevels.data}
           period={timeSlot.part === "night" ? "Lnight" : "Lday"}
+          slot={`${timeSlot.week}-${timeSlot.part}`}
         />
       ) : null}
 

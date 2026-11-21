@@ -22,7 +22,10 @@ import { nightlifeEmojiImageId } from "@/lib/map/nightlife-emoji-images"
 import {
   NOISE_DATA_BASE_URL,
   bakedLayerName,
+  localLayerName,
+  roadLocalLayerName,
   type BakedNoisePeriod,
+  type LocalNoiseSlot,
 } from "@/lib/map/noise-tiles"
 import {
   NoiseGridGlLayer,
@@ -267,9 +270,14 @@ const DefraNoiseRasterLayers = ({
 
 type DefraNoiseGridLayersProps = Omit<DefraNoiseRasterLayersProps, "rasterFadeMs"> & {
   base: string
+  /** Local noise sources (OSM venues and hospitals) switched on. */
+  local: boolean
 }
 
-const gridLayerId = (kind: DefraMapKind) => `defra-noise-${kind}-grid-gl`
+type GridKind = DefraMapKind | "local"
+const GRID_RENDER_ORDER: readonly GridKind[] = [...DEFRA_MAP_RENDER_ORDER, "local"]
+
+const gridLayerId = (kind: GridKind) => `defra-noise-${kind}-grid-gl`
 
 const palettes = new Map<string, Uint8Array>()
 /** Stable per layer and day/night, so the GL layer re-uploads only on a real change. */
@@ -287,10 +295,15 @@ const paletteFor = (layer: string, glow: boolean) => {
 /**
  * A published bake: one WebGL layer per source, drawn from the raw 10 m BNG
  * grid so every pixel shows the cell under its own lat/lng (see
- * lib/map/noise-grid-gl-layer.ts). All three stay mounted in render order and
- * only hide, so toggling a source never reorders them. Opacity follows the
- * raster path (raster-opacity, capped at 0.95); night uses the glow palette,
- * a recolour of the same bands.
+ * lib/map/noise-grid-gl-layer.ts). All stay mounted in render order and only
+ * hide, so toggling a source never reorders them. Opacity follows the raster
+ * path (raster-opacity, capped at 0.95); night uses the glow palette, a
+ * recolour of the same bands.
+ *
+ * Local sources are on the same cells (lib/map/noise-tiles.ts): with road on,
+ * the road layer draws road + local energy (`roadlocal_<slot>`), so a venue
+ * raises the road baseline instead of tinting over it; with road off, the
+ * `local` layer draws the venues alone in the same colours.
  */
 const DefraNoiseGridLayers = ({
   base,
@@ -299,31 +312,47 @@ const DefraNoiseGridLayers = ({
   opacity,
   weekendNightBoost,
   revealStage,
+  local,
 }: DefraNoiseGridLayersProps) => {
   const { current: mapRef } = useMap()
   const period = defraPeriodFromDayPart(timeSlot.part) as BakedNoisePeriod
   const isNight = timeSlot.part === "night"
   const shown = kindsForRevealStage(revealStage, visibility)
+  const slot = poiDensitySlotFromParts(timeSlot) as LocalNoiseSlot
+  const localOn = local && revealStage !== "basemap"
+
+  const kindOpacity = (kind: DefraMapKind) =>
+    Math.min(
+      (opacity[kind] ?? DEFAULT_NOISE_LAYER_OPACITY[kind]) *
+        (kind === "road" && isNight ? weekendNightBoost : 1) *
+        (isNight ? NIGHT_GLOW_OPACITY_BOOST : 1),
+      0.95
+    )
 
   const states = Object.fromEntries(
-    DEFRA_MAP_RENDER_ORDER.map((kind) => {
-      const layer = bakedLayerName(kind, period)
-      const layerOpacity =
-        (opacity[kind] ?? DEFAULT_NOISE_LAYER_OPACITY[kind]) *
-        (kind === "road" && isNight ? weekendNightBoost : 1) *
-        (isNight ? NIGHT_GLOW_OPACITY_BOOST : 1)
+    GRID_RENDER_ORDER.map((kind) => {
+      const layer =
+        kind === "local"
+          ? localLayerName(slot)
+          : kind === "road" && localOn
+            ? roadLocalLayerName(slot)
+            : bakedLayerName(kind, period)
       const state: NoiseGridLayerState = {
         layer,
         palette: paletteFor(layer, isNight),
-        opacity: Math.min(layerOpacity, 0.95),
-        visible: shown.includes(kind),
+        // Venues alone look like a road at the same dB.
+        opacity: kindOpacity(kind === "local" ? "road" : kind),
+        visible:
+          kind === "local"
+            ? localOn && !shown.includes("road")
+            : shown.includes(kind),
       }
       return [kind, state]
     })
-  ) as Record<DefraMapKind, NoiseGridLayerState>
+  ) as Record<GridKind, NoiseGridLayerState>
 
   const statesRef = useRef(states)
-  const layersRef = useRef<Partial<Record<DefraMapKind, NoiseGridGlLayer>>>({})
+  const layersRef = useRef<Partial<Record<GridKind, NoiseGridGlLayer>>>({})
   // Declared first so the effects below read this render's states.
   useEffect(() => {
     statesRef.current = states
@@ -333,7 +362,7 @@ const DefraNoiseGridLayers = ({
     const map = mapRef?.getMap()
     if (!map) return
     const layers = layersRef.current
-    for (const kind of DEFRA_MAP_RENDER_ORDER) {
+    for (const kind of GRID_RENDER_ORDER) {
       layers[kind] ??= new NoiseGridGlLayer(
         gridLayerId(kind),
         base,
@@ -341,7 +370,12 @@ const DefraNoiseGridLayers = ({
       )
     }
     const add = () => {
-      for (const kind of DEFRA_MAP_RENDER_ORDER) {
+      // addLayer throws until the style has loaded (a fresh page can mount first).
+      if (!map.isStyleLoaded()) {
+        map.once("styledata", add)
+        return
+      }
+      for (const kind of GRID_RENDER_ORDER) {
         const id = gridLayerId(kind)
         if (map.getLayer(id)) continue
         map.addLayer(
@@ -355,18 +389,19 @@ const DefraNoiseGridLayers = ({
     map.on("style.load", add)
     return () => {
       map.off("style.load", add)
-      for (const kind of DEFRA_MAP_RENDER_ORDER) {
+      map.off("styledata", add)
+      for (const kind of GRID_RENDER_ORDER) {
         if (map.getLayer(gridLayerId(kind))) map.removeLayer(gridLayerId(kind))
       }
     }
   }, [mapRef, base])
 
-  const key = DEFRA_MAP_RENDER_ORDER.map(
+  const key = GRID_RENDER_ORDER.map(
     (kind) =>
       `${states[kind].layer}:${states[kind].opacity}:${states[kind].visible}:${isNight}`
   ).join("|")
   useEffect(() => {
-    for (const kind of DEFRA_MAP_RENDER_ORDER) {
+    for (const kind of GRID_RENDER_ORDER) {
       layersRef.current[kind]?.setState(statesRef.current[kind])
     }
   }, [key])
@@ -703,6 +738,7 @@ export const NoiseMapLayers = ({
           opacity={opacity}
           weekendNightBoost={weekendNightBoost}
           revealStage={revealStage}
+          local={visibility.nightlife}
         />
       ) : (
         <DefraNoiseRasterLayers
@@ -719,7 +755,8 @@ export const NoiseMapLayers = ({
         />
       )}
 
-      {showDeferredOverlays ? (
+      {/* With a bake, local sources are on the DEFRA grid (DefraNoiseGridLayers). */}
+      {showDeferredOverlays && !NOISE_DATA_BASE_URL ? (
         <PoiDensityRasterLayer
           visible={visibility.nightlife}
           timeSlot={timeSlot}

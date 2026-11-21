@@ -11,10 +11,16 @@ import {
   NOISE_DATA_BASE_URL,
   NOISE_GRID_BOUNDS,
   bakedLayerName,
+  roadLayerForSlot,
+  roadLocalLayerName,
   type BakedNoiseKind,
   type BakedNoisePeriod,
+  type LocalNoiseSlot,
 } from "@/lib/map/noise-tiles"
-import { createNoiseCellReader } from "@/lib/map/noise-cell-reader"
+import {
+  createNoiseCellReader,
+  createNoiseGridReader,
+} from "@/lib/map/noise-cell-reader"
 import { lngLatToTilePixel } from "@/lib/map/web-mercator"
 import bakePalette from "@/scripts/noise-bake/palette_derived.json"
 
@@ -30,6 +36,8 @@ type SampleInput = {
   longitude: number
   latitude: number
   zoom: number
+  /** Local sources on: road reads road + local (`roadlocal_<slot>`), as the map draws it. */
+  localSlot?: LocalNoiseSlot | null
 }
 
 const tileCache = new Map<string, Promise<TilePixels>>()
@@ -118,6 +126,7 @@ const getTilePixels = ({
  * unchanged.
  */
 let cellReader: ReturnType<typeof createNoiseCellReader> | null = null
+let gridReader: ReturnType<typeof createNoiseGridReader> | null = null
 const bandColours = bakePalette as Record<string, Record<string, { rgba: number[] }>>
 
 const sampleBakedCell = async ({
@@ -125,10 +134,19 @@ const sampleBakedCell = async ({
   period,
   longitude,
   latitude,
+  localSlot,
 }: Omit<SampleInput, "zoom">) => {
-  cellReader ??= createNoiseCellReader(`${NOISE_DATA_BASE_URL}/points`)
-  const layer = bakedLayerName(kind as BakedNoiseKind, period as BakedNoisePeriod)
-  const band = await cellReader.bandAt(latitude, longitude, layer)
+  let layer: string
+  let band: number | null
+  if (kind === "road" && localSlot) {
+    gridReader ??= createNoiseGridReader(`${NOISE_DATA_BASE_URL}/grid`)
+    layer = roadLayerForSlot(localSlot)
+    band = await gridReader.valueAt(latitude, longitude, roadLocalLayerName(localSlot))
+  } else {
+    cellReader ??= createNoiseCellReader(`${NOISE_DATA_BASE_URL}/points`)
+    layer = bakedLayerName(kind as BakedNoiseKind, period as BakedNoisePeriod)
+    band = await cellReader.bandAt(latitude, longitude, layer)
+  }
   const rgba = band ? bandColours[layer]?.[String(band)]?.rgba : undefined
   if (!rgba) return 0
   const intensity = defraRasterPixelToIntensity({
@@ -146,10 +164,11 @@ export const sampleDefraRasterIntensity = async ({
   longitude,
   latitude,
   zoom,
+  localSlot,
 }: SampleInput) => {
   // The baked grid only covers London; outside it there is nothing to read.
   if (NOISE_DATA_BASE_URL && !insideBakedBounds(longitude, latitude)) return 0
-  if (NOISE_DATA_BASE_URL) return sampleBakedCell({ kind, period, longitude, latitude })
+  if (NOISE_DATA_BASE_URL) return sampleBakedCell({ kind, period, longitude, latitude, localSlot })
 
   const z = clampTileZoom(zoom)
   const tile = lngLatToTilePixel({

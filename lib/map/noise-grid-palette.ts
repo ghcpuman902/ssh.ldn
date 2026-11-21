@@ -1,4 +1,9 @@
 import { defraGlowRgba } from "@/lib/map/night-glow-tiles"
+import {
+  roadBandOf,
+  roadLayerForSlot,
+  type LocalNoiseSlot,
+} from "@/lib/map/noise-tiles"
 import bakePalette from "@/scripts/noise-bake/palette_derived.json"
 
 type DerivedPalette = Record<string, Record<string, { rgba: number[] }>>
@@ -13,7 +18,23 @@ const derived = bakePalette as DerivedPalette
  * DEFRA's below-threshold white wash (alpha 179) for every road and rail
  * layer, rail_Lnight included, and transparent for airport.
  */
-export const gridLayerPalette = (layer: string) => {
+export const gridLayerPalette = (layer: string): Uint8Array => {
+  // Road + local sources holds road bands: the road palette as it is.
+  if (layer.startsWith("roadlocal_")) {
+    return gridLayerPalette(roadLayerForSlot(layer.slice(10) as LocalNoiseSlot))
+  }
+  // Local sources alone hold round(2 x dB): each value gets the colour of
+  // its road band, so a venue and a road at the same dB look the same.
+  if (layer.startsWith("local_")) {
+    const slot = layer.slice(6) as LocalNoiseSlot
+    const road = gridLayerPalette(roadLayerForSlot(slot))
+    const out = new Uint8Array(256 * 4)
+    for (let v = 1; v < 256; v++) {
+      const band = roadBandOf(v / 2, slot.endsWith("night"))
+      if (band > 0) out.set(road.subarray(band * 4, band * 4 + 4), v * 4)
+    }
+    return out
+  }
   const out = new Uint8Array(256 * 4)
   const own = derived[layer] ?? {}
   const entries =

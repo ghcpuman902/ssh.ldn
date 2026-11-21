@@ -12,7 +12,7 @@ import { mkdir, readFile, rm, writeFile } from "node:fs/promises"
 import path from "node:path"
 import { promisify } from "node:util"
 import { deflateSync } from "node:zlib"
-import { fileURLToPath } from "node:url"
+import { fileURLToPath, pathToFileURL } from "node:url"
 
 import openingHours from "opening_hours"
 
@@ -39,14 +39,14 @@ const OVERPASS_ENDPOINTS = [
   "https://overpass-api.de/api/interpreter",
 ]
 
-const DENSITY_SLOTS = [
+export const DENSITY_SLOTS = [
   "weekday-day",
   "weekday-night",
   "weekend-day",
   "weekend-night",
 ]
 
-const WEIGHTS = {
+export const WEIGHTS = {
   pub: 0.28,
   bar: 0.34,
   nightclub: 1,
@@ -91,7 +91,7 @@ const FALLBACK_ACTIVITY = {
  * Approximate annoying indoor-with-window-open reach in metres.
  * These are deliberately conservative: the raster is context, not measured dB.
  */
-const REACH_METERS = {
+export const REACH_METERS = {
   pub: 34,
   bar: 38,
   nightclub: 90,
@@ -231,7 +231,8 @@ const probeDatesForSlot = (slot) => {
   ])
 }
 
-const activityForSlot = (feature, slot) => {
+/** 0-1 share of the slot a venue is open; also used by scripts/noise-bake/local_activity.mjs. */
+export const activityForSlot = (feature, slot) => {
   if (!feature.openingHours) {
     return FALLBACK_ACTIVITY[feature.amenity][slot]
   }
@@ -483,7 +484,10 @@ const main = async () => {
   )
 }
 
-main().catch((error) => {
-  console.error(error)
-  process.exit(1)
-})
+// Only build tiles when run directly, so other scripts can import activityForSlot.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((error) => {
+    console.error(error)
+    process.exit(1)
+  })
+}

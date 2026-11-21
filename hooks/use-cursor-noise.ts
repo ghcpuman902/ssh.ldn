@@ -19,6 +19,7 @@ import {
   type LocalNoiseAmenity,
   venueSlotActivity,
 } from "@/lib/map/venue-time"
+import { poiDensitySlotFromParts } from "@/lib/map/poi-density"
 import { sampleDefraRasterIntensity } from "@/lib/map/raster-pixel-sampler"
 import { snapReadingAtPoint } from "@/lib/map/noise-tap-snap"
 import { haversineMeters } from "@/lib/server/geo"
@@ -232,6 +233,9 @@ export const useCursorNoise = ({
             longitude: reading.longitude,
             latitude: reading.latitude,
             zoom: latestZoom,
+            localSlot: layerVisibility.nightlife
+              ? poiDensitySlotFromParts(timeSlot)
+              : null,
           })
             .catch(() => 0)
         })

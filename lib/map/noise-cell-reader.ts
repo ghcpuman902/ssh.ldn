@@ -165,3 +165,76 @@ export const createNoiseCellReader = (pointsBase: string, fetchImpl: typeof fetc
 
   return { bandAt }
 }
+
+type GridIndex = {
+  originE: number
+  originN: number
+  cellMeters: number
+  chunkCells: number
+  gridCols: number
+  gridRows: number
+  levels: Record<string, { cols: number }>
+  layers: Record<string, Record<string, number[]>>
+}
+
+const gunzipGridChunk = async (bytes: Uint8Array, cells: number) => {
+  // A host that adds Content-Encoding: gzip has already had the browser decompress it.
+  if (bytes.byteLength === cells && !(bytes[0] === 0x1f && bytes[1] === 0x8b)) return bytes
+  return gunzip(bytes)
+}
+
+/**
+ * Reads one level-0 value of any grid layer from `<base>/grid` (the 256-cell
+ * gzip chunks the WebGL layer draws), for layers that have no point archive:
+ * `local_<slot>` (round(2 x dB)) and `roadlocal_<slot>` (road band). Same
+ * cell maths as bandAt, same chunk bytes as the map, so the readout is the
+ * drawn value by construction.
+ */
+export const createNoiseGridReader = (gridBase: string, fetchImpl: typeof fetch = fetch) => {
+  const root = gridBase.replace(/\/+$/, "")
+  let indexPromise: Promise<GridIndex & { present: Map<string, Set<number>> }> | null = null
+  const chunks = new Map<string, Promise<Uint8Array | null>>()
+
+  const index = () =>
+    (indexPromise ??= (async () => {
+      const res = await fetchImpl(`${root}/index.json`)
+      if (!res.ok) throw new Error(`noise grid index ${res.status}`)
+      const idx = (await res.json()) as GridIndex
+      const present = new Map<string, Set<number>>()
+      for (const [layer, levels] of Object.entries(idx.layers)) present.set(layer, new Set(levels["0"] ?? []))
+      return { ...idx, present }
+    })().catch((error) => {
+      indexPromise = null
+      throw error
+    }))
+
+  /** Level-0 value of the cell under the point; 0 = empty; null = outside the grid or no such layer. */
+  const valueAt = async (latitude: number, longitude: number, layer: string): Promise<number | null> => {
+    const idx = await index()
+    const present = idx.present.get(layer)
+    if (!present) return null
+    const { easting, northing } = wgs84ToBng(latitude, longitude)
+    const col = Math.floor((easting - idx.originE) / idx.cellMeters)
+    const row = Math.floor((idx.originN - northing) / idx.cellMeters)
+    if (col < 0 || row < 0 || col >= idx.gridCols || row >= idx.gridRows) return null
+    const C = idx.chunkCells
+    const cx = Math.floor(col / C)
+    const cy = Math.floor(row / C)
+    if (!present.has(cy * idx.levels["0"].cols + cx)) return 0
+    const key = `${layer}/${cx}_${cy}`
+    let p = chunks.get(key)
+    if (!p) {
+      p = fetchImpl(`${root}/${layer}/0/${cx}_${cy}.gz`).then(async (res) => {
+        if (!res.ok) throw new Error(`noise grid chunk ${res.status}`)
+        return gunzipGridChunk(new Uint8Array(await res.arrayBuffer()), C * C)
+      })
+      p.catch(() => chunks.delete(key))
+      chunks.set(key, p)
+      if (chunks.size > MAX_CHUNKS) chunks.delete(chunks.keys().next().value as string)
+    }
+    const data = await p
+    return data ? data[(row % C) * C + (col % C)] : 0
+  }
+
+  return { valueAt }
+}

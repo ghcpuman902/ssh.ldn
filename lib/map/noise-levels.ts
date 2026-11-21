@@ -8,7 +8,17 @@ export type NoiseLevelPeriod = "Lden" | "Lday" | "Leve" | "Lnight"
 export type NoiseLevels = Record<
   NoiseLevelSource,
   Record<NoiseLevelPeriod, number | null>
->
+> & {
+  /**
+   * Local sources on the same cell (lib/map/noise-local-levels.ts), per time
+   * slot; absent or null with no bake. Kept apart from the DEFRA values above,
+   * which are the point API's and never change.
+   */
+  local?: Record<
+    "weekday-day" | "weekday-night" | "weekend-day" | "weekend-night",
+    { db: number | null; roadBand: number }
+  > | null
+}
 
 type PointApiBody = {
   results?: Array<
