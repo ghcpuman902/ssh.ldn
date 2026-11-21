@@ -42,6 +42,11 @@
 //   --snap            with --subpixel: apply the UI tap snap (lib/map/noise-tap-snap.ts). Where a CSS pixel is
 //                     >= SNAP_MIN_PIXEL_METERS (5 m, MapLibre z <= ~13.3) the reading is the cell under the
 //                     device pixel's centre, so readout == drawn band must be 100% with no sub-pixel cases.
+//
+// Local-sources layers (local_<slot>, roadlocal_<slot>; lib/map/noise-tiles.ts) have no point API values:
+// for them step 3 reads the value with the app's own grid reader (createNoiseGridReader, the readout's
+// code path) in the page. The shader and the reader share only the chunk bytes, so this still proves the
+// drawn cell is the cell under the point; scripts/noise-bake (box verify_local.py) checks the values.
 
 const flags = process.argv.slice(2).filter((a) => a.startsWith("--"))
 const [pageUrl, apiOrigin, nArg = "200", cdp = "http://127.0.0.1:9333"] = process.argv.slice(2).filter((a) => !a.startsWith("--"))
@@ -156,12 +161,21 @@ try {
     }
   }
 
-  // 3: bands from the point API
+  // 3: bands from the point API (or, for local-sources layers, the app's grid reader)
   const [source, period] = info.layer.split("_")
   const queries = SUBPIXEL
     ? samples.flatMap((s) => [{ s, key: "band", lat: s.lat, lng: s.lng }, { s, key: "centreBand", lat: s.centreLat, lng: s.centreLng }])
     : samples.map((s) => ({ s, key: "band", lat: s.lat, lng: s.lng }))
-  for (let i = 0; i < queries.length; i += 50) {
+  const GRID_READER = /^(local|roadlocal)_/.test(info.layer)
+  if (GRID_READER) {
+    const values = await evaluate(`Promise.all(${JSON.stringify(queries.map((q) => [q.lat, q.lng]))}.map(([a, b]) => window.__noiseGate.readValue(a, b)))`)
+    queries.forEach((q, k) => {
+      if (q.key === "band") q.s.inCoverage = values[k] !== null
+      q.s[q.key] = values[k] ?? 0
+    })
+    console.log("reader: app grid reader (createNoiseGridReader)")
+  }
+  for (let i = 0; i < (GRID_READER ? 0 : queries.length); i += 50) {
     const batch = queries.slice(i, i + 50)
     const res = await fetch(`${apiOrigin.replace(/\/+$/, "")}/api/noise/point`, {
       method: "POST",
@@ -201,7 +215,7 @@ try {
   }
   const mode = PERTURB ? `NEGATIVE CONTROL ${PERTURB}: ` : SUBPIXEL ? (snapping ? "SUBPIXEL+SNAP: " : "SUBPIXEL: ") : ""
   const pct = ((100 * pass) / samples.length).toFixed(1)
-  console.log(`${mode}${pass}/${samples.length} pixels match the point API band (${pct}%)` +
+  console.log(`${mode}${pass}/${samples.length} pixels match the ${GRID_READER ? "grid reader value" : "point API band"} (${pct}%)` +
     (SUBPIXEL ? `; ${subpixel} sub-pixel cell-edge cases; ${failures.length} unexplained; ${edges} samples on band edges` : ""))
   for (const f of failures.slice(0, PERTURB ? 3 : 20)) console.log("FAIL", JSON.stringify(f))
   await closeTab()

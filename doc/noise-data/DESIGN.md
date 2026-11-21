@@ -98,5 +98,24 @@ Mangle asked for the GPU layer section 3 kept for later ("I want 100% exact", CO
 - Drawing: `lib/map/noise-grid-gl-layer.ts`, a MapLibre custom layer per source. A Web Mercator mesh carries each vertex's exact BNG position (`wgs84ToBng`, the point API's transform); the GPU interpolates it per triangle and the fragment shader reads the band of the cell under the pixel. Mesh squares are tile-zoom-16 squares (about 380 m): max affine error 7 mm, measured. Each square carries an integer base cell so float32 keeps sub-millimetre precision.
 - Level rule: the exact 10 m cells whenever a CSS pixel is 12 m or less (MapLibre zoom 12 and up in London, the old tile z13); coarser views use the max-band pyramid so thin roads survive.
 - Loading: only chunks in view plus one chunk of margin, nearest first, 6 at a time, stale fetches aborted; GPU atlas of 32–128 chunks per source with LRU eviction. A chunk not loaded yet falls back to any loaded level, so loaded areas never blank on pan or zoom. Idle prefetch (section 6) now warms grid chunks: coarse levels for all 12 layers, then 10 m rings around the view.
-- Palette: `palette_derived.json` as before, band 0 white at alpha 179 for every road and rail layer, transparent for airport. Night recolours the palette with the same glow as `night-glow-tiles.ts`.
+- Palette: `palette_derived.json` as before, band 0 white at alpha 179 for every road and rail layer, transparent for airport. Night recolours the palette with the same glow as `night-glow-tiles.ts` (see Night glow below).
 - Gates: tests A (mesh vs exact transform, and transform vs pyproj) and B (shader maths on the CPU vs the points archive, 2,000 points, 100%) in `lib/map/noise-grid-gl-math.test.mjs`; the GPU gate is `app/dev/noise-gl-gate` plus `scripts/noise-gl-gate.mjs`.
+
+## Night glow (21 Nov 2026)
+
+Mangle: night "seems a lot quieter than we designed"; numbers stay, but visually night should have the bigger impact. Rendering only; dB values and readings are unchanged.
+
+- DEFRA's day and night ramps share one colour per 5 dB step (Lnight band k and Lday band k-1 are the same colour), so the glow is keyed by colour: equal dB gets equal glow.
+- `lib/map/night-glow-palette.ts`: grey wash (modelled, under DEFRA's threshold), slate, teal, amber, orange, red-orange, hot red, magenta, pale pink, white-hot at 80 dB+. Every step is at least as visible on the night basemap as the same dB is on the day map, brighter the louder, and no two steps tie (`night-glow-palette.test.mjs`).
+- Night ignores DEFRA's own tile alpha (179 road, 128 airport) and uses the glow alpha alone. Before, the two multiplied with the layer opacity and the old ≤ 0.58 compression, so 55–60 dB drew at about 9% alpha. Labels and transit lines draw above the noise slot, so they read through the loudest cores without that compression.
+
+## Local sources on the grid (21 Nov 2026)
+
+Mangle: the OSM halos (pubs, bars, clubs, music venues, hospitals) did not add to the baseline, and looked coarse and untilted next to the DEFRA cells. They were a separate Web Mercator density raster (z10–14, about 6 m pixels at best, axis-aligned) with its own cyan-to-red ramp, drawn as a translucent tint over the road layer, so a quiet-coloured halo could read as quieter than the road under it.
+
+- Same cells: `scripts/noise-bake/bake_local.py` puts the venues on the exact 10 m BNG grid (venue positions through the app's own `wgs84ToBng`, `local_activity.mjs`), with the same chunks, pyramid and shader path as DEFRA.
+- Same units, added as energy: at 10 m a venue is 66 dB + 10 log10(weight × activity), where weight is the density design's relative strength (pub 0.28, bar 0.34, nightclub 1, music venue 0.82, hospital 0.32) and activity the share of the slot it is open; it falls with 20 log10(d/10) + 0.05 dB/m, so a busy pub reaches 45 dB at about 35 m and a club at about 85 m (the design's `REACH_METERS`). Venues and the road add as 10 log10 of the summed 10^(L/10). This is an estimate, not a measurement; the model lives in one place (`bake_local.py`) to tune.
+- Layers per slot: `local_<slot>` (venues alone, round(2 × dB), 0 under 35 dB) and `roadlocal_<slot>` (DEFRA road band of road + venues, never below the road band; days add to road_Lday, nights to road_Lnight).
+- Drawing: with local sources on, the road layer draws `roadlocal_<slot>`, so venues raise the road baseline cell by cell in DEFRA's colours; with road off, `local_<slot>` draws alone in the same colours. The Mercator density raster is used only when no bake is published. The venue markers stay.
+- Readout: the cursor gauge reads `roadlocal_<slot>` for road when local sources are on, and the pin panel adds "Local sources" and "Road + local", from the same chunks (`createNoiseGridReader`). `/api/noise/point` stays DEFRA only.
+- Gates: `verify_local.py` (bake vs brute-force sum, 229 cells, 0 off), `noise-local.test.mjs`, and the GPU gate on the local layers with the app's grid reader (`scripts/noise-gl-gate.mjs`).

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import type { Map as MapLibreMap } from "maplibre-gl"
 import "maplibre-gl/dist/maplibre-gl.css"
 
+import { createNoiseGridReader } from "@/lib/map/noise-cell-reader"
 import { NoiseGridGlLayer } from "@/lib/map/noise-grid-gl-layer"
 import { gridLevelFor, pixelMetersAt } from "@/lib/map/noise-grid-gl-math"
 import { gridLayerPalette } from "@/lib/map/noise-grid-palette"
@@ -25,6 +26,8 @@ type NoiseGate = {
   ready: Promise<void>
   /** CSS pixel position -> the device pixel under it, read back with gl.readPixels. */
   samplePixel: (x: number, y: number) => GateSample
+  /** Level-0 value of the cell under a point, read the way the app's readout reads it (grid chunks). */
+  readValue: (lat: number, lng: number) => Promise<number | null>
   info: () => {
     layer: string
     zoom: number
@@ -140,9 +143,11 @@ export const NoiseGlGateClient = () => {
         }
       }
 
+      const reader = createNoiseGridReader(`${base}/grid`)
       window.__noiseGate = {
         ready,
         samplePixel,
+        readValue: (a, b) => reader.valueAt(a, b, layerName),
         info: () => {
           const canvas = m.getCanvas()
           return {
