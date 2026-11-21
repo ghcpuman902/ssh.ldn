@@ -397,3 +397,21 @@ export const translateMat4 = (m: ArrayLike<number>, x: number, y: number) => {
   for (let r = 0; r < 4; r++) out[12 + r] = m[r] * x + m[4 + r] * y + m[12 + r]
   return out
 }
+
+/**
+ * Tap snap (Mangle, 21 Nov 2026). When a CSS pixel is this many metres or
+ * more (MapLibre zoom ~13.3 and below in London), a device pixel can span two
+ * 10 m cells, so a tap inside it can land in a cell the shader did not draw
+ * there. The UI reading then uses the cell under the centre of the tapped
+ * device pixel: exactly the cell the fragment shader drew. Closer in, the
+ * exact tap spot is kept. /api/noise/point itself never snaps.
+ */
+export const SNAP_MIN_PIXEL_METERS = 5
+
+export const shouldSnapReading = (cssPixelMeters: number) => cssPixelMeters >= SNAP_MIN_PIXEL_METERS
+
+/** CSS position of the centre of the device pixel under a CSS point (what the shader shades). */
+export const devicePixelCentre = (x: number, y: number, devicePixelRatio: number) => {
+  const r = devicePixelRatio > 0 ? devicePixelRatio : 1
+  return { x: (Math.floor(x * r) + 0.5) / r, y: (Math.floor(y * r) + 0.5) / r }
+}

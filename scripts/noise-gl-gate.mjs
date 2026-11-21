@@ -39,11 +39,16 @@
 //   --subpixel        sample a random point inside each pixel (not its centre) and keep edge pixels too.
 //                     A mismatch is "sub-pixel" when the pixel still equals the band at its own centre: a
 //                     pixel can show one cell only, so a point in the same pixel but the next cell differs.
+//   --snap            with --subpixel: apply the UI tap snap (lib/map/noise-tap-snap.ts). Where a CSS pixel is
+//                     >= SNAP_MIN_PIXEL_METERS (5 m, MapLibre z <= ~13.3) the reading is the cell under the
+//                     device pixel's centre, so readout == drawn band must be 100% with no sub-pixel cases.
 
 const flags = process.argv.slice(2).filter((a) => a.startsWith("--"))
 const [pageUrl, apiOrigin, nArg = "200", cdp = "http://127.0.0.1:9333"] = process.argv.slice(2).filter((a) => !a.startsWith("--"))
 const PERTURB = flags.find((f) => f.startsWith("--perturb="))?.split("=")[1] ?? null
 const SUBPIXEL = flags.includes("--subpixel")
+const SNAP = flags.includes("--snap")
+const SNAP_MIN_PIXEL_METERS = 5 // mirror of lib/map/noise-grid-gl-math.ts
 if (!pageUrl || !apiOrigin) {
   console.error("usage: node scripts/noise-gl-gate.mjs <gate page URL> <point API origin> [n] [cdp]")
   process.exit(2)
@@ -180,6 +185,10 @@ try {
     return [r, g, b].map((c, i) => Math.round(c * a + info.clearRgb[i] * (1 - a)))
   }
   const matches = (band, rgba) => expectedFor(band).every((v, i) => Math.abs(v - rgba[i]) <= TOLERANCE)
+  const pixelMeters = (78271.516964 * Math.cos((samples[0]?.lat ?? 51.5) * Math.PI / 180)) / 2 ** info.zoom
+  const snapping = SNAP && pixelMeters >= SNAP_MIN_PIXEL_METERS
+  if (SNAP) console.log(`snap ${snapping ? "ON" : "off"} (CSS pixel ${pixelMeters.toFixed(2)} m)`)
+  if (snapping) for (const s of samples) s.band = s.centreBand
   let pass = 0, subpixel = 0, edges = 0
   const failures = []
   for (const s of samples) {
@@ -190,13 +199,13 @@ try {
     else if (SUBPIXEL && matches(s.centreBand, s.rgba)) subpixel++
     else failures.push({ x: s.x, y: s.y, lat: s.lat, lng: s.lng, band: s.band, expected, got: s.rgba.slice(0, 3) })
   }
-  const mode = PERTURB ? `NEGATIVE CONTROL ${PERTURB}: ` : SUBPIXEL ? "SUBPIXEL: " : ""
+  const mode = PERTURB ? `NEGATIVE CONTROL ${PERTURB}: ` : SUBPIXEL ? (snapping ? "SUBPIXEL+SNAP: " : "SUBPIXEL: ") : ""
   const pct = ((100 * pass) / samples.length).toFixed(1)
   console.log(`${mode}${pass}/${samples.length} pixels match the point API band (${pct}%)` +
     (SUBPIXEL ? `; ${subpixel} sub-pixel cell-edge cases; ${failures.length} unexplained; ${edges} samples on band edges` : ""))
   for (const f of failures.slice(0, PERTURB ? 3 : 20)) console.log("FAIL", JSON.stringify(f))
   await closeTab()
-  const clean = SUBPIXEL ? failures.length === 0 : pass === samples.length
+  const clean = snapping ? pass === samples.length : SUBPIXEL ? failures.length === 0 : pass === samples.length
   process.exit(samples.length > 0 && clean ? 0 : 1)
 } catch (error) {
   console.error(error)

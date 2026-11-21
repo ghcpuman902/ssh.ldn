@@ -23,6 +23,7 @@ import { useMapLongPress } from "@/hooks/use-map-long-press"
 import { useMapTypeToSearch } from "@/hooks/use-map-type-to-search"
 import { useMapWindowClip } from "@/hooks/use-map-window-clip"
 import { fetchNoiseLevels } from "@/lib/map/noise-levels"
+import { snapReadingAtLngLat } from "@/lib/map/noise-tap-snap"
 import { useNoisePrefetch } from "@/hooks/use-noise-prefetch"
 import { useMapZoomControlStyles } from "@/hooks/use-map-zoom-control-styles"
 import { useIsMobile } from "@/hooks/use-mobile"
@@ -409,7 +410,9 @@ export const MapShell = () => {
         patchAnalyse({ noiseLevels: { status: "running" } })
 
         try {
-          const data = await fetchNoiseLevels({ latitude, longitude })
+          // Zoomed out, read the cell the noise layer drew under the pin (tap snap).
+          const reading = snapReadingAtLngLat(mapRef.current?.getMap(), { latitude, longitude })
+          const data = await fetchNoiseLevels(reading)
           patchAnalyse({ noiseLevels: { status: "done", data } })
         } catch (error) {
           patchAnalyse({
