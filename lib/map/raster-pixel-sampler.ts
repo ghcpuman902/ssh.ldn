@@ -7,7 +7,22 @@ import {
   defraRasterPixelToIntensity,
   sanitizeTransportRasterIntensity,
 } from "@/lib/map/defra-raster-legend"
+import {
+  NOISE_DATA_BASE_URL,
+  NOISE_GRID_BOUNDS,
+  bakedLayerName,
+  roadLayerForSlot,
+  roadLocalLayerName,
+  type BakedNoiseKind,
+  type BakedNoisePeriod,
+  type LocalNoiseSlot,
+} from "@/lib/map/noise-tiles"
+import {
+  createNoiseCellReader,
+  createNoiseGridReader,
+} from "@/lib/map/noise-cell-reader"
 import { lngLatToTilePixel } from "@/lib/map/web-mercator"
+import bakePalette from "@/scripts/noise-bake/palette_derived.json"
 
 const TILE_SIZE = 256
 
@@ -21,15 +36,25 @@ type SampleInput = {
   longitude: number
   latitude: number
   zoom: number
+  /** Local sources on: road reads road + local (`roadlocal_<slot>`), as the map draws it. */
+  localSlot?: LocalNoiseSlot | null
 }
 
 const tileCache = new Map<string, Promise<TilePixels>>()
 
+/** Live proxy tiles only (no bake published); they stop at z12. */
 const clampTileZoom = (zoom: number) =>
   Math.min(
     NOISE_TILE_PRECACHE_MAX_ZOOM,
     Math.max(NOISE_TILE_MIN_ZOOM, Math.floor(zoom))
   )
+
+const insideBakedBounds = (longitude: number, latitude: number) => {
+  const [west, south, east, north] = NOISE_GRID_BOUNDS
+  return (
+    longitude >= west && longitude <= east && latitude >= south && latitude <= north
+  )
+}
 
 const createCanvas = () => {
   if (typeof OffscreenCanvas !== "undefined") {
@@ -92,13 +117,59 @@ const getTilePixels = ({
   return loading
 }
 
+/**
+ * With a published bake, point values come from the 10 m cell under the point
+ * (the same cell /api/noise/point reads), not from a tile pixel: a Mercator
+ * pixel shows the cell under its own centre, which differs at band edges at
+ * every zoom. The band is turned into the colour the map paints for it (the
+ * same palette the WebGL grid layer uses), so the intensity scale is
+ * unchanged.
+ */
+let cellReader: ReturnType<typeof createNoiseCellReader> | null = null
+let gridReader: ReturnType<typeof createNoiseGridReader> | null = null
+const bandColours = bakePalette as Record<string, Record<string, { rgba: number[] }>>
+
+const sampleBakedCell = async ({
+  kind,
+  period,
+  longitude,
+  latitude,
+  localSlot,
+}: Omit<SampleInput, "zoom">) => {
+  let layer: string
+  let band: number | null
+  if (kind === "road" && localSlot) {
+    gridReader ??= createNoiseGridReader(`${NOISE_DATA_BASE_URL}/grid`)
+    layer = roadLayerForSlot(localSlot)
+    band = await gridReader.valueAt(latitude, longitude, roadLocalLayerName(localSlot))
+  } else {
+    cellReader ??= createNoiseCellReader(`${NOISE_DATA_BASE_URL}/points`)
+    layer = bakedLayerName(kind as BakedNoiseKind, period as BakedNoisePeriod)
+    band = await cellReader.bandAt(latitude, longitude, layer)
+  }
+  const rgba = band ? bandColours[layer]?.[String(band)]?.rgba : undefined
+  if (!rgba) return 0
+  const intensity = defraRasterPixelToIntensity({
+    red: rgba[0],
+    green: rgba[1],
+    blue: rgba[2],
+    alpha: 255,
+  })
+  return sanitizeTransportRasterIntensity(intensity, kind)
+}
+
 export const sampleDefraRasterIntensity = async ({
   kind,
   period,
   longitude,
   latitude,
   zoom,
+  localSlot,
 }: SampleInput) => {
+  // The baked grid only covers London; outside it there is nothing to read.
+  if (NOISE_DATA_BASE_URL && !insideBakedBounds(longitude, latitude)) return 0
+  if (NOISE_DATA_BASE_URL) return sampleBakedCell({ kind, period, longitude, latitude, localSlot })
+
   const z = clampTileZoom(zoom)
   const tile = lngLatToTilePixel({
     longitude,

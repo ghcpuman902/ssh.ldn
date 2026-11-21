@@ -11,7 +11,12 @@ import { isSameOriginRequest } from "@/lib/server/same-origin"
  * lib/server/voice-cors.ts (it needs to allow a configurable embed origin,
  * not just same-origin), so it's exempted here too.
  */
-const PUBLIC_API_PREFIXES = ["/api/noise-address", "/api/mcp", "/api/voice"]
+const PUBLIC_API_PREFIXES = [
+  "/api/noise-address",
+  "/api/noise/point",
+  "/api/mcp",
+  "/api/voice",
+]
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl

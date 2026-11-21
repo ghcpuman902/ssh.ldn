@@ -19,7 +19,9 @@ import {
   type LocalNoiseAmenity,
   venueSlotActivity,
 } from "@/lib/map/venue-time"
+import { poiDensitySlotFromParts } from "@/lib/map/poi-density"
 import { sampleDefraRasterIntensity } from "@/lib/map/raster-pixel-sampler"
+import { snapReadingAtPoint } from "@/lib/map/noise-tap-snap"
 import { haversineMeters } from "@/lib/server/geo"
 
 const TRANSPORT_KINDS: DefraMapKind[] = ["road", "rail", "airport"]
@@ -219,6 +221,8 @@ export const useCursorNoise = ({
         nextAmenityLevels = local.amenityLevels
       }
 
+      // Zoomed out, read the cell the noise layer drew under this pixel (tap snap).
+      const reading = snapReadingAtPoint(map, cursorPoint, cursor)
       await Promise.all(
         TRANSPORT_KINDS.map(async (kind) => {
           if (!layerVisibility[kind]) return
@@ -226,9 +230,12 @@ export const useCursorNoise = ({
           nextLevels[kind] = await sampleDefraRasterIntensity({
             kind,
             period,
-            longitude: cursor.longitude,
-            latitude: cursor.latitude,
+            longitude: reading.longitude,
+            latitude: reading.latitude,
             zoom: latestZoom,
+            localSlot: layerVisibility.nightlife
+              ? poiDensitySlotFromParts(timeSlot)
+              : null,
           })
             .catch(() => 0)
         })

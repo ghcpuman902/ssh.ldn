@@ -1,0 +1,9 @@
+# Noise data: reported problems
+
+Read `DESIGN.md` ("How to take feedback") first. Each entry records what was reported, the implementation detail that caused it, the fix, and the regression test. Principles stay unless Mangle explicitly changes one.
+
+| Date | Reported (Mangle's words) | Real cause (detail, or mechanisms in conflict) | Fix (commit) | Regression test |
+|---|---|---|---|---|
+| 20 Nov 2026 | "zoom and tile misalignment; I want 100% exact" | Mercator pixel lattice vs BNG 10 m cells (11.9 m, 1.49° rotation) in pre-baked tiles: a pixel shows the cell under its own centre, so band edges shift at every zoom | WebGL layer from the raw grid (9729a93, 0176a68, 8dd3211): each pixel looks up the 10 m cell under its own lat/lng; baked Mercator tiles removed | test A + test B (`lib/map/noise-grid-gl-math.test.mjs`) + gl gate (`app/dev/noise-gl-gate`, `scripts/noise-gl-gate.mjs`) |
+| 21 Nov 2026 | "night time seems a lot quieter than we designed… visually night time actually has a bigger impact" | Three alphas multiplied: DEFRA tile alpha (179) × glow alpha (quiet steps 0, top capped 0.58) × layer opacity, so 55–60 dB drew at ~9% and the three quietest steps tied at 0 | Night glow keyed per 5 dB step with absolute alpha, no ties, ≥ day contrast (see DESIGN "Night glow") | `lib/map/night-glow-palette.test.mjs` |
+| 21 Nov 2026 | "hospitals have a pixel range around them… not added on top of the baseline… didn't adjust the resolution and the tilt to match the grid" | Venue halos were a separate Web Mercator density raster (axis-aligned, z14 max) with its own colour ramp, tinting over the road layer instead of adding to it | Venues baked on the 10 m BNG grid as estimated dB, energy-summed with road (`roadlocal_<slot>`), drawn by the same shader; readout reads the same chunks (see DESIGN "Local sources on the grid") | `verify_local.py`, `lib/map/noise-local.test.mjs`, gl gate on `roadlocal_*` |

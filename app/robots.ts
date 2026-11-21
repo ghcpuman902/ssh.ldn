@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next"
 
 import { SITE_URL } from "@/lib/site"
 
-const ALLOW = ["/", "/og", "/llms.txt", "/llms-full.txt", "/api/noise-address", "/api/mcp"]
+const ALLOW = ["/", "/og", "/llms.txt", "/llms-full.txt", "/api/noise-address", "/api/noise/point", "/api/mcp"]
 const DISALLOW = ["/api/", "/dev/"]
 
 // Answer-engine and user-triggered fetchers are named so the intent is
