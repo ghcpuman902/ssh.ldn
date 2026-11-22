@@ -3,33 +3,26 @@ import {
   type NoiseTimeSlot,
 } from "@/lib/map/noise-time"
 
-/** Larger than the default 1200×630 card, still the 1.91:1 ratio platforms keep. */
-export const SHARE_CARD_WIDTH = 1600
-export const SHARE_CARD_HEIGHT = 840
+/** The standard 1200×630 (1.91:1) card every platform shows uncropped. */
+export const SHARE_CARD_WIDTH = 1200
+export const SHARE_CARD_HEIGHT = 630
 
 /**
- * Interactive search flies to zoom 15. The card steps back to zoom 14 on a
- * wide frame so the pin sits in its neighbourhood instead of a single block.
+ * Same zoom interactive search flies to: about 3 m per pixel in London, so a
+ * 10 m noise cell is 3-4 px and the card spans about 3.6 km.
  */
-export const SHARE_CARD_ZOOM = 14
+export const SHARE_CARD_ZOOM = 15
 export const SHARE_CARD_TILE_SIZE = 256
 
-const PAGE_PADDING = 20
-const FRAME_RADIUS = 40
+/** White sheet rising from the bottom edge (rounded top corners only). */
+export const SHARE_SHEET_HEIGHT = 140
+export const SHARE_SHEET_RADIUS = 32
 
-export const SHARE_MAP_FRAME = {
-  x: PAGE_PADDING,
-  y: PAGE_PADDING,
-  width: SHARE_CARD_WIDTH - PAGE_PADDING * 2,
-  height: SHARE_CARD_HEIGHT - PAGE_PADDING * 2,
-  radius: FRAME_RADIUS,
-} as const
+/** White tab cut into the map from the top-left corner, holding the logo. */
+export const SHARE_TAB = { width: 252, height: 72, radius: 26, fillet: 22 } as const
 
-/** Shift the camera down so the pin sits in the map above the caption. */
-export const SHARE_PIN_LIFT = 84
-
-const STREET_WIDTH_WITH_SCORE = 960
-const STREET_WIDTH_PLAIN = 1340
+const STREET_WIDTH_WITH_SCORE = 700
+const STREET_WIDTH_PLAIN = 1100
 
 const LONDON_BOUNDS = {
   west: -0.57,
@@ -38,7 +31,25 @@ const LONDON_BOUNDS = {
   north: 51.73,
 } as const
 
+/**
+ * Esri's Light Gray Canvas: keyless raster tiles close to the app's Positron
+ * look (CARTO's raster Positron now needs an API key). Base under the noise,
+ * reference labels over it, as the app keeps labels on top.
+ */
 const ESRI_TILE = "https://services.arcgisonline.com/ArcGIS/rest/services/Canvas"
+
+/** SVG path of the logo tab: card corner, rounded outer corner, concave fillets into both edges. */
+export const shareTabPath = ({ width: w, height: h, radius: R, fillet: r } = SHARE_TAB) =>
+  [
+    "M0,0",
+    `H${w + r}`,
+    `A${r},${r} 0 0 0 ${w},${r}`,
+    `V${h - R}`,
+    `A${R},${R} 0 0 1 ${w - R},${h}`,
+    `H${r}`,
+    `A${r},${r} 0 0 0 0,${h + r}`,
+    "Z",
+  ].join(" ")
 
 export const describeNoiseScore = (score: number) => {
   if (score >= 75) return "ssh has left the chat"
@@ -322,12 +333,12 @@ export type ShareMapTile = {
 }
 
 export const layoutShareMap = (latitude: number, longitude: number) => {
-  const { width, height } = SHARE_MAP_FRAME
+  const width = SHARE_CARD_WIDTH
+  const height = SHARE_CARD_HEIGHT
   const point = lngLatToWorld(longitude, latitude)
-  const centerX = point.x
-  const centerY = point.y + SHARE_PIN_LIFT
-  const left = centerX - width / 2
-  const top = centerY - height / 2
+  // The place sits in the middle of the map left visible above the sheet.
+  const left = Math.round(point.x - width / 2)
+  const top = Math.round(point.y - (height - SHARE_SHEET_HEIGHT) / 2)
   const size = SHARE_CARD_TILE_SIZE
   const zoom = SHARE_CARD_ZOOM
   const x0 = Math.floor(left / size)
@@ -355,6 +366,8 @@ export const layoutShareMap = (latitude: number, longitude: number) => {
 
   return {
     tiles,
+    /** Web Mercator world pixels of the card's top-left corner, for the noise raster. */
+    view: { left, top, worldSize: size * limit, width, height },
     pinLeft: point.x - left,
     pinTop: point.y - top,
   }

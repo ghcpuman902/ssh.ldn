@@ -1,6 +1,7 @@
 import { ImageResponse } from "next/og"
 
 import { getNoiseScoreHex } from "@/lib/map/noise-score-color"
+import { NOISE_DATA_BASE_URL } from "@/lib/map/noise-tiles"
 import {
   describeNoiseScore,
   layoutShareMap,
@@ -8,10 +9,14 @@ import {
   layoutShareStreet,
   SHARE_CARD_HEIGHT,
   SHARE_CARD_WIDTH,
-  SHARE_MAP_FRAME,
+  SHARE_SHEET_HEIGHT,
+  SHARE_SHEET_RADIUS,
+  SHARE_TAB,
+  shareTabPath,
   shortShareAddress,
   type ShareCardInput,
 } from "@/lib/map/share-card"
+import { renderShareNoisePng } from "@/lib/server/share-noise-raster"
 
 const NOTO_400 =
   "https://cdn.jsdelivr.net/fontsource/fonts/noto-sans@5.2.5/latin-400-normal.ttf"
@@ -55,28 +60,47 @@ const loadFonts = () => {
 const toDataUrl = (buffer: ArrayBuffer, mime: string) =>
   `data:${mime};base64,${Buffer.from(buffer).toString("base64")}`
 
-const loadTiles = async (input: ShareCardInput) => {
+const loadMap = async (input: ShareCardInput) => {
   const layout = layoutShareMap(input.latitude, input.longitude)
-  const tiles = await Promise.all(
-    layout.tiles.map(async (tile) => {
-      const [base, labels] = await Promise.all([
-        fetchBuffer(tile.baseUrl),
-        fetchBuffer(tile.labelUrl),
-      ])
+  const [tiles, noise] = await Promise.all([
+    Promise.all(
+      layout.tiles.map(async (tile) => {
+        const [base, labels] = await Promise.all([
+          fetchBuffer(tile.baseUrl),
+          fetchBuffer(tile.labelUrl),
+        ])
 
-      return {
-        ...tile,
-        base: base ? toDataUrl(base, "image/jpeg") : null,
-        labels: labels ? toDataUrl(labels, "image/png") : null,
-      }
-    })
-  )
+        return {
+          ...tile,
+          base: base ? toDataUrl(base, "image/jpeg") : null,
+          labels: labels ? toDataUrl(labels, "image/png") : null,
+        }
+      })
+    ),
+    renderShareNoisePng(NOISE_DATA_BASE_URL, layout.view).catch((error) => {
+      console.error("share card noise", error)
+      return null
+    }),
+  ])
 
-  return { ...layout, tiles }
+  return {
+    ...layout,
+    tiles,
+    noise: noise ? `data:image/png;base64,${noise.toString("base64")}` : null,
+  }
 }
 
+const fill = { position: "absolute", left: 0, top: 0 } as const
+
+/**
+ * Full-bleed share card (Mangle, t1327u-t1329u): the real map (Positron +
+ * the weekday-day noise grid, every source on) edge to edge, a white logo
+ * tab cut into the top-left corner and a white sheet rising from the bottom
+ * with the place and its score. White only, no shadows, no frame: platforms
+ * round the corners themselves.
+ */
 export const createShareCardImage = async (input: ShareCardInput) => {
-  const [fonts, map] = await Promise.all([loadFonts(), loadTiles(input)])
+  const [fonts, map] = await Promise.all([loadFonts(), loadMap(input)])
   const short = shortShareAddress(input.address)
   const street = layoutShareStreet(short.name, input.score !== undefined)
   const place = short.area ? layoutSharePlace(short.area, street.width) : ""
@@ -84,7 +108,9 @@ export const createShareCardImage = async (input: ShareCardInput) => {
     input.score !== undefined ? getNoiseScoreHex(input.score) : "#1c1c1c"
   const phrase =
     input.score !== undefined ? describeNoiseScore(input.score) : ""
-  const frame = SHARE_MAP_FRAME
+  const W = SHARE_CARD_WIDTH
+  const H = SHARE_CARD_HEIGHT
+  const tab = SHARE_TAB
 
   return new ImageResponse(
     (
@@ -93,263 +119,225 @@ export const createShareCardImage = async (input: ShareCardInput) => {
           width: "100%",
           height: "100%",
           display: "flex",
-          backgroundColor: "#ffffff",
+          position: "relative",
+          overflow: "hidden",
+          backgroundColor: "#fafaf8",
           fontFamily: "Inter",
         }}
       >
+        {map.tiles.map((tile) =>
+          tile.base ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              key={`b${tile.key}`}
+              alt=""
+              src={tile.base}
+              width={tile.size}
+              height={tile.size}
+              style={{ position: "absolute", left: tile.left, top: tile.top }}
+            />
+          ) : null
+        )}
+
+        {map.noise ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img alt="" src={map.noise} width={W} height={H} style={fill} />
+        ) : null}
+
+        {map.tiles.map((tile) =>
+          tile.labels ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              key={`l${tile.key}`}
+              alt=""
+              src={tile.labels}
+              width={tile.size}
+              height={tile.size}
+              style={{ position: "absolute", left: tile.left, top: tile.top }}
+            />
+          ) : null
+        )}
+
+        <svg
+          width={22}
+          height={30}
+          viewBox="0 0 22 30"
+          style={{ position: "absolute", left: map.pinLeft - 11, top: map.pinTop - 29 }}
+        >
+          <path
+            d="M11 29 C11 29 1 17.5 1 11 A10 10 0 0 1 21 11 C21 17.5 11 29 11 29 Z"
+            fill="#1c1c1c"
+            stroke="#ffffff"
+            strokeWidth={2}
+          />
+          <circle cx={11} cy={11} r={3.6} fill="#ffffff" />
+        </svg>
+
+        <svg
+          width={tab.width + tab.fillet}
+          height={tab.height + tab.fillet}
+          viewBox={`0 0 ${tab.width + tab.fillet} ${tab.height + tab.fillet}`}
+          style={fill}
+        >
+          <path d={shareTabPath()} fill="#ffffff" />
+        </svg>
         <div
           style={{
             position: "absolute",
-            left: frame.x,
-            top: frame.y,
-            width: frame.width,
-            height: frame.height,
+            left: 0,
+            top: 0,
+            width: tab.width,
+            height: tab.height,
             display: "flex",
-            overflow: "hidden",
-            borderRadius: frame.radius,
-            backgroundColor: "#eceae6",
-            border: "1px solid #e4e4e7",
+            alignItems: "center",
+            paddingLeft: 24,
           }}
         >
-          {map.tiles.map((tile) => (
+          <div style={{ display: "flex", fontSize: 32 }}>🤫</div>
+          <div style={{ display: "flex", flexDirection: "column", marginLeft: 10 }}>
             <div
-              key={tile.key}
               style={{
-                position: "absolute",
-                left: tile.left,
-                top: tile.top,
-                width: tile.size,
-                height: tile.size,
                 display: "flex",
+                fontSize: 28,
+                fontWeight: 600,
+                letterSpacing: -0.6,
+                color: "#1c1c1c",
+                lineHeight: 1,
               }}
             >
-              {tile.base ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  alt=""
-                  src={tile.base}
-                  width={tile.size}
-                  height={tile.size}
-                  style={{
-                    position: "absolute",
-                    left: 0,
-                    top: 0,
-                    width: tile.size,
-                    height: tile.size,
-                  }}
-                />
-              ) : null}
-              {tile.labels ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  alt=""
-                  src={tile.labels}
-                  width={tile.size}
-                  height={tile.size}
-                  style={{
-                    position: "absolute",
-                    left: 0,
-                    top: 0,
-                    width: tile.size,
-                    height: tile.size,
-                  }}
-                />
-              ) : null}
+              ssh-ldn
             </div>
-          ))}
-
-          <div
-            style={{
-              position: "absolute",
-              left: map.pinLeft - 22,
-              top: map.pinTop - 26,
-              width: 44,
-              height: 44,
-              borderRadius: 22,
-              backgroundColor: "#ffffff",
-              border: "3px solid #1c1c1c",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 24,
-            }}
-          >
-            📍
-          </div>
-
-          <div
-            style={{
-              position: "absolute",
-              left: 22,
-              top: 22,
-              display: "flex",
-              alignItems: "center",
-              backgroundColor: "#ffffff",
-              borderRadius: 18,
-              padding: "8px 14px 8px 10px",
-            }}
-          >
-            <div style={{ display: "flex", fontSize: 28 }}>🤫</div>
             <div
               style={{
                 display: "flex",
-                flexDirection: "column",
-                marginLeft: 8,
+                marginTop: 4,
+                fontSize: 14,
+                color: "#737373",
+                lineHeight: 1,
               }}
             >
-              <div
-                style={{
-                  display: "flex",
-                  fontSize: 26,
-                  fontWeight: 600,
-                  letterSpacing: -0.6,
-                  color: "#1c1c1c",
-                  lineHeight: 1,
-                }}
-              >
-                ssh-ldn
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  marginTop: 3,
-                  fontSize: 13,
-                  color: "#737373",
-                  lineHeight: 1,
-                }}
-              >
-                London Noise Map
-              </div>
+              London Noise Map
             </div>
           </div>
+        </div>
 
-          <div
-            style={{
-              position: "absolute",
-              right: 22,
-              top: 22,
-              display: "flex",
-              backgroundColor: "#ffffff",
-              borderRadius: 12,
-              padding: "6px 10px",
-              fontSize: 13,
-              color: "#737373",
-            }}
-          >
-            © Esri, OSM
-          </div>
-
-          <div
-            style={{
-              position: "absolute",
-              left: 22,
-              bottom: 22,
-              width: frame.width - 46,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              backgroundColor: "#ffffff",
-              borderRadius: 28,
-              padding: "18px 22px",
-            }}
-          >
+        <div
+          style={{
+            position: "absolute",
+            left: 0,
+            bottom: 0,
+            width: W,
+            height: SHARE_SHEET_HEIGHT,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            backgroundColor: "#ffffff",
+            borderTopLeftRadius: SHARE_SHEET_RADIUS,
+            borderTopRightRadius: SHARE_SHEET_RADIUS,
+            padding: "0 40px 16px",
+          }}
+        >
+          <div style={{ display: "flex", flexDirection: "column", width: street.width }}>
             <div
               style={{
                 display: "flex",
-                flexDirection: "column",
                 width: street.width,
+                fontSize: street.fontSize,
+                fontWeight: 600,
+                lineHeight: `${street.lineHeight}px`,
+                letterSpacing: -0.8,
+                color: "#1c1c1c",
+                whiteSpace: street.lines === 1 ? "nowrap" : "normal",
               }}
             >
+              {street.text}
+            </div>
+            {place ? (
               <div
                 style={{
                   display: "flex",
                   width: street.width,
-                  fontSize: street.fontSize,
-                  fontWeight: 600,
-                  lineHeight: `${street.lineHeight}px`,
-                  letterSpacing: -0.8,
-                  color: "#1c1c1c",
-                  whiteSpace: street.lines === 1 ? "nowrap" : "normal",
+                  marginTop: 4,
+                  fontSize: 22,
+                  lineHeight: "28px",
+                  color: "#737373",
+                  whiteSpace: "nowrap",
                 }}
               >
-                {street.text}
+                {place}
               </div>
-              {place ? (
+            ) : null}
+          </div>
+
+          {input.score !== undefined ? (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "flex-end",
+                marginLeft: 20,
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "flex-end" }}>
                 <div
                   style={{
                     display: "flex",
-                    width: street.width,
-                    marginTop: 4,
-                    fontSize: 22,
-                    lineHeight: "28px",
-                    color: "#737373",
-                    whiteSpace: "nowrap",
+                    fontSize: 64,
+                    fontWeight: 600,
+                    lineHeight: 1,
+                    letterSpacing: -2,
+                    color: scoreColor,
                   }}
                 >
-                  {place}
+                  {input.score}
                 </div>
-              ) : null}
-            </div>
-
-            {input.score !== undefined ? (
+                <div
+                  style={{
+                    display: "flex",
+                    marginLeft: 4,
+                    marginBottom: 7,
+                    fontSize: 22,
+                    fontWeight: 600,
+                    color: "#737373",
+                  }}
+                >
+                  /100
+                </div>
+              </div>
               <div
                 style={{
                   display: "flex",
-                  flexDirection: "column",
-                  alignItems: "flex-end",
-                  marginLeft: 20,
-                  width: 340,
+                  marginTop: 4,
+                  fontSize: 22,
+                  lineHeight: "28px",
+                  fontWeight: 600,
+                  color: "#1c1c1c",
+                  whiteSpace: "nowrap",
                 }}
               >
-                <div style={{ display: "flex", alignItems: "flex-end" }}>
-                  <div
-                    style={{
-                      display: "flex",
-                      fontSize: 72,
-                      fontWeight: 600,
-                      lineHeight: 1,
-                      letterSpacing: -2,
-                      color: scoreColor,
-                    }}
-                  >
-                    {input.score}
-                  </div>
-                  <div
-                    style={{
-                      display: "flex",
-                      marginLeft: 4,
-                      marginBottom: 8,
-                      fontSize: 22,
-                      fontWeight: 600,
-                      color: "#737373",
-                    }}
-                  >
-                    /100
-                  </div>
-                </div>
-                <div
-                  style={{
-                    display: "flex",
-                    marginTop: 6,
-                    fontSize: 24,
-                    lineHeight: "30px",
-                    fontWeight: 600,
-                    color: "#1c1c1c",
-                    textAlign: "right",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {phrase}
-                </div>
+                {phrase}
               </div>
-            ) : null}
+            </div>
+          ) : null}
+
+          <div
+            style={{
+              position: "absolute",
+              right: 40,
+              bottom: 6,
+              display: "flex",
+              fontSize: 11,
+              color: "#a3a3a3",
+            }}
+          >
+            © Esri, OpenStreetMap · noise © DEFRA
           </div>
         </div>
       </div>
     ),
     {
-      width: SHARE_CARD_WIDTH,
-      height: SHARE_CARD_HEIGHT,
+      width: W,
+      height: H,
       fonts,
       emoji: "twemoji",
       headers: {
