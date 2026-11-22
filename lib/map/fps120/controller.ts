@@ -53,7 +53,8 @@ export type Fps120Options = {
 
 export const attachFps120Controller = (map: MapLibreMap, options: Fps120Options) => {
   ensureStyle()
-  const container = map.getCanvasContainer()
+  // The canvas container has no height of its own; size from the map element.
+  const container = map.getContainer()
   const canvas = map.getCanvas()
 
   const wrapper = document.createElement("div")
