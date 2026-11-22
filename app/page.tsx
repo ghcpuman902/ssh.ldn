@@ -13,7 +13,6 @@ import {
   parseShareCardSearchParams,
   SHARE_CARD_HEIGHT,
   SHARE_CARD_WIDTH,
-  splitShareAddress,
 } from "@/lib/map/share-card"
 import { decodeNoiseTimeSlot } from "@/lib/map/noise-time"
 import { TRANSIT_GEOMETRY_CACHE_VERSION } from "@/lib/map/transit-geometry-cache"
@@ -35,9 +34,8 @@ export const generateMetadata = async ({
   const card = parseShareCardSearchParams(params)
   if (!card) return { alternates: { canonical: "/" } }
 
-  const lines = splitShareAddress(card.address)
   const title = formatShareTitle(card.address, card.score)
-  const description = formatShareDescription(lines, card.score)
+  const description = formatShareDescription(card.address, card.score)
   const image = buildShareCardPath(card)
   const timeSlot = decodeNoiseTimeSlot(readParam(params.timeSlot)) ?? undefined
   const query = buildShareQuery({ ...card, timeSlot })

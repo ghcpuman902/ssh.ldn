@@ -264,22 +264,14 @@ export const formatShareTitle = (address: string, score?: number) => {
     : `${name}: London noise | ssh-ldn`
 }
 
-export const formatShareDescription = (
-  lines: ShareAddressLines,
-  score?: number
-) => {
-  const phrase =
+export const formatShareDescription = (address: string, score?: number) => {
+  const { name, area } = shortShareAddress(address)
+  const where = area ? `${name} (${area})` : name
+  const full =
     score !== undefined
-      ? describeNoiseScore(score)
-      : "London noise for this address"
-  const location = lines.place ? `${lines.street}, ${lines.place}` : lines.street
-  const full = `${location}. ${phrase}.`
-
-  if (full.length <= 150) return full
-
-  const short = `${lines.street}. ${phrase}.`
-  if (short.length <= 150) return short
-  return truncateAtWord(short, 150)
+      ? `${where}: ${score}/100 on the London noise map, ${describeNoiseScore(score)}. Road, rail, aircraft and nightlife noise by time of day.`
+      : `${where} on the London noise map. Road, rail, aircraft and nightlife noise by time of day.`
+  return full.length <= 160 ? full : truncateAtWord(full, 160)
 }
 
 const lineCapacity = (width: number, fontSize: number, lines: number) =>
