@@ -19,6 +19,10 @@ import Map, {
 } from "react-map-gl/maplibre"
 import { toast } from "sonner"
 import { useCursorNoise } from "@/hooks/use-cursor-noise"
+import {
+  useFps120Controller,
+  useFps120Flags,
+} from "@/hooks/use-fps120-controller"
 import { useMapLongPress } from "@/hooks/use-map-long-press"
 import { useMapTypeToSearch } from "@/hooks/use-map-type-to-search"
 import { useMapWindowClip } from "@/hooks/use-map-window-clip"
@@ -90,6 +94,7 @@ import {
   writeVisualLayerVisibility,
 } from "@/lib/map/layer-visibility-storage"
 import { noiseAudioEngine } from "@/lib/map/noise-audio-engine"
+import { Fps120Meter } from "@/components/map/fps120-meter"
 import { cn } from "@/lib/utils"
 
 import "maplibre-gl/dist/maplibre-gl.css"
@@ -938,7 +943,18 @@ export const MapShell = () => {
   )
 
   useShiftDragRotate(mapRef, mounted && mapReady)
-  useMapLongPress(mapRef, mounted && mapReady && isMobile, handleMapLongPress)
+  // iOS 120 Hz input pilot (off unless ?fps120=1); it does its own long-press.
+  const fps120 = useFps120Flags()
+  useMapLongPress(
+    mapRef,
+    mounted && mapReady && isMobile && !fps120.controller,
+    handleMapLongPress
+  )
+  useFps120Controller(
+    mapRef,
+    mounted && mapReady && fps120.controller,
+    handleMapLongPress
+  )
 
   const handleMapClick = useCallback(
     (event: MapLayerMouseEvent) => {
@@ -1305,6 +1321,9 @@ export const MapShell = () => {
                 onOutOfMaxBounds={handleGeolocateOutOfMaxBounds}
               />
             </Map>
+            {mapReady && fps120.meter ? (
+              <Fps120Meter mapRef={mapRef} controller={fps120.controller} />
+            ) : null}
 
             <MapTimeVeil part={timeSlot.part} />
 
