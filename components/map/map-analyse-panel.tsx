@@ -38,6 +38,9 @@ import {
   type LocalAmenityHint,
 } from "@/lib/map/noise-contributor-copy"
 import { getNoiseContributorMeta } from "@/lib/map/noise-contributor-meta"
+import type { NoiseLevelPeriod, NoiseLevels } from "@/lib/map/noise-levels"
+import { roadPlusLocalDb } from "@/lib/map/noise-local-levels"
+import type { LocalNoiseSlot } from "@/lib/map/noise-tiles"
 import {
   ANALYSIS_DAY_PARTS,
   WEEK_SEGMENT_LETTERS,
@@ -105,6 +108,8 @@ export type AnalyseState =
       address: string
       testPointId?: string
       geocode: AnalyseTask<GeocodeResult>
+      /** DEFRA dB from /api/noise/point. Fetched first; never waits for Google. */
+      noiseLevels?: AnalyseTask<NoiseLevels>
       score: AnalyseTask<ScoreSummary>
       planning: AnalyseTask<ScorePlanningApplication[]>
       noisyPois: AnalyseTask<NearbyNoisyPoiSummary[]>
@@ -906,6 +911,53 @@ type AnalyseBodyProps = {
   scrollRef?: RefObject<HTMLDivElement | null>
 }
 
+const LEVEL_ROWS = [
+  ["road", "Road"],
+  ["rail", "Rail"],
+  ["airport", "Aircraft"],
+] as const
+
+const formatDb = (db: number | null) =>
+  db === null ? "below mapped level" : `${db.toFixed(1)} dB`
+
+const NoiseLevelsCard = ({
+  levels,
+  period,
+  slot,
+}: {
+  levels: NoiseLevels
+  period: NoiseLevelPeriod
+  slot: LocalNoiseSlot
+}) => {
+  const local = levels.local?.[slot]
+  const roadDb = levels.road[period]
+  return (
+  <div className="space-y-1" data-testid="noise-levels">
+    <p className="text-xs font-medium text-muted-foreground">
+      DEFRA noise here · {period === "Lnight" ? "night" : "day"}
+    </p>
+    <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-0.5 text-sm">
+      {LEVEL_ROWS.map(([source, label]) => (
+        <Fragment key={source}>
+          <dt className="text-muted-foreground">{label}</dt>
+          <dd className="tabular-nums">{formatDb(levels[source][period])}</dd>
+        </Fragment>
+      ))}
+      {local?.db ? (
+        <>
+          <dt className="text-muted-foreground">Local sources</dt>
+          <dd className="tabular-nums">≈ {local.db.toFixed(1)} dB (estimate)</dd>
+          <dt className="text-muted-foreground">Road + local</dt>
+          <dd className="tabular-nums" data-road-band={local.roadBand}>
+            ≈ {roadPlusLocalDb(roadDb, local.db)?.toFixed(1)} dB
+          </dd>
+        </>
+      ) : null}
+    </dl>
+  </div>
+  )
+}
+
 export const AnalyseBody = ({
   state,
   timeSlot,
@@ -950,6 +1002,14 @@ export const AnalyseBody = ({
 
       {state.geocode.status === "failed" ? (
         <p className="text-sm text-destructive">{state.geocode.message}</p>
+      ) : null}
+
+      {state.noiseLevels?.status === "done" ? (
+        <NoiseLevelsCard
+          levels={state.noiseLevels.data}
+          period={timeSlot.part === "night" ? "Lnight" : "Lday"}
+          slot={`${timeSlot.week}-${timeSlot.part}`}
+        />
       ) : null}
 
       {state.score.status === "queued" || state.score.status === "running" ? (

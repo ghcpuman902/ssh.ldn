@@ -1,16 +1,20 @@
 import { DEFRA_ROUND4_PALETTE } from "@/lib/map/defra-raster-legend"
+import { DEFRA_NIGHT_GLOW } from "@/lib/map/night-glow-palette"
 
 /**
  * Night tiles go through this protocol so noise reads as light on the dark
- * basemap: quiet bands fade into the dark, a warm amber glow builds with
- * loudness, and from the red band up it cools through pale to icy blue, so
- * busy roads read as charged cores in an amber falloff (noise, not
- * streetlight). Brighter (luminance × alpha) always means louder, but the top
- * bands are compressed (alpha ≤ 0.58) so labels, transit lines and the river
- * stay readable through the loudest cores. Venue
- * density tiles also come through here by day, to flatten their alpha into
- * hard-edged bands. Runs once per tile (not per frame); gauges and audio sample
- * the original tiles, so the data is untouched.
+ * basemap. Equal dB must look at least as loud at night as by day, and louder
+ * bands visibly stronger: the same dB colour index (DEFRA's day and night
+ * ramps share colours per 5 dB step) gets at least the day map's contrast
+ * against its basemap, rising from a faint grey wash (modelled but below
+ * DEFRA's threshold) through slate and teal, amber, orange and hot red to
+ * white-hot at 80 dB+. Every band is a distinct colour (no ties). DEFRA tiles
+ * carry their own alpha (179 for road, 128 for airport); night ignores it and
+ * uses the glow alpha alone, so the two never multiply into a dimmer map.
+ * Labels and transit lines draw above the noise slot, so they stay readable.
+ * Venue density tiles also come through here by day, to flatten their alpha
+ * into hard-edged bands. Runs once per tile (not per frame); gauges and audio
+ * sample the original tiles, so the data is untouched.
  */
 export const NIGHT_GLOW_PROTOCOL = "ssh-glow"
 
@@ -47,19 +51,8 @@ const VENUE_FLAT_ALPHA = [56, 100, 146, 188, 216]
 const GLOW_PALETTES: Record<NightGlowPalette, GlowPalette> = {
   defra: {
     source: DEFRA_ROUND4_PALETTE,
-    glow: [
-      [0, 0, 0, 0],
-      [0, 0, 0, 0],
-      [0, 0, 0, 0],
-      [130, 68, 28, 0.05],
-      [150, 80, 32, 0.09],
-      [205, 120, 48, 0.16],
-      [245, 150, 66, 0.32],
-      [250, 196, 140, 0.42],
-      [232, 222, 220, 0.44],
-      [200, 216, 240, 0.52],
-      [186, 212, 248, 0.58],
-    ],
+    glow: DEFRA_NIGHT_GLOW,
+    flatAlpha: DEFRA_ROUND4_PALETTE.map(() => 255),
   },
   // A rosier ember than the roads, so venues stay distinguishable.
   venues: {
@@ -103,6 +96,29 @@ const nearestBand = (
     }
   })
   return best
+}
+
+/**
+ * The night glow for one flat DEFRA colour, exactly as `recolourToGlow` paints
+ * it: [r, g, b, a] in 0-255, or null when the band is transparent. The WebGL noise
+ * layer recolours its palette with this instead of every tile pixel.
+ */
+export const defraGlowRgba = (
+  red: number,
+  green: number,
+  blue: number,
+  alpha: number
+): [number, number, number, number] | null => {
+  const palette = GLOW_PALETTES.defra
+  const band = nearestBand(palette.source, red, green, blue)
+  const glow = band >= 0 ? palette.glow[band] : null
+  if (!glow || glow[3] === 0 || alpha === 0) return null
+  return [
+    glow[0],
+    glow[1],
+    glow[2],
+    Math.round((palette.flatAlpha?.[band] ?? alpha) * glow[3]),
+  ]
 }
 
 const recolourToGlow = (pixels: Uint8ClampedArray, palette: GlowPalette) => {

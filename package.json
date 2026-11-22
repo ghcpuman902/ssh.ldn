@@ -10,6 +10,7 @@
     "lint": "eslint",
     "format": "prettier --write \"**/*.{ts,tsx}\"",
     "typecheck": "tsc --noEmit",
+    "test": "node --test \"lib/**/*.test.mjs\"",
     "download-noise-tiles": "node scripts/download-noise-tiles.mjs",
     "generate-poi-density": "node scripts/generate-poi-density-tiles.mjs",
     "create-speech-engine": "node scripts/create-speech-engine.mjs",

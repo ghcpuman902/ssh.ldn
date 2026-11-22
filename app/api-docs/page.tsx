@@ -70,6 +70,26 @@ export default function ApiDocsPage() {
         </section>
 
         <section className="space-y-4">
+          <h2 className="text-lg font-semibold text-foreground">
+            Noise by coordinates
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Bring your own points and get DEFRA road, rail and aircraft noise
+            back, kept separate, as dB (0.5 dB steps) and DEFRA band for Lden,
+            Lday, Leve and Lnight. At most 50 points per call, 60 requests a
+            minute. Responses carry the DEFRA attribution.
+          </p>
+          <CodeBlock>{`GET ${SITE_URL}/api/noise/point?lat=51.5072&lng=-0.1276
+
+GET ${SITE_URL}/api/noise/point?points=51.5072,-0.1276;51.5155,-0.0922
+
+POST ${SITE_URL}/api/noise/point
+Content-Type: application/json
+
+{ "points": [{ "lat": 51.5072, "lng": -0.1276 }] }`}</CodeBlock>
+        </section>
+
+        <section className="space-y-4">
           <h2 className="text-lg font-semibold text-foreground">REST API</h2>
           <p className="text-sm text-muted-foreground">
             Public read-only endpoint with rate limiting.
