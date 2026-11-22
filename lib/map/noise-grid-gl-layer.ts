@@ -46,6 +46,13 @@ const MAX_IN_FLIGHT = 6
 const MAX_UPLOADS_PER_FRAME = 8
 /** Index texture value for "this chunk has no file: every cell is band 0". */
 const EMPTY = 0xffff
+/**
+ * Fade width at the edge of the baked grid, in 10 m cells (1.5 km). Past the
+ * grid there is no DEFRA data, so the layer (wash included) fades to nothing
+ * instead of ending in a hard rectangle. The grid reaches 1.9 km or more past
+ * the map's maxBounds, so inside the viewable area nothing is faded.
+ */
+export const EDGE_FADE_CELLS = 150
 
 const indexPromises = new globalThis.Map<string, Promise<GridIndex>>()
 
@@ -109,6 +116,7 @@ uniform int u_level;
 uniform int u_maxLevel;
 uniform int u_rowOffset[8];
 uniform float u_opacity;
+uniform float u_edgeFade;
 out vec4 fragColor;
 void main() {
   // The 10 m cell under this fragment: integer base + floor(local offset).
@@ -128,7 +136,11 @@ void main() {
       band = texelFetch(u_atlas, at, 0).r;
     }
     vec4 c = texelFetch(u_palette, ivec2(int(band), 0), 0);
-    fragColor = vec4(c.rgb * c.a, c.a) * u_opacity;
+    // Distance to the nearest grid edge, in cells: no data beyond it, so fade.
+    vec2 pos = vec2(v_base) + v_local;
+    vec2 far = vec2(u_grid) - pos;
+    float edge = smoothstep(0.0, u_edgeFade, min(min(pos.x, pos.y), min(far.x, far.y)));
+    fragColor = vec4(c.rgb * c.a, c.a) * (u_opacity * edge);
     return;
   }
   discard;
@@ -307,7 +319,7 @@ export class NoiseGridGlLayer implements CustomLayerInterface {
       throw new Error(`noise grid program: ${gl.getProgramInfoLog(program)}`)
     }
     const uniforms: Gl["uniforms"] = {}
-    for (const name of ["u_matrix", "u_atlas", "u_index", "u_palette", "u_grid", "u_level", "u_maxLevel", "u_rowOffset", "u_opacity"]) {
+    for (const name of ["u_matrix", "u_atlas", "u_index", "u_palette", "u_grid", "u_level", "u_maxLevel", "u_rowOffset", "u_opacity", "u_edgeFade"]) {
       uniforms[name] = gl.getUniformLocation(program, name)
     }
 
@@ -640,6 +652,7 @@ export class NoiseGridGlLayer implements CustomLayerInterface {
     this.rowOffset.forEach((o, k) => (offsets[k] = o))
     gl.uniform1iv(u.u_rowOffset, offsets)
     gl.uniform1f(u.u_opacity, this.state.opacity)
+    gl.uniform1f(u.u_edgeFade, EDGE_FADE_CELLS)
     g.gl.bindVertexArray(g.vao)
     gl.drawElements(gl.TRIANGLES, this.mesh.count, gl.UNSIGNED_INT, 0)
     g.gl.bindVertexArray(null)
