@@ -1,10 +1,13 @@
 """Bake London DEFRA layers: master 10 m grid (0.5 dB byte + band), WebP band pyramid, dB point archive.
-Grid: BNG, top-left cell edge E=502005 N=203005, 10 m cells, 6000 cols x 5000 rows.
+Grid: BNG, top-left cell edge E=497005 N=208005, 10 m cells, 7000 cols x 6000 rows: the map's maxBounds
+(LONDON_BOUNDS, about E 498,900-564,800 N 149,950-206,100) plus 1.1-3.9 km. Fetched as 10 km chunks on an 8 x 7 block
+(E 492005-572005, N 143005-213005) and cropped.
 Decoding stretch v (1..255): road/rail db = max*(v-0.5)/254 (v>=2), v==255 -> max; airport min+(max-min)*(v-0.5)/254 ..."""
 import os, sys, json, glob, gzip, io, time, logging, numpy as np, tifffile
 from PIL import Image
 logging.disable(50)
-E0, NTOP, CELL, W, H = 502005, 203005, 10, 6000, 5000
+E0, NTOP, CELL, W, H = 497005, 208005, 10, 7000, 6000
+CHUNK_E0, CHUNK_N0, CHUNKS_X, CHUNKS_Y = 492005, 143005, 8, 7
 LAYERS = [f"{k}_{p}" for k in ("road", "rail", "airport") for p in ("Lden", "Lday", "Leve", "Lnight")]
 cal = {}
 for l in open("calib.jsonl"):
@@ -23,21 +26,25 @@ def decode_db(s, nod, rec, kind):
 def master(L):
     kind = L.split("_")[0]
     db05 = np.zeros((H, W), np.uint8); band = np.zeros((H, W), np.uint8); missing = []
-    for j in range(5):
-        for i in range(6):
-            E, N = E0 + i * 10000, 153005 + j * 10000
+    for j in range(CHUNKS_Y):
+        for i in range(CHUNKS_X):
+            E, N = CHUNK_E0 + i * 10000, CHUNK_N0 + j * 10000
             f = f"raw/{L}/{L}_E{E}_N{N}.stretch.tif"
             if not os.path.exists(f) or f not in cal: missing.append(f); continue
             s = tifffile.imread(f); b = tifffile.imread(f.replace(".stretch.", ".band.")).astype(np.uint8)
             nod = (b == 0) if kind != "airport" else ((b == 0) | (b >= 10))
             r0 = (NTOP - (N + 10000)) // 10; c0 = (E - E0) // 10
+            # crop the 1000 x 1000 chunk to the grid
+            ra, rb, ca, cb = max(0, r0), min(H, r0 + 1000), max(0, c0), min(W, c0 + 1000)
+            if ra >= rb or ca >= cb: continue
+            sl = (slice(ra - r0, rb - r0), slice(ca - c0, cb - c0))
             rec = cal[f]
             if not rec.get("empty"):
                 db = decode_db(s, nod, rec, kind)
                 q = np.where(nod, 0, np.clip(np.round(db * 2), 1, 255)).astype(np.uint8)
-                db05[r0:r0+1000, c0:c0+1000] = q
+                db05[ra:rb, ca:cb] = q[sl]
             bb = b.copy(); bb[nod] = 0
-            band[r0:r0+1000, c0:c0+1000] = bb
+            band[ra:rb, ca:cb] = bb[sl]
     return db05, band, missing
 def webp(a):
     bio = io.BytesIO(); Image.fromarray(a, "L").save(bio, "WEBP", lossless=True, quality=100, method=6); return bio.getvalue()
@@ -65,7 +72,7 @@ if __name__ == "__main__":
     for L in (sys.argv[1:] or LAYERS):
         t0 = time.time(); db05, band, missing = master(L)
         np.savez_compressed(f"master/{L}.npz", db05=db05, band=band)
-        sz = pyramid(L, band, out)
+        sz = pyramid(L, band, out) if os.environ.get("WEBP_PYRAMID") else None
         report[L] = {"missing": len(missing), "pyramid": sz, "valid_cells": int((band > 0).sum()), "s": round(time.time() - t0, 1)}
         print(L, json.dumps(report[L]), flush=True)
         json.dump(report, open(f"{out}/report.json", "w"), indent=1)

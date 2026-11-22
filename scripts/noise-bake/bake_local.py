@@ -15,7 +15,7 @@ Layers per slot s in weekday-day, weekday-night, weekend-day, weekend-night:
 Both get the same max pyramid and chunking as bake_grid.py and are added to baked/grid/index.json.
 Input: local_activity.json from scripts/noise-bake/local_activity.mjs (venue BNG from the app's own wgs84ToBng)."""
 import os, json, gzip, time, numpy as np
-E0, NTOP, CELL, W, H = 502005, 203005, 10, 6000, 5000  # = bake.py
+from bake import E0, NTOP, CELL, W, H
 OUT = "baked/grid"; T = 256
 FLOOR = 35.0
 LREF = 66.0

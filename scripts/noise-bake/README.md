@@ -2,7 +2,9 @@
 
 Python scripts that turn the fetched DEFRA GeoTIFFs into what ssh.ldn serves. Read `doc/noise-data/DESIGN.md` first.
 
-Run from a folder holding `raw/` (the 722 DEFRA GeoTIFFs), `calib.jsonl` and the scripts. Needs numpy, Pillow, tifffile, pyproj.
+`fetch_ext.py` fetches the 26 extra chunks for the coverage box (`bake.py` holds the grid constants; every other script imports them or reads `index.json`).
+
+Run from a folder holding `raw/` (the DEFRA GeoTIFFs: 56 chunks × 12 layers × 2), `calib.jsonl` and the scripts. Needs numpy, Pillow, tifffile, pyproj.
 
 1. `bake.py` builds `master/<layer>.npz`: dB in 0.5 dB steps plus DEFRA's band index per 10 m cell.
 2. `derive_palette.py` reads DEFRA's own styled z12 tiles and writes `palette_derived.json` (band to DEFRA colour per layer).

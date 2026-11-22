@@ -1,6 +1,6 @@
 import json, gzip, numpy as np, math
 src=json.load(open("local_activity.json")); idx=json.load(open("baked/grid/index.json")); W=src["weights"]
-E0,NTOP=502005,203005
+E0,NTOP,GW,GH=idx["originE"],idx["originN"],idx["gridCols"],idx["gridRows"]
 def A(d): d=max(d,10.0); return 20*math.log10(d/10)+0.05*(d-10)
 def cell(name,r,c):
     p=f"baked/grid/{name}/0/{c//256}_{r//256}.gz"
@@ -14,7 +14,7 @@ for slot in src["slots"]:
   feats=[f for f in src["features"] if f["activity"][slot]>0]
   for _ in range(60):
     f=feats[rng.integers(len(feats))]; c=int((f["e"]-E0)//10)+int(rng.integers(-12,13)); r=int((NTOP-f["n"])//10)+int(rng.integers(-12,13))
-    if not (0<=r<5000 and 0<=c<6000): continue
+    if not (0<=r<GH and 0<=c<GW): continue
     ce=E0+(c+.5)*10; cn=NTOP-(r+.5)*10; E=0
     for g in feats:
       d=math.hypot(ce-g["e"],cn-g["n"])

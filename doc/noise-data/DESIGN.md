@@ -25,7 +25,8 @@ When Mangle reports a bug, or says something doesn't work or feels wrong:
 - Why: DEFRA allows bots 10 requests a minute and standard users 200. The old app spent 12 DEFRA requests on every lookup. Fetching once and serving our own copy removes that limit and the cost.
 
 ### 2. One-off fetch and master grid
-- London box: E 502,005–562,005, N 153,005–203,005 (6,000 × 5,000 cells of 10 m), fetched as 1000 px WMS GeoTIFFs. Per chunk: the band image (no style) and the stretched dB image ('raster' style). 722 files, 689 MB, about 1.5 hours at about 7.5 requests a minute, 0 rate-limit errors.
+- London box (first fetch, 19 Nov): E 502,005–562,005, N 153,005–203,005 (6,000 × 5,000 cells of 10 m), fetched as 1000 px WMS GeoTIFFs. Per chunk: the band image (no style) and the stretched dB image ('raster' style). 722 files, 689 MB, about 1.5 hours at about 7.5 requests a minute, 0 rate-limit errors.
+- Coverage box (21 Nov): E 497,005–567,005, N 148,005–208,005 (7,000 × 6,000 cells). It is the map's `LONDON_BOUNDS` (about E 498,900–564,800, N 149,950–206,100 in BNG) plus 1.9–3.9 km. `scripts/noise-bake/fetch_ext.py` fetched the 26 extra 10 km chunks around the first block (8 × 7 block, E 492,005–572,005, N 143,005–213,005); `bake.py` crops it to the box. See "Coverage".
 - Real dB from the stretched image, calibrated with exact point readings (GetFeatureInfo). Road and rail: dB = max × (v − 0.5) / 254, from one reading at the loudest cell per chunk; v = 1 means no data. Airport: a straight line through the quietest and loudest valid cells (band 10 or 11 means no data, and the loudest valid cell can be v = 254).
 - Master copy per layer: dB in 0.5 dB steps as one byte (0 = no data or below DEFRA's threshold), plus DEFRA's own band index. Keep both: bands worked out from dB differ at about 2.5% of band edges.
 - Accuracy gate: 50 random exact DEFRA readings (22 road, 15 rail, 13 airport) are within 0.37 dB at worst, 0.125 dB on average, and none over 0.5 dB. The fixture is `lib/server/__fixtures__/noise-grid-gate.json`; the test runs whenever the baked data is present.
@@ -119,3 +120,10 @@ Mangle: the OSM halos (pubs, bars, clubs, music venues, hospitals) did not add t
 - Drawing: with local sources on, the road layer draws `roadlocal_<slot>`, so venues raise the road baseline cell by cell in DEFRA's colours; with road off, `local_<slot>` draws alone in the same colours. The Mercator density raster is used only when no bake is published. The venue markers stay.
 - Readout: the cursor gauge reads `roadlocal_<slot>` for road when local sources are on, and the pin panel adds "Local sources" and "Road + local", from the same chunks (`createNoiseGridReader`). `/api/noise/point` stays DEFRA only.
 - Gates: `verify_local.py` (bake vs brute-force sum, 229 cells, 0 off), `noise-local.test.mjs`, and the GPU gate on the local layers with the app's grid reader (`scripts/noise-gl-gate.mjs`).
+
+## Coverage (21 Nov 2026)
+
+- Mangle saw the noise end in a hard rectangle inside the map (west near Uxbridge, north near Potters Bar and Epping, east near Ockendon, south near Kingston and Bromley).
+- Cause: the first fetch asked DEFRA for a 60 × 50 km box (E 502–562 km, N 153–203 km), not the map's maxBounds. DEFRA's England-wide road and rail layers carry on past it; the M25, A1(M) and Dartford Crossing are all in the data.
+- Fix: the grid now covers maxBounds plus at least 1.9 km on every side (box above). The app reads the extent from `grid/index.json`, so no app constants changed.
+- Past the grid there is no data, so the shader fades the layer, wash included, to nothing over the last 1.5 km (`EDGE_FADE_CELLS` in `lib/map/noise-grid-gl-layer.ts`) instead of drawing a hard edge. The fade sits outside maxBounds, so the viewable map is never faded. Taps outside the grid read "no data" (the reader returns null), never quiet.
