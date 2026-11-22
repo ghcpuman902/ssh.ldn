@@ -1,31 +1,11 @@
 import type { PlanningApplication } from "@/lib/server/planning"
+import {
+  getPlanningPortal,
+  resolvePortalLink,
+} from "@/lib/server/planning-portals"
 
 const PLANNING_DATA_GOV_UK_ENTITY_BASE_URL =
   "https://www.planning.data.gov.uk/entity"
-
-/** Councils that publish relative `url_planning_app` paths on their own portal. */
-const LPA_PLANNING_PORTAL_BASE: Record<string, string> = {
-  Hackney: "https://developmentandhousing.hackney.gov.uk",
-}
-
-const LPA_REFERENCE_SEARCH_URL: Record<string, (reference: string) => string> = {
-  Islington: (reference) =>
-    `https://planning.islington.gov.uk/publicaccess/search.do?action=simple&searchType=Application&searchCriteria.reference=${encodeURIComponent(reference)}`,
-  Camden: (reference) =>
-    `https://camdocs.camden.gov.uk/online-applications/search.do?action=simple&searchType=Application&searchCriteria.reference=${encodeURIComponent(reference)}`,
-  Westminster: (reference) =>
-    `https://idoxpa.westminster.gov.uk/online-applications/search.do?action=simple&searchType=Application&searchCriteria.reference=${encodeURIComponent(reference)}`,
-}
-
-/** Council planning register landing pages when no direct application URL exists. */
-const LPA_PLANNING_FALLBACK_URL: Record<string, string> = {
-  Islington: "https://www.islington.gov.uk/planning/applications/comment",
-  Camden: "https://www.camden.gov.uk/planning-applications",
-  Westminster: "https://www.westminster.gov.uk/planning-building-control-and-environmental-regulations/planning-applications",
-  "Tower Hamlets":
-    "https://development.towerhamlets.gov.uk/online-applications/search.do?action=simple&searchType=Application",
-  Hackney: "https://developmentandhousing.hackney.gov.uk/planning/index.html",
-}
 
 export type PlanningApplicationLinkInput = Pick<
   PlanningApplication,
@@ -43,77 +23,64 @@ export type PlanningApplicationLinkInput = Pick<
   | "urlPlanningApp"
 >
 
-const resolveRelativePlanningUrl = (
-  urlPlanningApp: string,
-  planningAuthority: string | null
-) => {
-  if (!planningAuthority) {
-    return null
-  }
-
-  const base = LPA_PLANNING_PORTAL_BASE[planningAuthority]
-  if (!base) {
-    return null
-  }
-
-  return `${base}${urlPlanningApp.startsWith("/") ? "" : "/"}${urlPlanningApp}`
-}
-
-const hasDirectPlanningApplicationUrl = (
-  application: PlanningApplicationLinkInput
-) => {
-  if (!application.urlPlanningApp) {
-    return false
-  }
-
-  if (/^https?:\/\//i.test(application.urlPlanningApp)) {
-    return /getApplication|applicationDetails\.do/i.test(application.urlPlanningApp)
-  }
-
-  return /getApplication|applicationDetails\.do/i.test(application.urlPlanningApp)
-}
-
-const getPlanningLinkPriority = (application: PlanningApplicationLinkInput) => {
-  if (hasDirectPlanningApplicationUrl(application)) {
-    return 0
-  }
-
-  if (
-    application.source === "planning.data.gov.uk" &&
-    application.applicationId
-  ) {
-    return 1
-  }
-
-  if (resolvePlanningApplicationUrl(application)) {
-    return 2
-  }
-
-  return 3
-}
-
+/**
+ * - `direct`: opens the application, or a results page holding only it.
+ * - `entity`: the national record on planning.data.gov.uk.
+ * - `portal`: the council's search page only; the reference has to be typed in.
+ */
 export type PlanningLinkKind = "direct" | "entity" | "portal"
 
-export const getPlanningLinkKind = (
+type ResolvedPlanningLink = { url: string; kind: PlanningLinkKind }
+
+const resolvePlanningLink = (
   application: PlanningApplicationLinkInput
-): PlanningLinkKind | null => {
-  if (hasDirectPlanningApplicationUrl(application)) {
-    return "direct"
+): ResolvedPlanningLink | null => {
+  // London authorities: only links checked in planning-portals.ts.
+  if (getPlanningPortal(application.planningAuthority)) {
+    const link = resolvePortalLink(application)
+    if (link) {
+      return { url: link.url, kind: link.kind === "direct" ? "direct" : "portal" }
+    }
   }
 
   if (
     application.source === "planning.data.gov.uk" &&
     application.applicationId
   ) {
-    return "entity"
+    return {
+      url: `${PLANNING_DATA_GOV_UK_ENTITY_BASE_URL}/${application.applicationId}`,
+      kind: "entity",
+    }
   }
 
-  if (resolvePlanningApplicationUrl(application)) {
-    return "portal"
+  if (
+    application.urlPlanningApp &&
+    /^https:\/\/[^\s<>]+$/i.test(application.urlPlanningApp.trim())
+  ) {
+    return { url: application.urlPlanningApp.trim(), kind: "direct" }
   }
 
   return null
 }
+
+const LINK_PRIORITY: Record<PlanningLinkKind, number> = {
+  direct: 0,
+  entity: 1,
+  portal: 2,
+}
+
+const getPlanningLinkPriority = (application: PlanningApplicationLinkInput) => {
+  const link = resolvePlanningLink(application)
+  return link ? LINK_PRIORITY[link.kind] : 3
+}
+
+export const getPlanningLinkKind = (
+  application: PlanningApplicationLinkInput
+): PlanningLinkKind | null => resolvePlanningLink(application)?.kind ?? null
+
+export const resolvePlanningApplicationUrl = (
+  application: PlanningApplicationLinkInput
+): string | null => resolvePlanningLink(application)?.url ?? null
 
 export const getPlanningLinkLabel = (
   application: Pick<
@@ -138,49 +105,11 @@ export const getPlanningLinkLabel = (
 
   if (linkKind === "portal") {
     return council
-      ? `Search ${subject} on ${council} planning register`
-      : `Search ${subject} on council planning register`
+      ? `Open the ${council} planning search page and search for ${subject}`
+      : `Open the council planning search page and search for ${subject}`
   }
 
   return subject
-}
-
-export const resolvePlanningApplicationUrl = (
-  application: PlanningApplicationLinkInput
-): string | null => {
-  if (application.urlPlanningApp) {
-    if (/^https?:\/\//i.test(application.urlPlanningApp)) {
-      return application.urlPlanningApp
-    }
-
-    const relativeUrl = resolveRelativePlanningUrl(
-      application.urlPlanningApp,
-      application.planningAuthority
-    )
-    if (relativeUrl) {
-      return relativeUrl
-    }
-  }
-
-  if (
-    application.source === "planning.data.gov.uk" &&
-    application.applicationId
-  ) {
-    return `${PLANNING_DATA_GOV_UK_ENTITY_BASE_URL}/${application.applicationId}`
-  }
-
-  if (application.reference && application.planningAuthority) {
-    const searchUrl = LPA_REFERENCE_SEARCH_URL[application.planningAuthority]
-    if (searchUrl) {
-      return searchUrl(application.reference)
-    }
-  }
-
-  if (application.planningAuthority) {
-    return LPA_PLANNING_FALLBACK_URL[application.planningAuthority] ?? null
-  }
-
-  return null
 }
 
 export const presentPlanningApplications = (
@@ -200,17 +129,20 @@ export const presentPlanningApplications = (
       return aDistance - bDistance
     })
     .slice(0, limit)
-    .map((application) => ({
-      applicationId: application.applicationId,
-      reference: application.reference,
-      description: application.description,
-      status: application.status,
-      decisionType: application.decisionType,
-      applicationTypeFull: application.applicationTypeFull,
-      developmentType: application.developmentType,
-      decisionDate: application.decisionDate,
-      distanceMeters: application.distanceMeters,
-      planningAuthority: application.planningAuthority,
-      url: resolvePlanningApplicationUrl(application),
-      linkKind: getPlanningLinkKind(application),
-    }))
+    .map((application) => {
+      const link = resolvePlanningLink(application)
+      return {
+        applicationId: application.applicationId,
+        reference: application.reference,
+        description: application.description,
+        status: application.status,
+        decisionType: application.decisionType,
+        applicationTypeFull: application.applicationTypeFull,
+        developmentType: application.developmentType,
+        decisionDate: application.decisionDate,
+        distanceMeters: application.distanceMeters,
+        planningAuthority: application.planningAuthority,
+        url: link?.url ?? null,
+        linkKind: link?.kind ?? null,
+      }
+    })

@@ -398,7 +398,7 @@ const getPlanningLinkHint = (linkKind: ScorePlanningApplication["linkKind"]) => 
     return "Direct link"
   }
   if (linkKind === "portal") {
-    return "Council search"
+    return "Search page only"
   }
   if (linkKind === "entity") {
     return "National record"
@@ -717,16 +717,29 @@ const renderPlanningApplication = (application: ScorePlanningApplication) => {
     description: application.description,
   })
   const linkHint = getPlanningLinkHint(application.linkKind)
+  // No working deep link for this council: say so, and give the reference
+  // to type into its search page.
+  const searchOnly = application.linkKind === "portal" && application.url
   const metaLine = [
     application.distanceMeters !== null
       ? `${application.distanceMeters}m away`
       : null,
+    searchOnly
+      ? application.reference
+        ? `no direct link, search for ${application.reference}`
+        : "no direct link, opens the council search"
+      : null,
   ]
     .filter(Boolean)
     .join(" · ")
-  const linkLabel = application.reference
-    ? `Open planning application ${application.reference}${application.planningAuthority ? ` on ${application.planningAuthority}` : ""}`
-    : `Open planning application${application.planningAuthority ? ` on ${application.planningAuthority}` : ""}`
+  const council = application.planningAuthority
+    ? ` ${application.planningAuthority}`
+    : ""
+  const linkLabel = searchOnly
+    ? `Open the${council} planning search page${application.reference ? ` and search for ${application.reference}` : ""}`
+    : application.reference
+      ? `Open planning application ${application.reference}${application.planningAuthority ? ` on ${application.planningAuthority}` : ""}`
+      : `Open planning application${application.planningAuthority ? ` on ${application.planningAuthority}` : ""}`
 
   const cardContent = (
     <>
