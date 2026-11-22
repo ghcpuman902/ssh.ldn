@@ -28,9 +28,8 @@ export const SHARE_MAP_FRAME = {
 /** Shift the camera down so the pin sits in the map above the caption. */
 export const SHARE_PIN_LIFT = 84
 
-const STREET_WIDTH_WITH_SCORE = 1080
+const STREET_WIDTH_WITH_SCORE = 960
 const STREET_WIDTH_PLAIN = 1340
-const META_TITLE_MAX = 42
 
 const LONDON_BOUNDS = {
   west: -0.57,
@@ -197,28 +196,72 @@ export const truncateAtWord = (value: string, max: number) => {
   return `${cut.replace(/[,\s]+$/, "")}…`
 }
 
+const POSTCODE_PATTERN = /\b[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}\b/i
+
+/** Segments that name the borough, region or country, not the neighbourhood. */
+const isAdminSegment = (value: string) =>
+  /^(london borough of|royal borough of|city of westminster|greater london|england|united kingdom|uk)\b/i.test(value) ||
+  /^london(\s+[A-Z]{1,2}\d.*)?$/i.test(value) ||
+  POSTCODE_PATTERN.test(value)
+
+const stripHouseNumber = (value: string) =>
+  value.replace(/^(flat|apartment|apt|unit)\s+\S+\s*/i, "").replace(/^\d+[a-z]?(-\d+[a-z]?)?\s+/i, "")
+
+export type ShortShareAddress = {
+  /** "Merino Gardens, Wapping": street without the house number, then the neighbourhood. */
+  name: string
+  /** "Tower Hamlets · E1W 2DS", or "" when the address has neither. */
+  area: string
+}
+
 /**
- * Link-preview title. Kept to one short line: street, score when we have it,
- * and the brand only when the street is already short enough not to wrap.
+ * A short public label for an address. Drops house and flat numbers, keeps the
+ * street and the last neighbourhood before the borough/region parts.
  */
-export const formatShareMetaTitle = (
-  lines: ShareAddressLines,
-  score?: number
-) => {
-  const scoreSuffix = score !== undefined ? ` · ${score}` : ""
-  const brandSuffix = " · ssh-ldn"
-  const withBrandBudget = META_TITLE_MAX - scoreSuffix.length - brandSuffix.length
-  const scoreBudget = META_TITLE_MAX - scoreSuffix.length
-
-  if (lines.street.length <= withBrandBudget) {
-    return `${lines.street}${scoreSuffix}${brandSuffix}`
+export const shortShareAddress = (address: string): ShortShareAddress => {
+  const lines = splitShareAddress(address)
+  if (lines.street === "Dropped pin" || !lines.place) {
+    return { name: stripHouseNumber(lines.street) || lines.street, area: lines.place }
   }
 
-  if (lines.street.length <= scoreBudget) {
-    return `${lines.street}${scoreSuffix}`
-  }
+  const parts = tidyAddress(address)
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean)
+  // "1", "Flat 3": numbers and flat labels carry no street name.
+  const named = parts
+    .map(stripHouseNumber)
+    .filter((part) => part && !/^\d+[a-z]?$/i.test(part))
+  const street = named[0] ?? lines.street
 
-  return `${truncateAtWord(lines.street, scoreBudget)}${scoreSuffix}`
+  const firstAdmin = named.findIndex(
+    (part, index) => index > 0 && isAdminSegment(part)
+  )
+  const neighbourhoods = named.slice(
+    1,
+    firstAdmin === -1 ? undefined : firstAdmin
+  )
+  const neighbourhood = neighbourhoods.at(-1)
+  const name = neighbourhood ? `${street}, ${neighbourhood}` : `${street}, London`
+
+  const borough = parts
+    .find((part) => /^(london borough of|royal borough of)\s/i.test(part))
+    ?.replace(/^(london borough of|royal borough of)\s+/i, "")
+  const postcode = POSTCODE_PATTERN.exec(tidyAddress(address))?.[0]?.toUpperCase()
+  const area = [borough, postcode].filter(Boolean).join(" · ")
+
+  return { name, area }
+}
+
+/**
+ * Page and link-preview title, e.g.
+ * "Merino Gardens, Wapping: 15/100, a rare London hush | ssh-ldn".
+ */
+export const formatShareTitle = (address: string, score?: number) => {
+  const { name } = shortShareAddress(address)
+  return score !== undefined
+    ? `${name}: ${score}/100, ${describeNoiseScore(score)} | ssh-ldn`
+    : `${name}: London noise | ssh-ldn`
 }
 
 export const formatShareDescription = (

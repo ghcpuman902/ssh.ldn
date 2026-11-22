@@ -6,8 +6,7 @@ import { toast } from "sonner"
 import {
   buildShareCardPath,
   buildShareQuery,
-  formatShareMetaTitle,
-  splitShareAddress,
+  formatShareTitle,
 } from "@/lib/map/share-card"
 import type { NoiseTimeSlot } from "@/lib/map/noise-time"
 
@@ -49,7 +48,7 @@ export const ShareAnalyseButton = ({
       score,
     })
     const url = `${window.location.origin}${window.location.pathname}?${query}`
-    const title = formatShareMetaTitle(splitShareAddress(address), score)
+    const title = formatShareTitle(address, score)
 
     if (navigator.share) {
       try {

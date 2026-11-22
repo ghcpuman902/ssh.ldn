@@ -9,7 +9,7 @@ import {
   buildShareCardPath,
   buildShareQuery,
   formatShareDescription,
-  formatShareMetaTitle,
+  formatShareTitle,
   parseShareCardSearchParams,
   SHARE_CARD_HEIGHT,
   SHARE_CARD_WIDTH,
@@ -36,7 +36,7 @@ export const generateMetadata = async ({
   if (!card) return { alternates: { canonical: "/" } }
 
   const lines = splitShareAddress(card.address)
-  const title = formatShareMetaTitle(lines, card.score)
+  const title = formatShareTitle(card.address, card.score)
   const description = formatShareDescription(lines, card.score)
   const image = buildShareCardPath(card)
   const timeSlot = decodeNoiseTimeSlot(readParam(params.timeSlot)) ?? undefined

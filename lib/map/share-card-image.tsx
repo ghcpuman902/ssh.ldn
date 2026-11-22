@@ -9,7 +9,7 @@ import {
   SHARE_CARD_HEIGHT,
   SHARE_CARD_WIDTH,
   SHARE_MAP_FRAME,
-  splitShareAddress,
+  shortShareAddress,
   type ShareCardInput,
 } from "@/lib/map/share-card"
 
@@ -77,9 +77,9 @@ const loadTiles = async (input: ShareCardInput) => {
 
 export const createShareCardImage = async (input: ShareCardInput) => {
   const [fonts, map] = await Promise.all([loadFonts(), loadTiles(input)])
-  const lines = splitShareAddress(input.address)
-  const street = layoutShareStreet(lines.street, input.score !== undefined)
-  const place = lines.place ? layoutSharePlace(lines.place, street.width) : ""
+  const short = shortShareAddress(input.address)
+  const street = layoutShareStreet(short.name, input.score !== undefined)
+  const place = short.area ? layoutSharePlace(short.area, street.width) : ""
   const scoreColor =
     input.score !== undefined ? getNoiseScoreHex(input.score) : "#1c1c1c"
   const phrase =
@@ -298,17 +298,17 @@ export const createShareCardImage = async (input: ShareCardInput) => {
                   flexDirection: "column",
                   alignItems: "flex-end",
                   marginLeft: 20,
-                  width: 220,
+                  width: 340,
                 }}
               >
                 <div style={{ display: "flex", alignItems: "flex-end" }}>
                   <div
                     style={{
                       display: "flex",
-                      fontSize: 56,
+                      fontSize: 72,
                       fontWeight: 600,
                       lineHeight: 1,
-                      letterSpacing: -1.5,
+                      letterSpacing: -2,
                       color: scoreColor,
                     }}
                   >
@@ -318,8 +318,8 @@ export const createShareCardImage = async (input: ShareCardInput) => {
                     style={{
                       display: "flex",
                       marginLeft: 4,
-                      marginBottom: 6,
-                      fontSize: 18,
+                      marginBottom: 8,
+                      fontSize: 22,
                       fontWeight: 600,
                       color: "#737373",
                     }}
@@ -330,11 +330,13 @@ export const createShareCardImage = async (input: ShareCardInput) => {
                 <div
                   style={{
                     display: "flex",
-                    marginTop: 4,
-                    fontSize: 16,
-                    lineHeight: "20px",
-                    color: "#737373",
+                    marginTop: 6,
+                    fontSize: 24,
+                    lineHeight: "30px",
+                    fontWeight: 600,
+                    color: "#1c1c1c",
                     textAlign: "right",
+                    whiteSpace: "nowrap",
                   }}
                 >
                   {phrase}

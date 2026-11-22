@@ -59,7 +59,8 @@ import {
   getCurrentNoiseTimeSlot,
   mapThemeForTimeSlot,
 } from "@/lib/map/noise-time"
-import { buildShareQuery } from "@/lib/map/share-card"
+import { buildShareQuery, formatShareTitle } from "@/lib/map/share-card"
+import { SITE_TITLE } from "@/lib/site"
 // import { locationContextFromAnalyse } from "@/lib/voice/location-context"
 // import { isVoiceModeEnabledClient } from "@/lib/voice/voice-mode"
 import { estimateClientNoiseScore } from "@/lib/map/client-noise-score"
@@ -785,6 +786,16 @@ export const MapShell = () => {
     urlLongitude,
     urlScore,
   ])
+
+  // The URL is rewritten client-side, so Next's metadata does not follow it:
+  // keep the tab title in step with the open analyse sheet.
+  useEffect(() => {
+    if (!mounted) return
+    document.title =
+      urlAddress !== null && analyseState.status === "analysing"
+        ? formatShareTitle(urlAddress, urlScore)
+        : SITE_TITLE
+  }, [analyseState.status, mounted, urlAddress, urlScore])
 
   const handleNoisyPoiFocus = useCallback((poi: NearbyNoisyPoiSummary) => {
     setFocusedNoisyPoiId((current) =>
