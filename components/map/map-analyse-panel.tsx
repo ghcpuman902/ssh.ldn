@@ -1,6 +1,6 @@
 "use client"
 
-import { Fragment, useEffect, useRef, type ElementType, type RefObject } from "react"
+import { Fragment, useEffect, useRef, type ElementType, type ReactNode, type RefObject } from "react"
 
 import { useRevealProgress } from "@/hooks/use-reveal-progress"
 import {
@@ -194,14 +194,16 @@ const NoiseScoreCard = ({
   score,
   animationKey,
   nearbyVenues = [],
+  footnote = null,
 }: {
   score: ScoreSummary
   animationKey: string
   nearbyVenues?: NearbyNoisyPoiSummary[]
+  /** Small print at the foot of the card (the DEFRA readings). */
+  footnote?: ReactNode
 }) => {
   const progress = useRevealProgress(animationKey)
   const animatedNoiseScore = revealValue(score.noiseScore, progress)
-  const animatedConfidence = revealValue(score.confidenceScore, progress)
   const scoreColor = getNoiseScoreColor(animatedNoiseScore)
   const loudest = findLoudestSlot(score.timeProfile)
 
@@ -224,9 +226,6 @@ const NoiseScoreCard = ({
           <div className="text-right leading-none">
             <p className="text-base font-medium text-foreground">
               {describeNoiseScore(score.noiseScore)}
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Confidence {animatedConfidence} · {score.confidenceBand}
             </p>
           </div>
         </div>
@@ -286,6 +285,7 @@ const NoiseScoreCard = ({
             ))}
           </div>
         </div>
+        {footnote}
       </div>
 
       {score.contributors.map((contributor) => {
@@ -933,7 +933,8 @@ const LEVEL_ROWS = [
 const formatDb = (db: number | null) =>
   db === null ? "below mapped level" : `${db.toFixed(1)} dB`
 
-const NoiseLevelsCard = ({
+/** One line of small print: "DEFRA day: road 43.5 dB · rail 40.5 dB · …". */
+const NoiseLevelsFootnote = ({
   levels,
   period,
   slot,
@@ -944,30 +945,25 @@ const NoiseLevelsCard = ({
 }) => {
   const local = levels.local?.[slot]
   const roadDb = levels.road[period]
+  const parts = LEVEL_ROWS.map(
+    ([source, label]) =>
+      `${label.toLowerCase()} ${formatDb(levels[source][period])}`
+  )
+  if (local?.db) {
+    parts.push(`local ≈ ${local.db.toFixed(1)} dB (estimate)`)
+    const combined = roadPlusLocalDb(roadDb, local.db)
+    if (combined !== null) {
+      parts.push(`road + local ≈ ${combined.toFixed(1)} dB`)
+    }
+  }
   return (
-  <div className="space-y-1" data-testid="noise-levels">
-    <p className="text-xs font-medium text-muted-foreground">
-      DEFRA noise here · {period === "Lnight" ? "night" : "day"}
+    <p
+      className="mt-3 text-[11px] leading-snug text-muted-foreground tabular-nums"
+      data-testid="noise-levels"
+      data-road-band={local?.db ? local.roadBand : undefined}
+    >
+      DEFRA {period === "Lnight" ? "night" : "day"}: {parts.join(" · ")}
     </p>
-    <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-0.5 text-sm">
-      {LEVEL_ROWS.map(([source, label]) => (
-        <Fragment key={source}>
-          <dt className="text-muted-foreground">{label}</dt>
-          <dd className="tabular-nums">{formatDb(levels[source][period])}</dd>
-        </Fragment>
-      ))}
-      {local?.db ? (
-        <>
-          <dt className="text-muted-foreground">Local sources</dt>
-          <dd className="tabular-nums">≈ {local.db.toFixed(1)} dB (estimate)</dd>
-          <dt className="text-muted-foreground">Road + local</dt>
-          <dd className="tabular-nums" data-road-band={local.roadBand}>
-            ≈ {roadPlusLocalDb(roadDb, local.db)?.toFixed(1)} dB
-          </dd>
-        </>
-      ) : null}
-    </dl>
-  </div>
   )
 }
 
@@ -1017,14 +1013,6 @@ export const AnalyseBody = ({
         <p className="text-sm text-destructive">{state.geocode.message}</p>
       ) : null}
 
-      {state.noiseLevels?.status === "done" ? (
-        <NoiseLevelsCard
-          levels={state.noiseLevels.data}
-          period={timeSlot.part === "night" ? "Lnight" : "Lday"}
-          slot={`${timeSlot.week}-${timeSlot.part}`}
-        />
-      ) : null}
-
       {state.score.status === "queued" || state.score.status === "running" ? (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="size-4 animate-spin" aria-hidden="true" />
@@ -1043,6 +1031,15 @@ export const AnalyseBody = ({
             animationKey={`${state.address}-${state.score.data.noiseScore}`}
             nearbyVenues={
               state.noisyPois.status === "done" ? state.noisyPois.data : []
+            }
+            footnote={
+              state.noiseLevels?.status === "done" ? (
+                <NoiseLevelsFootnote
+                  levels={state.noiseLevels.data}
+                  period={timeSlot.part === "night" ? "Lnight" : "Lday"}
+                  slot={`${timeSlot.week}-${timeSlot.part}`}
+                />
+              ) : null
             }
           />
 
